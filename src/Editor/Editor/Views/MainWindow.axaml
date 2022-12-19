@@ -1,0 +1,32 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Editor.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+		xmlns:views="clr-namespace:Editor.Views"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="Editor.Views.MainWindow"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="Editor">
+
+    <Design.DataContext>
+        <vm:MainWindowViewModel/>
+    </Design.DataContext>
+
+	<Grid RowDefinitions="Auto,*,Auto">
+		<Grid Grid.Row="0" Background="Orange" Height="30" ColumnDefinitions="Auto,Auto,*,Auto,Auto">
+			<Rectangle Grid.Column="0" Fill="Red" Width="40" ></Rectangle>
+			<Rectangle Grid.Column="1" Fill="Blue" Width="40" ></Rectangle>
+		</Grid>
+
+		<Grid Grid.Row="1" ColumnDefinitions="Auto,*">
+			<Rectangle Grid.Column="0" Width="200" Fill="AntiqueWhite"></Rectangle>
+			<views:VulkanPage Grid.Column="1"></views:VulkanPage>
+		</Grid>
+
+		<Grid Grid.Row="2" Background="Blue" Height="30" ColumnDefinitions="Auto">
+
+		</Grid>
+	</Grid>
+
+</Window>

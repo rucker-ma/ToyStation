@@ -1,0 +1,11 @@
+.vs/
+.vscode/
+build/
+tools/
+
+**/obj/
+*.pdb
+*.deps.json
+*.dll
+!src/ThirdParty/LLVM/bin/libclang.dll
+!src/ThirdParty/Vulkan/Bin/VkLayer_khronos_validation.dll

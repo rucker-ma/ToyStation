@@ -1,0 +1,5 @@
+set(MODULE_NAME Engine)
+file(GLOB SOURCE_FILE *.cpp *.h)
+add_executable(${MODULE_NAME} ${SOURCE_FILE})
+target_link_libraries()
+add_custom_command()
