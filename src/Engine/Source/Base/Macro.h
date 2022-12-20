@@ -8,23 +8,20 @@
 #define TS_CPP_API
 #endif
 
-
-
 #ifdef __cplusplus
-#define BEGIN_EXPORT extern "C"{
+#define BEGIN_EXPORT extern "C" {
 #define END_EXPORT }
 #else
 #define BEGIN_EXPORT
 #define END_EXPORT
 #endif
 
-
 #define PROPERTY(...)
 #define CLASS(...)
 #define FUNCTION(...)
 #define REFLECTION_BODY(...)
 
-//modify for CLASS Macro
+// modify for CLASS Macro
 #define SINGLETON
-//export for csharp use,
+// export for csharp use,
 #define CSHARP

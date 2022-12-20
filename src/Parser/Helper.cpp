@@ -1,7 +1,6 @@
 #include "Helper.h"
 
-PathEnv& PathEnv::Get()
-{
+PathEnv& PathEnv::Get() {
     static PathEnv Env;
     return Env;
 }

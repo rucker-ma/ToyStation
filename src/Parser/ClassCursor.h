@@ -2,20 +2,17 @@
 #include "MacroCursor.h"
 #include "MemberCursor.h"
 
-
-
-class ClassCursor:public Cursor
-{
+class ClassCursor : public Cursor {
 public:
     ClassCursor(Cursor& c, std::shared_ptr<MacrosDelegate> del,
-        std::vector<std::string> ns);
+                std::vector<std::string> ns);
     void Generate();
     std::string GetType();
     std::vector<std::string>& Keys();
     std::vector<std::string> GetNameSpace();
     bool MatchKey(std::string key);
-public:
 
+public:
     std::vector<FieldCursor> field_cursor;
     std::vector<MethodCursor> method_cursor;
 
@@ -26,4 +23,3 @@ private:
 
     std::vector<std::string> name_space;
 };
-

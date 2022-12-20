@@ -14,7 +14,7 @@ void ClassCursor::Generate()
         {
             current_specifier = clang_getCXXAccessSpecifier(child.GetCXCursor());
         }
-        //方法申明
+   
         if (child.GetKind() == CXCursor_CXXMethod)
         {
             auto method = MethodCursor(child, current_specifier);
@@ -23,7 +23,7 @@ void ClassCursor::Generate()
                 method_cursor.push_back(method);
             }
         }
-        //变量申明
+
         if (child.GetKind() == CXCursor_FieldDecl)
         {
             auto field = FieldCursor(child, current_specifier);
