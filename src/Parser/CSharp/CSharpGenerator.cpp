@@ -46,7 +46,7 @@ void CSharpGenerator::Generate() {
         for (auto& func : c.Funcs) {
             AddUsing(func.ReturnType.UsingNS);
             content +=
-                "[DllImport(\"TSEngine\", CharSet = CharSet.Ansi, "
+                "[DllImport(\"Engine\", CharSet = CharSet.Ansi, "
                 "CallingConvention = CallingConvention.Cdecl)]\n";
             content = content + "internal static extern " +
                       func.ReturnType.TypeName + " " + func.FuncName;
