@@ -28,8 +28,11 @@ std::string Cursor::GetSpelling() {
 }
 
 std::vector<Cursor> Cursor::GetChildren() {
-    std::vector<Cursor> children;
+    if (!children.empty()) return children;
 
+    VisitData Data;
+    Data.parent = this;
+    Data.children_ptr = &children;
     clang_visitChildren(
         cursor_,
         [](CXCursor cursor, CXCursor parent, CXClientData data) {
@@ -37,14 +40,15 @@ std::vector<Cursor> Cursor::GetChildren() {
                     clang_getCursorLocation(cursor)) == 0) {
                 return CXChildVisit_Continue;
             }
-            std::vector<Cursor>* children_ptr =
-                static_cast<std::vector<Cursor>*>(data);
+            Cursor::VisitData* visitor = static_cast<Cursor::VisitData*>(data);
 
-            children_ptr->push_back(cursor);
-
+            visitor->children_ptr->push_back(cursor);
+            if (cursor.kind == CXCursor_MacroExpansion) {
+                visitor->parent->HasMacro() = true;
+            }
             return CXChildVisit_Continue;
         },
-        &children);
+        &Data);
     return children;
 }
 
@@ -61,7 +65,6 @@ void Cursor::FormatPrint(std::string& str) {
             Cursor Cur = cursor;
             str_ptr->push_back('-');
             int flag = 30 + str_ptr->size();
-            std::to_string(flag);
 
             //              foreground background
             //    black        30         40
@@ -84,3 +87,5 @@ void Cursor::FormatPrint(std::string& str) {
         },
         &str);
 }
+
+bool& Cursor::HasMacro() { return has_macro_; }
