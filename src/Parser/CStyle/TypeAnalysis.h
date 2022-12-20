@@ -1,12 +1,11 @@
 #pragma once
 #include <clang-c/Index.h>
-#include "MemberCursor.h"
+
 #include "CSharp/MetaInfo.h"
+#include "MemberCursor.h"
 // one file, one analysis
-class TypeAnalysis
-{
-    struct RecordClientData
-    {
+class TypeAnalysis {
+    struct RecordClientData {
         TypeAnalysis* parent;
         StructMetaInfo* record;
     };
@@ -20,9 +19,9 @@ public:
 
 private:
     bool CheckPointer(CXType& type, ParamMetaInfo& info);
-    
-    void CheckRecord(CXType& type,Cursor& cursor);
+
+    void CheckRecord(CXType& type, Cursor& cursor);
+
 private:
     std::vector<std::string> compounds;
 };
-

@@ -1,27 +1,23 @@
 #include "UnitGanerator.h"
+
 #include "Define.h"
 
-UnitGanerator::UnitGanerator()
-{
-}
+UnitGanerator::UnitGanerator() {}
 
-std::string UnitGanerator::GenerateDefine(ClassCursor* c, MethodCursor& m)
-{
+std::string UnitGanerator::GenerateDefine(ClassCursor* c, MethodCursor& m) {
     std::string cls_name = c->GetSpelling();
     std::string ret_type = m.ReturnType();
     std::string func_name = m.GetSpelling();
     std::vector<ParamDecl> params = m.Params();
-    std::string def = "TS_API " + ret_type + " " + cls_name + "_" + func_name + "(";
-    if(!c->MatchKey(SINGLETON))
-    {
+    std::string def =
+        "TS_API " + ret_type + " " + cls_name + "_" + func_name + "(";
+    if (!c->MatchKey(SINGLETON)) {
         def = def + c->GetType() + "* Self, ";
     }
     int i = 1;
-    for (auto& var : params)
-    {
+    for (auto& var : params) {
         def = def + var.type + " " + var.name;
-        if (i != params.size())
-        {
+        if (i != params.size()) {
             def += ", ";
         }
         i++;
@@ -30,31 +26,27 @@ std::string UnitGanerator::GenerateDefine(ClassCursor* c, MethodCursor& m)
     return def;
 }
 
-std::string UnitGanerator::GenerateImpl(ClassCursor* c, MethodCursor& m)
-{
-    if (!c->MatchKey(SINGLETON))
-    {
+std::string UnitGanerator::GenerateImpl(ClassCursor* c, MethodCursor& m) {
+    if (!c->MatchKey(SINGLETON)) {
         return SimpleImpl(c, m);
     }
     return SingletonImpl(c, m);
 }
 
-std::string UnitGanerator::SimpleImpl(ClassCursor* c, MethodCursor& m)
-{
+std::string UnitGanerator::SimpleImpl(ClassCursor* c, MethodCursor& m) {
     std::string cls_name = c->GetSpelling();
     std::string ret_type = m.ReturnType();
     std::string func_name = m.GetSpelling();
     std::vector<ParamDecl> params = m.Params();
 
-    std::string impl = ret_type + " " + cls_name + "_" + func_name + "(" + c->GetType() + "* Self";
+    std::string impl = ret_type + " " + cls_name + "_" + func_name + "(" +
+                       c->GetType() + "* Self";
     std::string input = "(";
     int i = 1;
-    for (auto& var : params)
-    {
+    for (auto& var : params) {
         impl = impl + ", " + var.type + " " + var.name;
         input += var.name;
-        if (i != params.size())
-        {
+        if (i != params.size()) {
             input += ", ";
         }
         ++i;
@@ -67,8 +59,7 @@ std::string UnitGanerator::SimpleImpl(ClassCursor* c, MethodCursor& m)
     return impl;
 }
 
-std::string UnitGanerator::SingletonImpl(ClassCursor* c, MethodCursor& m)
-{
+std::string UnitGanerator::SingletonImpl(ClassCursor* c, MethodCursor& m) {
     std::string cls_name = c->GetSpelling();
     std::string ret_type = m.ReturnType();
     std::string func_name = m.GetSpelling();
@@ -78,12 +69,10 @@ std::string UnitGanerator::SingletonImpl(ClassCursor* c, MethodCursor& m)
 
     std::string input = "(";
     int i = 1;
-    for (auto& var : params)
-    {
+    for (auto& var : params) {
         impl = impl + var.type + " " + var.name;
         input += var.name;
-        if (i != params.size())
-        {
+        if (i != params.size()) {
             input += ", ";
             impl += ", ";
         }
@@ -93,6 +82,7 @@ std::string UnitGanerator::SingletonImpl(ClassCursor* c, MethodCursor& m)
 
     impl += ")\n{\n";
 
-    impl = impl + "	return " + c->GetType() + "::Instance()." + func_name + input + "\n}\n";
+    impl = impl + "	return " + c->GetType() + "::Instance()." + func_name +
+           input + "\n}\n";
     return impl;
 }
