@@ -37,7 +37,7 @@ namespace ToyStation.Vulkan
             foreach (var surface in surfaces)
             {
                 //IPlatformNativeSurfaceHandle
-                
+
                 if (surface is IPlatformHandle handle)
                 {
                     VulkanContext.CreateSurface(handle.Handle);

@@ -28,7 +28,7 @@ namespace ToyStation.Vulkan
             //render.SetScale(SurfaceHandle.Scaling);
             //VKApi.Render_SetScaling(SurfaceHandle.Scaling);
             ToyStation.VkExtent2D extent = new ToyStation.VkExtent2D();
-            
+
             //extent.width = (uint)SurfaceHandle.Size.Width;
             //extent.height = (uint)SurfaceHandle.Size.Height;
 
