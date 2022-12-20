@@ -114,5 +114,6 @@ jobs:
       shell: powershell
       run: |
         .\.sonar\scanner\dotnet-sonarscanner begin /k:"rucker-ma_ToyStation" /o:"toystation" /d:sonar.login="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io"
+        dotnet tool install Cake.Tool
         dotnet cake
         .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
