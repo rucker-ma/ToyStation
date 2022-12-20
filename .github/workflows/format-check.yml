@@ -11,19 +11,14 @@ jobs:
     strategy:
       matrix:
         path:
-          - 'src/Parser'
-          - 'src/Engine'
+          - check: 'src/Engine'
+            exclude: 'Generated'
+          - check: 'src/Parser'
+            exclude : ''
     steps:
     - name: Checkout
       uses: actions/checkout@v3
-      
-    - name: Run clang-format style check for C/C++/Protobuf programs.
-      uses: jidicula/clang-format-action@v4.9.0
-      with:
-        clang-format-version: '15'
-        check-path: ${{ matrix.path }}
-        fallback-style: 'Google' # optional
-        
+
     - name: Install .NET Core
       uses: actions/setup-dotnet@v3
       with:
@@ -33,6 +28,16 @@ jobs:
       run: dotnet tool install -g dotnet-format
     
     - name: Run dotnet format
-      run: dotnet format '.\src\Editor' --folder --check --verbosity diagnostic     
+      run: dotnet format --include .\src\Editor --check --verbosity diagnostic     
+
+    - name: Run clang-format style check for C/C++/Protobuf programs.
+      uses: jidicula/clang-format-action@v4.9.0
+      with:
+        clang-format-version: '15'
+        check-path: ${{ matrix.path['check'] }}
+        exclude-regex: ${{ matrix.path['exclude'] }}
+        fallback-style: 'Google' # optional
+        
+
       
       
