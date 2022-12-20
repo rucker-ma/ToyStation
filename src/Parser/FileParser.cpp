@@ -36,6 +36,8 @@ void FileParser::Generate() {
 }
 
 void FileParser::Parse(Cursor& root_cursor) {
+    root_cursor.GetChildren();
+    if (!root_cursor.HasMacro()) return;
     for (auto& child : root_cursor.GetChildren()) {
         CXCursorKind kind = child.GetKind();
         if (kind == CXCursor_ClassDecl || kind == CXCursor_StructDecl) {

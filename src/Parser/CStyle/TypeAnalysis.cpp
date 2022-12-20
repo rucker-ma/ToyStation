@@ -35,11 +35,11 @@ bool TypeAnalysis::CheckArgument(Cursor& c, FuncMetaInfo& info) {
 }
 
 void TypeAnalysis::CheckType(CXType& type, Cursor& c, ParamMetaInfo& info) {
-    std::cerr << "type:" << ToString(clang_getTypeSpelling(type))
-              << " kind:  " << ToString(clang_getTypeKindSpelling(type.kind))
-              << std::endl;
-    std::cerr << " cursor : " << c.GetSpelling()
-              << " kind:  " << c.GetKindSpelling() << std::endl;
+    // std::cerr << "type:" << ToString(clang_getTypeSpelling(type))
+    //           << " kind:  " << ToString(clang_getTypeKindSpelling(type.kind))
+    //           << std::endl;
+    // std::cerr << " cursor : " << c.GetSpelling()
+    //           << " kind:  " << c.GetKindSpelling() << std::endl;
     if (type.kind == CXType_Typedef) {
         Cursor cur = clang_getTypeDeclaration(type);
         CXType under_type =
@@ -96,7 +96,6 @@ void TypeAnalysis::CheckRecord(CXType& type, Cursor& cursor) {
     client_data.parent = this;
     client_data.record = &Record;
 
-    // ȡ�������ռ�Ĳ㼶��ϵ
     Cursor parent = clang_getCursorSemanticParent(cursor.GetCXCursor());
     while (parent.GetKind() == CXCursor_Namespace) {
         Record.NS.push_back(parent.GetSpelling());
