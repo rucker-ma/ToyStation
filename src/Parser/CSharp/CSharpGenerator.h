@@ -7,7 +7,6 @@ public:
     void Generate();
 
 private:
-    
     void GenerateCompound();
     void AddUsing(std::vector<std::string> ns);
 
