@@ -1,7 +1,7 @@
 #include "ImageFactory.h"
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "ThirdParty/stb_image.h"
+#include "stb_image.h"
 
 #include "Render.h"
 #include <stdexcept>

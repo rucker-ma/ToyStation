@@ -14,6 +14,12 @@ FileParser::~FileParser()
 
 void FileParser::Generate() {
     //idx_ = clang_createIndex(1, 1);
+
+    for(auto& include:PathEnv::Get().IncludeFolder)
+    {
+        arguments.push_back(include.c_str());
+    }
+
     unit_ = clang_createTranslationUnitFromSourceFile(idx_, file_path_.string().c_str(),
         arguments.size(),
         arguments.data(),

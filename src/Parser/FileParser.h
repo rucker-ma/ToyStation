@@ -34,10 +34,10 @@ private:
         //"-M",  //只进行预处理（-E）并打印依赖头文件到控制台                        
         "-E",
         "-ferror-limit=0",                                       //错误过多也不会停止
-        "-ID:/project/csharp/Avalonia-VK/Avalonia/src/TSEngine", //-I包含的文件夹
-        "-ID:/project/csharp/Avalonia-VK/Avalonia/src/TSEngine/Render",
-        "-ID:/software/VulkanSDK/1.3.231.1/Include",
-        "-ID:/project/cpp/graphics/vk-demo/3rd/glm-0.9.9.8",
+        // "-ID:/project/csharp/Avalonia-VK/Avalonia/src/TSEngine", //-I包含的文件夹
+        // "-ID:/project/csharp/Avalonia-VK/Avalonia/src/TSEngine/Render",
+        // "-ID:/software/VulkanSDK/1.3.231.1/Include",
+        // "-ID:/project/cpp/graphics/vk-demo/3rd/glm-0.9.9.8",
         "-o clangLog.txt" //写输出到指定文件
     }
   };

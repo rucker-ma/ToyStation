@@ -26,6 +26,7 @@ public:
     std::filesystem::path ProjectFolder;
     std::filesystem::path CStyleFolder;
     std::filesystem::path CSharpFolder;
+    std::vector<std::string> IncludeFolder;
     static PathEnv& Get();
 private:
     PathEnv()=default;

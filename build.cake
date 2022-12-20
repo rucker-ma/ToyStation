@@ -1,20 +1,32 @@
-#addin nuget:?package=Cake.CMake
+#addin nuget:?package=Cake.CMake&version=1.3.1
 
 var target = Argument("target","BuildEditor");
 
-Task("CMakeBuild")
+Task("CMakeGenerate")
 .Does(
     ()=>{
         var settings = new CMakeSettings
         {
-            SourcePath = "./src",
+            SourcePath = "./",
             OutputPath = "./build"
         };
-        CMake(settings);  
+        CMake(settings);
+
+    }
+);
+Task("CMakeBuild")
+.IsDependentOn("CMakeGenerate")
+.Does(
+    ()=>{
+        var settings = new CMakeBuildSettings
+        {
+            BinaryPath = "./build"
+        };
+        CMakeBuild(settings);
     }
 );
 Task("BuildRuntime")
-// .IsDependentOn("CMakeBuild")
+.IsDependentOn("CMakeBuild")
 .Does(
     ()=>{
         // MSBuild("./Editor/ToyStation.Runtime/ToyStation.Runtime.csproj",new MSBuildSettings{

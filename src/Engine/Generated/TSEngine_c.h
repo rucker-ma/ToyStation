@@ -7,4 +7,3 @@ TS_API void TEngine_Tick();
 TS_API TSEngine::Render * TEngine_IRender();
 TS_API void TEngine_UpdateSize(VkRect2D Size);
 END_EXPORT
-
