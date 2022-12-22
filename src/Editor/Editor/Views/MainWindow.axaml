@@ -21,7 +21,7 @@
 
 		<Grid Grid.Row="1" ColumnDefinitions="Auto,*">
 			<Rectangle Grid.Column="0" Width="200" Fill="AntiqueWhite"></Rectangle>
-			<views:VulkanPage Grid.Column="1"></views:VulkanPage>
+			<views:VulkanPage Name="VulkanPage" Grid.Column="1" ></views:VulkanPage>
 		</Grid>
 
 		<Grid Grid.Row="2" Background="Blue" Height="30" ColumnDefinitions="Auto">

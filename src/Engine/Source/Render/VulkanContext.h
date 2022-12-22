@@ -7,6 +7,8 @@
 #endif  // _WIN32
 
 #define VK_USE_PLATFORM_WIN32_KHR
+#define VK_ENABLE_BETA_EXTENSIONS
+
 #include "Base/Macro.h"
 #include "vulkan/vulkan.h"
 

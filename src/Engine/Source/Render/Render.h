@@ -24,7 +24,8 @@ public:
     void UpdateSize(VkRect2D Size);
     FUNCTION(CSHARP)
     void SetScale(double Scale);
-
+    FUNCTION(CSHARP)
+    void FrameResized();
 private:
     void CreateSwapChain();
     void RecreateSwapChain();
@@ -79,5 +80,6 @@ private:
     // draw content size
     VkRect2D copy_size_;
     double scale_;
+    bool frame_resized_;
 };
 }  // namespace TSEngine

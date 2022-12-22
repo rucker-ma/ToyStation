@@ -3,6 +3,8 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Platform;
 using Avalonia.Rendering.SceneGraph;
+using Avalonia.Threading;
+using ToyStation.TSEngine;
 
 namespace ToyStation.Vulkan
 {
@@ -13,6 +15,7 @@ namespace ToyStation.Vulkan
         {
             OnRender();
             base.Render(context);
+            Dispatcher.UIThread.InvokeAsync(InvalidateVisual, DispatcherPriority.Render);
         }
         protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
         {

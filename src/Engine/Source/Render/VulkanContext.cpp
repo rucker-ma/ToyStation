@@ -55,6 +55,10 @@ VulkanQueueFamily VulkanContext::FindQueueFamilies(
     for (const auto& queue_family : queue_families) {
         if (queue_family.queueFlags & VK_QUEUE_GRAPHICS_BIT)
             queue_family_res.graphics_family = i;
+        if (queue_family.queueFlags & VK_QUEUE_VIDEO_ENCODE_BIT_KHR)
+            std::cerr << "Get Support Encode Queue" << std::endl;
+        
+
         VkBool32 presentSupport = false;
         vkGetPhysicalDeviceSurfaceSupportKHR(phy_device, i, surface_,
                                              &presentSupport);
@@ -178,7 +182,7 @@ void VulkanContext::CreateInstance(DebugFunction func, bool EnableDebug) {
     create_info.pApplicationInfo = &application_info;
 
     std::vector<const char*> extensions = GetRequiredExtensions();
-
+    
     std::vector<const char*> validationLayers = {"VK_LAYER_KHRONOS_validation"};
     validationLayers.push_back("VK_LAYER_LUNARG_api_dump");
 
@@ -233,6 +237,15 @@ void VulkanContext::CreateSurface(HWND hwnd) {
 
 void VulkanContext::CreatePhysicalDevice() {
     device_extensions_.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+
+    //for vulkan encode
+    device_extensions_.push_back(
+        VK_EXT_YCBCR_2PLANE_444_FORMATS_EXTENSION_NAME);
+    device_extensions_.push_back(VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME);
+    device_extensions_.push_back(VK_KHR_VIDEO_QUEUE_EXTENSION_NAME);
+    device_extensions_.push_back(VK_KHR_VIDEO_ENCODE_QUEUE_EXTENSION_NAME);
+    device_extensions_.push_back(VK_EXT_VIDEO_ENCODE_H264_EXTENSION_NAME);
+
     uint32_t device_count = 0;
     vkEnumeratePhysicalDevices(instance_, &device_count, nullptr);
     if (device_count) {

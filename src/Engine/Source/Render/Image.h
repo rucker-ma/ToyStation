@@ -16,7 +16,7 @@ public:
     void CreateVkImageView(VkFormat Format, VkImageAspectFlags AspectFlags);
     const VkSampler& GetImageSampler();
     const VkDeviceMemory& GetMemory();
-    const uint64_t GetMemorySize();
+    uint64_t GetMemorySize() const;
 
 private:
     Image(bool SwapChainImg = false);

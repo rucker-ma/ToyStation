@@ -10,54 +10,58 @@ namespace TSEngine {
 
 std::shared_ptr<Image> ImageFactory::CreateImage(std::string ImgFile,
                                                  RenderUtils* Utils) {
-    std::shared_ptr<Image> Res(new Image());
-    int tex_w, tex_h, tex_ch;
+    std::shared_ptr<Image> res(new Image());
+    int tex_w = 0;
+    int tex_h = 0;
+    int tex_ch = 0;
     stbi_uc* pixels =
         stbi_load(ImgFile.c_str(), &tex_w, &tex_h, &tex_ch, STBI_rgb_alpha);
-    VkDeviceSize image_size = tex_w * tex_h * 4;
-    if (!pixels) return Res;
+    VkDeviceSize image_size = static_cast<VkDeviceSize>(tex_w * tex_h * 4);
+    if (!pixels) {
+        return res;
+    }
 
-    VkBuffer staging_buffer;
-    VkDeviceMemory staging_buffer_memory;
+    VkBuffer staging_buffer = nullptr;
+    VkDeviceMemory staging_buffer_memory = nullptr;
     Utils->CreateGPUBuffer(image_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                                VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                            staging_buffer, staging_buffer_memory);
-    void* data;
+    void* data = nullptr;
     vkMapMemory(VulkanDevice, staging_buffer_memory, 0, image_size, 0, &data);
     memcpy(data, pixels, image_size);
     vkUnmapMemory(VulkanDevice, staging_buffer_memory);
     stbi_image_free(pixels);
 
-    CreateVKImage(*Res, tex_w, tex_h, VK_FORMAT_R8G8B8A8_SRGB,
+    CreateVKImage(*res, tex_w, tex_h, VK_FORMAT_R8G8B8A8_SRGB,
                   VK_IMAGE_TILING_OPTIMAL,
                   VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
                   VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-    Utils->TransitionImageLayout(Res->image_, VK_IMAGE_LAYOUT_UNDEFINED,
+    Utils->TransitionImageLayout(res->image_, VK_IMAGE_LAYOUT_UNDEFINED,
                                  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 0, 0);
 
-    Utils->CopyBufferToImage(staging_buffer, Res->image_, tex_w, tex_h);
+    Utils->CopyBufferToImage(staging_buffer, res->image_, tex_w, tex_h);
     Utils->TransitionImageLayout(
-        Res->image_, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        res->image_, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0, 0);
     vkDestroyBuffer(VulkanDevice, staging_buffer, nullptr);
     vkFreeMemory(VulkanDevice, staging_buffer_memory, nullptr);
-    return Res;
+    return res;
 }
 
 std::shared_ptr<Image> ImageFactory::CreateImage(VkImage Img) {
-    std::shared_ptr<Image> Res(new Image(true));
-    Res->image_ = Img;
-    return Res;
+    std::shared_ptr<Image> res(new Image(true));
+    res->image_ = Img;
+    return res;
 }
 
 std::shared_ptr<Image> ImageFactory::CreateImage(
     uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling,
     VkImageUsageFlags usage, VkMemoryPropertyFlags properties) {
-    std::shared_ptr<Image> Res(new Image());
-    CreateVKImage(*Res, width, height, format, tiling, usage, properties);
-    return Res;
+    std::shared_ptr<Image> res(new Image());
+    CreateVKImage(*res, width, height, format, tiling, usage, properties);
+    return res;
 }
 
 void ImageFactory::BindMemory(Image& Image, VkMemoryPropertyFlags properties) {

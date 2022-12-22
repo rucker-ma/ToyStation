@@ -13,5 +13,10 @@ find_library(ASTYLE_LIB NAMES AStyleLibd PATHS ${ASTYLE}/lib)
 find_library(LIBCLANG_LIB NAMES libclang PATHS ${LLVM}/lib)
 find_library(VULKAN_LIB NAMES vulkan-1 PATHS ${VULKAN}/Lib)
 
+# set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/src/Engine/Output)
+# set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/src/Engine/Output)
+# 设置输出目录要Editor bin目录
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_SOURCE_DIR}/src/Editor/Editor/bin/Debug/net6.0)
+
 add_subdirectory(./src/Parser)
 add_subdirectory(./src/Engine)

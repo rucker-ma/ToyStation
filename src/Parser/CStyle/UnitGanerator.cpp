@@ -12,11 +12,15 @@ std::string UnitGanerator::GenerateDefine(ClassCursor* c, MethodCursor& m) {
     std::string def =
         "TS_API " + ret_type + " " + cls_name + "_" + func_name + "(";
     if (!c->MatchKey(SINGLETON)) {
-        def = def + c->GetType() + "* Self, ";
+        def = def + c->GetType() + "* Self ";
+        if (!params.empty()) {
+            def += ",";
+        }
     }
+
     int i = 1;
     for (auto& var : params) {
-        def = def + var.type + " " + var.name;
+        def.append(var.type + " " + var.name);
         if (i != params.size()) {
             def += ", ";
         }

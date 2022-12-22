@@ -26,6 +26,8 @@ void Render::Init() {
     CreateSyncObjects();
     CreatePresentImage();
     current_frame_ = 0;
+    scale_ = 1;
+    frame_resized_ = false;
 }
 void Render::RecreateSwapChain() {
     CleanSwapChain();
@@ -45,8 +47,8 @@ void Render::RecreateSwapChain() {
 void Render::CleanSwapChain() {
     vkDeviceWaitIdle(VulkanDevice);
     depth_texture_ = nullptr;
-    for (size_t i = 0; i < swapchain_framebuffers_.size(); i++) {
-        vkDestroyFramebuffer(VulkanDevice, swapchain_framebuffers_[i], nullptr);
+    for (auto& frame : swapchain_framebuffers_) {
+        vkDestroyFramebuffer(VulkanDevice, frame, nullptr);
     }
     vkDestroyDescriptorPool(VulkanDevice, descriptor_pool_, nullptr);
     vkDestroyPipeline(VulkanDevice, graphics_pipeline_, nullptr);
@@ -66,16 +68,17 @@ void Render::Draw() {
     vkWaitForFences(VulkanDevice, 1, &inflight_fences_[current_frame_], VK_TRUE,
                     UINT64_MAX);
 
-    uint32_t image_index;
+    uint32_t image_index = 0;
     VkResult result =
         vkAcquireNextImageKHR(VulkanDevice, info_.SwapChain, UINT64_MAX,
                               image_available_semaphores_[current_frame_],
                               VK_NULL_HANDLE, &image_index);
     if (result == VK_ERROR_OUT_OF_DATE_KHR) {
         // todo: recreate swap chain when surface size changed
-        // recreate_swap_chain();
+        RecreateSwapChain();
         return;
-    } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+    }
+    if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
     }
     vkResetFences(VulkanDevice, 1, &inflight_fences_[current_frame_]);
     vkResetCommandBuffer(commandbuffers_[current_frame_], 0);
@@ -98,7 +101,7 @@ void Render::Draw() {
     VkSemaphore signal_semaphore[] = {
         render_finished_semaphores_[current_frame_]};
     submit_info.signalSemaphoreCount = 1;
-    submit_info.pSignalSemaphores = signal_semaphore;
+    submit_info.pSignalSemaphores = static_cast<VkSemaphore*>(signal_semaphore);
     if (vkQueueSubmit(VulkanGraphicsQueue, 1, &submit_info,
                       inflight_fences_[current_frame_]) != VK_SUCCESS) {
     }
@@ -113,10 +116,10 @@ void Render::Draw() {
     present_info.pImageIndices = &image_index;
 
     result = vkQueuePresentKHR(VulkanPresentQueue, &present_info);
-    if (result == VK_ERROR_OUT_OF_DATE_KHR ||
-        result == VK_SUBOPTIMAL_KHR /* || init_params.framebuffer_resized*/) {
-        // init_params.framebuffer_resized = false;
-        // recreate_swap_chain();
+    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR ||
+        frame_resized_) {
+        frame_resized_ = false;
+        RecreateSwapChain();
     } else if (result != VK_SUCCESS) {
     }
     current_frame_ = (current_frame_ + 1) % MAX_FRAMES_IN_FLIGHT;
@@ -149,6 +152,8 @@ void Render::UpdateSize(VkRect2D Size) { copy_size_ = Size; }
 
 void Render::SetScale(double Scale) { scale_ = Scale; }
 
+void Render::FrameResized() { frame_resized_ = true; }
+
 void Render::CreateSwapChain() {
     VulkanSwapChainSupportDetails swapChainSupport =
         VulkanContext::Instance().QuerySwapChainSupport(VulkanPhysicsDevice);
@@ -161,7 +166,7 @@ void Render::CreateSwapChain() {
         }
     }
 
-    VkPresentModeKHR presentMode = VK_PRESENT_MODE_FIFO_KHR;
+    VkPresentModeKHR present_mode = VK_PRESENT_MODE_FIFO_KHR;
 
     // for (const auto& availablePresentMode : swapChainSupport.present_modes)
     //{
@@ -205,7 +210,7 @@ void Render::CreateSwapChain() {
     }
     createInfo.preTransform = swapChainSupport.capabilities.currentTransform;
     createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-    createInfo.presentMode = presentMode;
+    createInfo.presentMode = present_mode;
     createInfo.clipped = VK_TRUE;
     if (info_.SwapChain == nullptr) {
         createInfo.oldSwapchain = VK_NULL_HANDLE;
@@ -213,8 +218,8 @@ void Render::CreateSwapChain() {
         createInfo.oldSwapchain = info_.SwapChain;
     }
 
-    auto res = vkCreateSwapchainKHR(VulkanDevice, &createInfo, nullptr,
-                                    &info_.SwapChain);
+    // auto res =
+    vkCreateSwapchainKHR(VulkanDevice, &createInfo, nullptr, &info_.SwapChain);
 
     vkGetSwapchainImagesKHR(VulkanDevice, info_.SwapChain, &imageCount,
                             nullptr);
@@ -228,11 +233,11 @@ void Render::CreateSwapChain() {
     info_.Extend = extent;
 
     swap_chain_images_.resize(imageCount);
-    auto Iter = swap_chain_images_.begin();
+    auto iter = swap_chain_images_.begin();
     for (auto img : images) {
-        *Iter = ImageFactory::CreateImage(img);
-        (*Iter)->GetVkImageView(info_.SurfaceFormat, VK_IMAGE_ASPECT_COLOR_BIT);
-        Iter++;
+        *iter = ImageFactory::CreateImage(img);
+        (*iter)->GetVkImageView(info_.SurfaceFormat, VK_IMAGE_ASPECT_COLOR_BIT);
+        iter++;
     }
 }
 void Render::CreateCommandPool() {
@@ -707,21 +712,32 @@ void Render::RecordCommandBuffer(VkCommandBuffer CommandBuffer,
     render_pass_info.renderPass = render_pass_;
     render_pass_info.framebuffer = swapchain_framebuffers_[image_index];
 
-    // if (copy_size_.width == 0 && copy_size_.height == 0)
-    //{
-    //     render_pass_info.renderArea.offset = { 0, 0 };
+    // if (copy_size_.width == 0 && copy_size_.height == 0) {
+    //     render_pass_info.renderArea.offset = {0, 0};
     //     render_pass_info.renderArea.extent = info_.Extend;
-    // }
-    // else {
-    int32_t offset_x = static_cast<int32_t>(200 * scale_);
-    int32_t offset_y = static_cast<int32_t>(30 * scale_);
+    // } else {
+    auto offset_x = static_cast<int32_t>(copy_size_.offset.x * scale_);
+    auto offset_y = static_cast<int32_t>(copy_size_.offset.y * scale_);
     render_pass_info.renderArea.offset = {offset_x, offset_y};
-    render_pass_info.renderArea.extent = {info_.Extend.width - offset_x,
-                                          info_.Extend.height - offset_y * 2};
+    // render_pass_info.renderArea.extent = {
+    //     info_.Extend.width - offset_x, info_.Extend.height - offset_y * 2};
+    if (info_.Extend.width <
+        (copy_size_.extent.width + copy_size_.offset.x) * scale_) {
+        copy_size_.extent.width = info_.Extend.width - offset_x;
+    }
+    if (info_.Extend.height <
+        (copy_size_.extent.height + copy_size_.offset.y) * scale_) {
+        copy_size_.extent.height = info_.Extend.height - offset_y;
+    }
+
+    render_pass_info.renderArea.extent = {
+        static_cast<uint32_t>(copy_size_.extent.width * scale_),
+        static_cast<uint32_t>(copy_size_.extent.height * scale_)};
     //}
+
     std::array<VkClearValue, 2> clear_values{};
-    clear_values[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
-    clear_values[1].depthStencil = {1.0f, 0};
+    clear_values[0].color = {{0.0F, 0.0F, 0.0F, 1.0F}};
+    clear_values[1].depthStencil = {1.0F, 0};
     render_pass_info.clearValueCount = clear_values.size();
     render_pass_info.pClearValues = clear_values.data();
     vkCmdBeginRenderPass(CommandBuffer, &render_pass_info,
@@ -760,7 +776,7 @@ void Render::UpdateUniformBuffer(uint32_t current_image) {
                                 info_.Extend.width / (float)info_.Extend.height,
                                 0.1f, 10.0f);
     ubo.proj[1][1] *= -1;
-    void* data;
+    void* data = nullptr;
     vkMapMemory(VulkanDevice, uniform_buffers_[current_image]->GetMemory(), 0,
                 sizeof(ubo), 0, &data);
     memcpy(data, &ubo, sizeof(ubo));

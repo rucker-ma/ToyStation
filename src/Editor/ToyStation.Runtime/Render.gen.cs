@@ -39,6 +39,8 @@ internal static class RenderGen
     internal static extern ImageInfo Render_GetNextImage(System.IntPtr Self, VkExtent2D Size);
     [DllImport("Engine", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
     internal static extern void Render_SetScale(System.IntPtr Self, double Scale);
+    [DllImport("Engine", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern void Render_FrameResized(System.IntPtr Self);
 
 }
 public partial class Render
@@ -55,6 +57,10 @@ public partial class Render
     public void SetScale(double Scale)
     {
         RenderGen.Render_SetScale(_obj, Scale);
+    }
+    public void FrameResized()
+    {
+        RenderGen.Render_FrameResized(_obj );
     }
 
 }

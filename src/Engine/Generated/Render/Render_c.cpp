@@ -7,3 +7,7 @@ void Render_SetScale(TSEngine::Render* Self, double Scale)
 {
     return Self->SetScale(Scale);
 }
+void Render_FrameResized(TSEngine::Render* Self)
+{
+    return Self->FrameResized();
+}

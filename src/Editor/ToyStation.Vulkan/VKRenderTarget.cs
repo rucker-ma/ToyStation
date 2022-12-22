@@ -70,7 +70,6 @@ namespace ToyStation.Vulkan
 
                 return new VKGpuSession(GRContext, renderTarget, surface, SurfaceHandle);
             }
-
         }
 
         public void Dispose()

@@ -50,22 +50,22 @@ const VkSampler& Image::GetImageSampler() {
 
 const VkDeviceMemory& Image::GetMemory() { return image_memory_; }
 
-const uint64_t Image::GetMemorySize() { return memory_size_; }
+uint64_t Image::GetMemorySize() const { return memory_size_; }
 
 void Image::CreateVkImageView(VkFormat Format, VkImageAspectFlags AspectFlags) {
-    VkImageViewCreateInfo createInfo{};
-    createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    createInfo.image = image_;
-    createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    createInfo.format = Format;
-    createInfo.subresourceRange.aspectMask = AspectFlags;
-    createInfo.subresourceRange.baseMipLevel = 0;
-    createInfo.subresourceRange.levelCount = 1;
-    createInfo.subresourceRange.baseArrayLayer = 0;
-    createInfo.subresourceRange.layerCount = 1;
+    VkImageViewCreateInfo create_info{};
+    create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    create_info.image = image_;
+    create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    create_info.format = Format;
+    create_info.subresourceRange.aspectMask = AspectFlags;
+    create_info.subresourceRange.baseMipLevel = 0;
+    create_info.subresourceRange.levelCount = 1;
+    create_info.subresourceRange.baseArrayLayer = 0;
+    create_info.subresourceRange.layerCount = 1;
 
-    auto res =
-        vkCreateImageView(VulkanDevice, &createInfo, nullptr, &image_view_);
+    // auto res =
+    vkCreateImageView(VulkanDevice, &create_info, nullptr, &image_view_);
     // todo: check res
 }
 
@@ -86,9 +86,9 @@ void Image::CreateSampler() {
     sampler_info.compareEnable = VK_FALSE;
     sampler_info.compareOp = VK_COMPARE_OP_ALWAYS;
     sampler_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-    sampler_info.mipLodBias = 0.0f;
-    sampler_info.minLod = 0.0f;
-    sampler_info.maxLod = 0.0f;
+    sampler_info.mipLodBias = 0;
+    sampler_info.minLod = 0;
+    sampler_info.maxLod = 0;
     if (vkCreateSampler(VulkanDevice, &sampler_info, nullptr, &sampler_) !=
         VK_SUCCESS) {
     }

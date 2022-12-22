@@ -3,7 +3,7 @@
 #include <string>
 
 #include "ClassCursor.h"
-#include "helper.h"
+#include "Helper.h"
 
 class FileParser {
 public:
@@ -28,19 +28,19 @@ private:
 
     std::vector<const char*> arguments = {{
         "-x",
-        "c++",         // ½«ÊäÈëÎÄ¼şÊÓÎªc++ÓïÑÔÎÄ¼ş
-        "-std=c++17",  // ±àÒëµÄÓïÑÔ±ê×¼
+        "c++",         // å°†è¾“å…¥æ–‡ä»¶è§†ä¸ºc++è¯­è¨€æ–‡ä»¶
+        "-std=c++17",  // ç¼–è¯‘çš„è¯­è¨€æ ‡å‡†
         "-DNDEBUG",
-        "-w",  // ÒÖÖÆ¾¯¸æ
-        // "-MG", //Ìí¼ÓÈ±Ê§µÄÍ·ÎÄ¼şµ½ÒÀÀµÎÄ¼şÖĞ
-        //"-M",  //Ö»½øĞĞÔ¤´¦Àí£¨-E£©²¢´òÓ¡ÒÀÀµÍ·ÎÄ¼şµ½¿ØÖÆÌ¨
+        "-w",  // æŠ‘åˆ¶è­¦å‘Š
+        // "-MG", //æ·»åŠ ç¼ºå¤±çš„å¤´æ–‡ä»¶åˆ°ä¾èµ–æ–‡ä»¶ä¸­
+        //"-M",  //åªè¿›è¡Œé¢„å¤„ç†ï¼ˆ-Eï¼‰å¹¶æ‰“å°ä¾èµ–å¤´æ–‡ä»¶åˆ°æ§åˆ¶å°
         "-E",
-        "-ferror-limit=0",  // ´íÎó¹ı¶àÒ²²»»áÍ£Ö¹
+        "-ferror-limit=0",  // é”™è¯¯è¿‡å¤šä¹Ÿä¸ä¼šåœæ­¢
         // "-ID:/project/csharp/Avalonia-VK/Avalonia/src/TSEngine",
-        // //-I°üº¬µÄÎÄ¼ş¼Ğ
+        // //-IåŒ…å«çš„æ–‡ä»¶å¤¹
         // "-ID:/project/csharp/Avalonia-VK/Avalonia/src/TSEngine/Render",
         // "-ID:/software/VulkanSDK/1.3.231.1/Include",
         // "-ID:/project/cpp/graphics/vk-demo/3rd/glm-0.9.9.8",
-        "-o clangLog.txt"  // Ğ´Êä³öµ½Ö¸¶¨ÎÄ¼ş
+        "-o clangLog.txt"  // å†™è¾“å‡ºåˆ°æŒ‡å®šæ–‡ä»¶
     }};
 };

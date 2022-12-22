@@ -1,7 +1,9 @@
 .vs/
 .vscode/
+.idea/
 build/
 tools/
+out/
 
 **/obj/
 *.pdb

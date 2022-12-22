@@ -80,7 +80,10 @@ void CSharpGenerator::Generate() {
                 }
             } else {
                 int last = 2;
-                input_param += "_obj, ";
+                input_param += "_obj ";
+                if (func.InputParams.size() > 1) {
+                    input_param += ", ";
+                }
                 bounds = bounds + "public " + func.ReturnType.TypeName + " " +
                          func.RawName;
                 for (size_t i = 1; i < func.InputParams.size(); i++) {
