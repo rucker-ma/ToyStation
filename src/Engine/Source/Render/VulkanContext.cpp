@@ -1,4 +1,4 @@
-﻿#include "VulkanContext.h"
+#include "VulkanContext.h"
 
 #include <iostream>
 #include <set>
@@ -53,11 +53,13 @@ VulkanQueueFamily VulkanContext::FindQueueFamilies(
     int i = 0;
 
     for (const auto& queue_family : queue_families) {
-        if (queue_family.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+        if (queue_family.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
             queue_family_res.graphics_family = i;
-        if (queue_family.queueFlags & VK_QUEUE_VIDEO_ENCODE_BIT_KHR)
+        }
+        if (queue_family.queueFlags & VK_QUEUE_VIDEO_ENCODE_BIT_KHR) {
+            queue_family_res.encode_family = i;
             std::cerr << "Get Support Encode Queue" << std::endl;
-        
+        }
 
         VkBool32 presentSupport = false;
         vkGetPhysicalDeviceSurfaceSupportKHR(phy_device, i, surface_,
@@ -66,62 +68,6 @@ VulkanQueueFamily VulkanContext::FindQueueFamilies(
         i++;
     }
     return queue_family_res;
-}
-
-void VulkanContext::CreatePresentImage() {
-    // VkImageUsageFlags flags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
-    // VK_IMAGE_USAGE_TRANSFER_DST_BIT |
-    //     VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-
-    // if (info_.SurfaceFormat == VK_FORMAT_B8G8R8A8_SRGB)
-    //{
-    //     present_image_info_.format = VK_FORMAT_B8G8R8A8_UNORM;
-    // }
-    // if (info_.SurfaceFormat == VK_FORMAT_R8G8B8A8_SRGB)
-    //{
-    //     present_image_info_.format = VK_FORMAT_R8G8B8A8_UNORM;
-    // }
-
-    // present_image_ = ImageFactory::CreateImage(info_.Extend.width,
-    // info_.Extend.height, VK_FORMAT_B8G8R8A8_UNORM,
-    //     VK_IMAGE_TILING_OPTIMAL, flags, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-    //
-    // VkComponentMapping mapping;
-    // present_image_->GetVkImageView(VK_FORMAT_B8G8R8A8_UNORM,VK_IMAGE_ASPECT_COLOR_BIT);
-    //
-    // VkCommandBuffer command_buffer = BeginSingletimeCommand();
-    // VkImageMemoryBarrier barrier{};
-    // barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-    // barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    // barrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-    // barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    // barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    // barrier.image = present_image_->GetVkImage();
-    // barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    // barrier.subresourceRange.baseMipLevel = 0;
-    // barrier.subresourceRange.levelCount = 1;
-    // barrier.subresourceRange.baseArrayLayer = 0;
-    // barrier.subresourceRange.layerCount = 1;
-    // barrier.srcAccessMask = 0;
-    // barrier.dstAccessMask = VK_ACCESS_NONE_KHR;
-
-    // VkPipelineStageFlags source_stage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
-    // VkPipelineStageFlags dest_stage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
-
-    // vkCmdPipelineBarrier(command_buffer, source_stage, dest_stage, 0, 0,
-    // nullptr, 0, nullptr, 1, &barrier); EndSingletimeCommand(command_buffer);
-
-    // present_image_info_.image = reinterpret_cast<std::uintptr_t>(
-    // present_image_->GetVkImage()); present_image_info_.image_view = 0;
-    // present_image_info_.memory = reinterpret_cast<std::uintptr_t>(
-    // present_image_->GetMemory()); present_image_info_.width =
-    // info_.Extend.width; present_image_info_.height = info_.Extend.height;
-    // present_image_info_.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-    // present_image_info_.tiling = VK_IMAGE_TILING_OPTIMAL;
-
-    ////present_image_info_.format = info_.SurfaceFormat;
-    // present_image_info_.usage_flags = flags;
-    // present_image_info_.memory_size = present_image_->GetMemorySize();
 }
 
 const VkInstance& VulkanContext::VKInstance() { return instance_; }
@@ -182,7 +128,7 @@ void VulkanContext::CreateInstance(DebugFunction func, bool EnableDebug) {
     create_info.pApplicationInfo = &application_info;
 
     std::vector<const char*> extensions = GetRequiredExtensions();
-    
+
     std::vector<const char*> validationLayers = {"VK_LAYER_KHRONOS_validation"};
     validationLayers.push_back("VK_LAYER_LUNARG_api_dump");
 
@@ -238,7 +184,7 @@ void VulkanContext::CreateSurface(HWND hwnd) {
 void VulkanContext::CreatePhysicalDevice() {
     device_extensions_.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 
-    //for vulkan encode
+    // for vulkan encode
     device_extensions_.push_back(
         VK_EXT_YCBCR_2PLANE_444_FORMATS_EXTENSION_NAME);
     device_extensions_.push_back(VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME);
@@ -272,7 +218,8 @@ void VulkanContext::CreateLogicalDevice() {
     }
     std::vector<VkDeviceQueueCreateInfo> queue_create_infos;
     std::set<uint32_t> unique_queue_families = {indices.graphics_family.value(),
-                                                indices.present_family.value()};
+                                                indices.present_family.value(),
+                                                indices.encode_family.value()};
 
     float queue_priority = 1.0f;
     for (uint32_t queue_family : unique_queue_families) {
@@ -300,8 +247,14 @@ void VulkanContext::CreateLogicalDevice() {
 
     vkGetDeviceQueue(device_, indices.graphics_family.value(), 0,
                      &graphics_queue_);
-    vkGetDeviceQueue(device_, indices.present_family.value(), 0,
-                     &present_queue_);
+    if (indices.present_family.has_value()) {
+        vkGetDeviceQueue(device_, indices.present_family.value(), 0,
+                         &present_queue_);
+    }
+    vkGetDeviceQueue(device_, indices.encode_family.value(), 0, &encode_queue_);
+
+
+    load_VK_EXTENSIONS(instance_,vkGetInstanceProcAddr,device_,vkGetDeviceProcAddr);
 }
 
 bool VulkanContext::ValidationLayerCheck() {

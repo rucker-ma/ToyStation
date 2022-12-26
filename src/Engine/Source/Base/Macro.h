@@ -21,6 +21,9 @@
 #define FUNCTION(...)
 #define REFLECTION_BODY(...)
 
+
+#include "Logger.h"
+
 // modify for CLASS Macro
 #define SINGLETON
 // export for csharp use,

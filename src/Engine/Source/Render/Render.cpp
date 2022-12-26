@@ -28,6 +28,8 @@ void Render::Init() {
     current_frame_ = 0;
     scale_ = 1;
     frame_resized_ = false;
+
+    encode_ctx_.Init(&config_);
 }
 void Render::RecreateSwapChain() {
     CleanSwapChain();
@@ -231,6 +233,9 @@ void Render::CreateSwapChain() {
 
     info_.SurfaceFormat = surfaceFormat.format;
     info_.Extend = extent;
+
+    config_.width = extent.width;
+    config_.height = extent.height;
 
     swap_chain_images_.resize(imageCount);
     auto iter = swap_chain_images_.begin();

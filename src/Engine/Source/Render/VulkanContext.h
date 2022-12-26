@@ -12,16 +12,19 @@
 #include "Base/Macro.h"
 #include "vulkan/vulkan.h"
 
+#include <extensions_vk.hpp>
+
 #define VulkanInstance VulkanContext::Instance().VKInstance()
 #define VulkanDevice VulkanContext::Instance().Device()
 #define VulkanPhysicsDevice VulkanContext::Instance().PhysicalDevice()
 #define VulkanCommandPool VulkanContext::Instance().CommandPool()
 #define VulkanGraphicsQueue VulkanContext::Instance().GraphicsQueue()
-#define VulkanPresentQueue VulkanContext::Instance().GraphicsQueue()
+#define VulkanPresentQueue VulkanContext::Instance().PresentQueue()
 #define VulkanSurface VulkanContext::Instance().Surface()
 namespace TSEngine {
 class ImageFactory;
 class Image;
+
 
 struct VKSwapChainInfo {
     VkSwapchainKHR SwapChain;
@@ -53,6 +56,7 @@ typedef void (*DebugFunction)(char*);
 struct VulkanQueueFamily {
     std::optional<uint32_t> graphics_family;
     std::optional<uint32_t> present_family;
+    std::optional<uint32_t> encode_family;
     bool has_value() {
         return graphics_family.has_value() && present_family.has_value();
     }
@@ -104,8 +108,6 @@ private:
     void SetupDebugMessengerCreateInfo(
         VkDebugUtilsMessengerCreateInfoEXT& create_info_ext);
 
-    void CreatePresentImage();
-
 private:
     VkInstance instance_;
     VkPhysicalDevice physical_device_;
@@ -113,6 +115,7 @@ private:
     VkDebugUtilsMessengerEXT debug_utils_messenger_ext_;
     VkQueue present_queue_;
     VkQueue graphics_queue_;
+    VkQueue encode_queue_;
     VkSurfaceKHR surface_;
 
     VulkanQueueFamily indices;

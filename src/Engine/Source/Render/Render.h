@@ -3,6 +3,8 @@
 #include "RenderUtils.h"
 #include "Vertex.h"
 
+#include "Encode/Encode.h"
+
 #define MAX_FRAMES_IN_FLIGHT 3
 
 namespace TSEngine {
@@ -81,5 +83,8 @@ private:
     VkRect2D copy_size_;
     double scale_;
     bool frame_resized_;
+
+    EncodeContext encode_ctx_;
+    EncodeConfig config_;
 };
 }  // namespace TSEngine
