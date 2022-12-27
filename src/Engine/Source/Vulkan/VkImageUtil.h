@@ -1,6 +1,6 @@
 #pragma once
 #include "Helper.h"
-namespace TSEngine {
+namespace toystation {
 class VkImageUtil {
 public:
     static void CmdBarrierImageLayout(
@@ -10,4 +10,4 @@ public:
     static VkAccessFlags AccessFlagsFromImageLayout(VkImageLayout layout);
     static VkPipelineStageFlags PipelineStageForLayout(VkImageLayout layout);
 };
-}  // namespace TSEngine
+}  // namespace toystation

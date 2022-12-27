@@ -4,7 +4,7 @@
 
 #include <iostream>
 
-namespace TSEngine {
+namespace toystation {
 static const uint32_t kH264MbSizeAlignment = 16;
 template <typename SizeType>
 SizeType AlignSize(SizeType size, SizeType alignment) {
@@ -807,4 +807,4 @@ VkFormat EncodeContext::CodecGetVkFormat(
     return vkformat;
 }
 
-}  // namespace TSEngine
+}  // namespace toystation

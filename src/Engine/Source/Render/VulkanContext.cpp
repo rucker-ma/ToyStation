@@ -19,7 +19,7 @@
     VkResult res = func; \
     VK_RES_CHECK(res)
 
-namespace TSEngine {
+namespace toystation {
 DebugFunction csharp_output_;
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL
@@ -118,7 +118,7 @@ void VulkanContext::CreateInstance(DebugFunction func, bool EnableDebug) {
     csharp_output_ = func;
     VkApplicationInfo application_info{};
     application_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    application_info.pApplicationName = "TSEngine";
+    application_info.pApplicationName = "toystation";
     application_info.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
     application_info.pEngineName = "No Engine";
     application_info.engineVersion = VK_MAKE_VERSION(1, 0, 0);
@@ -378,4 +378,4 @@ uint32_t VulkanContext::FindMemoryType(uint32_t TypeFilter,
     throw std::runtime_error("failed to find suitable memory type");
 }
 
-}  // namespace TSEngine
+}  // namespace toystation

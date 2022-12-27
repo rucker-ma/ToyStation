@@ -5,7 +5,7 @@
 
 #include "VulkanContext.h"
 
-namespace TSEngine {
+namespace toystation {
 
 std::vector<char> read_file(const std::string filename) {
     std::ifstream file(filename, std::ios::ate | std::ios::binary);
@@ -35,4 +35,4 @@ VkShaderModule Shader::GetVKShaderModule() {
     }
     return shader_module;
 }
-}  // namespace TSEngine
+}  // namespace toystation

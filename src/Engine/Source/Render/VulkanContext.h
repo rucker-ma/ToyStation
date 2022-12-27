@@ -21,7 +21,7 @@
 #define VulkanGraphicsQueue VulkanContext::Instance().GraphicsQueue()
 #define VulkanPresentQueue VulkanContext::Instance().PresentQueue()
 #define VulkanSurface VulkanContext::Instance().Surface()
-namespace TSEngine {
+namespace toystation {
 class ImageFactory;
 class Image;
 
@@ -122,4 +122,4 @@ private:
     std::vector<const char*> device_extensions_;
     std::vector<VkExtensionProperties> instance_extensions_;
 };
-}  // namespace TSEngine
+}  // namespace toystation

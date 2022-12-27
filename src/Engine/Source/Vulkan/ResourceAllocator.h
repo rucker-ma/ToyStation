@@ -1,7 +1,7 @@
 #pragma once
 #include "MemoryAllocator.h"
 
-namespace TSEngine {
+namespace toystation {
 
 #define DEFAULT_STAGING_BLOCKSIZE (VkDeviceSize(64) * 1024 * 1024)
 
@@ -123,4 +123,4 @@ private:
     std::unique_ptr<VkMemoryAllocator> mem_alloc_;
 };
 
-}  // namespace TSEngine
+}  // namespace toystation

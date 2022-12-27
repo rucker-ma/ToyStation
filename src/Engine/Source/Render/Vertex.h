@@ -9,7 +9,7 @@
 #include "RenderUtils.h"
 #include "VulkanContext.h"
 
-namespace TSEngine {
+namespace toystation {
 
 class Vertex {
 public:
@@ -72,4 +72,4 @@ inline const VkDeviceMemory& GPUBuffer<T>::GetMemory() {
     return memory_;
 }
 
-}  // namespace TSEngine
+}  // namespace toystation

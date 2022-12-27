@@ -1,6 +1,6 @@
 #include "Image.h"
 
-namespace TSEngine {
+namespace toystation {
 Image::Image(bool SwapChainImg)
     : image_(nullptr),
       image_view_(nullptr),

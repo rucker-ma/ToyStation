@@ -1,6 +1,6 @@
 #include "CommandPool.h"
 
-namespace TSEngine {
+namespace toystation {
 
 CommandPool::~CommandPool() { DeInit(); }
 CommandPool::CommandPool(VkDevice device, uint32_t family_index,
@@ -40,7 +40,7 @@ VkCommandBuffer CommandPool::CreateCommandBuffer(
     alloc_info.level = level;
     alloc_info.commandPool = command_pool_;
     alloc_info.commandBufferCount = 1;
-    VkCommandBuffer cmd;
+    VkCommandBuffer cmd = nullptr;
     vkAllocateCommandBuffers(device_, &alloc_info, &cmd);
     if (begin) {
         VkCommandBufferBeginInfo begin_info;
@@ -115,4 +115,4 @@ void CommandPool::SubmitAndWait(size_t count, const VkCommandBuffer* cmds) {
     SubmitAndWait(count, cmds, queue_);
 }
 
-}  // namespace TSEngine
+}  // namespace toystation

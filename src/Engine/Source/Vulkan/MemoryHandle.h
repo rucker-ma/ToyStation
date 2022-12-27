@@ -3,7 +3,7 @@
 #include "Helper.h"
 #include "Render/VulkanContext.h"
 
-namespace TSEngine {
+namespace toystation {
 
 class MemoryHandleBase;
 using MemHandle = MemoryHandleBase*;
@@ -45,11 +45,11 @@ private:
     VkImage image_{nullptr};
     VkMemoryAllocateFlags allocate_flags_{0};
     uint32_t device_mask_{0};
-    VkMemoryRequirements mem_reqs_{0, 0, 0};
-    VkMemoryPropertyFlags mem_props_{0};
+    VkMemoryRequirements mem_reqs_;
+    VkMemoryPropertyFlags mem_props_;
     float priority_{1.0};
     std::string debug_name_;
-    bool is_tiling_optimal_{false};
+    bool is_tiling_optimal_;
 };
 
 struct BakedAllocateInfo {
@@ -91,4 +91,4 @@ public:
     MemoryHandleBase& operator=(MemoryHandleBase&& mem) = delete;
     virtual ~MemoryHandleBase() = default;
 };
-}  // namespace TSEngine
+}  // namespace toystation

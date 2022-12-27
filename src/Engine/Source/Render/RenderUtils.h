@@ -1,7 +1,7 @@
 #pragma once
 #include "VulkanContext.h"
 
-namespace TSEngine {
+namespace toystation {
 
 class RenderUtils {
 public:
@@ -30,4 +30,4 @@ public:
 private:
     VkCommandPool command_pool_;
 };
-}  // namespace TSEngine
+}  // namespace toystation

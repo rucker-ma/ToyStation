@@ -1,7 +1,7 @@
 #include "Vertex.h"
 
 #include <vector>
-namespace TSEngine {
+namespace toystation {
 
 // clang-format off
     const std::vector<Vertex> vertices = {
@@ -46,4 +46,4 @@ Vertex::GetAttributeDescriptions() {
     attribute_desc[2].offset = offsetof(Vertex, texCoord);
     return attribute_desc;
 }
-}  // namespace TSEngine
+}  // namespace toystation

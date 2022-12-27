@@ -1,16 +1,16 @@
 #include "MemoryHandle.h"
-namespace TSEngine {
+namespace toystation {
 MemoryAllocateInfo::MemoryAllocateInfo(const VkMemoryRequirements& mem_reqs,
                                        VkMemoryPropertyFlags mem_props,
-                                       bool is_tiling_optimal) {
-    mem_reqs_ = mem_reqs;
-    mem_props_ = mem_props;
-    is_tiling_optimal_ = is_tiling_optimal;
+                                       bool is_tiling_optimal)
+    : mem_reqs_(mem_reqs),
+      mem_props_(mem_props),
+      is_tiling_optimal_(is_tiling_optimal) {
 }
 
 MemoryAllocateInfo::MemoryAllocateInfo(VkDevice device, VkBuffer buffer,
                                        VkMemoryPropertyFlags mem_props)
-    : mem_props_{mem_props} {
+    : mem_props_{mem_props},mem_reqs_{},is_tiling_optimal_(false) {
     VkBufferMemoryRequirementsInfo2 buffer_reqs = {
         VK_STRUCTURE_TYPE_BUFFER_MEMORY_REQUIREMENTS_INFO_2, nullptr, buffer};
     VkMemoryDedicatedRequirements dedicated_reqs = {
@@ -26,7 +26,7 @@ MemoryAllocateInfo::MemoryAllocateInfo(VkDevice device, VkBuffer buffer,
 }
 MemoryAllocateInfo::MemoryAllocateInfo(VkDevice device, VkImage image,
                                        VkMemoryPropertyFlags mem_props)
-    : mem_props_{mem_props} {
+    : mem_props_{mem_props} ,mem_reqs_{},is_tiling_optimal_(false){
     VkImageMemoryRequirementsInfo2 image_reqs = {
         VK_STRUCTURE_TYPE_IMAGE_MEMORY_REQUIREMENTS_INFO_2, nullptr, image};
     VkMemoryDedicatedRequirements dedicated_reqs = {
@@ -150,4 +150,4 @@ uint32_t MemoryAllocateUtils::GetMemoryType(
     assert(0);
     return ~0U;
 }
-}  // namespace TSEngine
+}  // namespace toystation

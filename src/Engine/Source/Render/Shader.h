@@ -3,7 +3,7 @@
 
 #include <string>
 
-namespace TSEngine {
+namespace toystation {
 class Shader {
 public:
     Shader(std::string& file);
@@ -13,4 +13,4 @@ private:
     std::string shader_file_;
 };
 
-}  // namespace TSEngine
+}  // namespace toystation

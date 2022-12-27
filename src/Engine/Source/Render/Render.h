@@ -7,7 +7,7 @@
 
 #define MAX_FRAMES_IN_FLIGHT 3
 
-namespace TSEngine {
+namespace toystation {
 
 struct UniformBufferOjbect {
     glm::mat4 model;
@@ -87,4 +87,4 @@ private:
     EncodeContext encode_ctx_;
     EncodeConfig config_;
 };
-}  // namespace TSEngine
+}  // namespace toystation

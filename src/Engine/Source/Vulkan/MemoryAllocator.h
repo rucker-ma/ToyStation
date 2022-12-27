@@ -1,7 +1,7 @@
 #pragma once
 #include "Vulkan/MemoryHandle.h"
 
-namespace TSEngine {
+namespace toystation {
 
 class VkMemoryAllocator {
 public:
@@ -32,4 +32,4 @@ private:
     VkMemoryAllocateFlags flags_{0};
 };
 
-}  // namespace TSEngine
+}  // namespace toystation

@@ -18,7 +18,7 @@
 // #define LOG_FATAL(...) \
 //     LOG_WRITE(spdlog::level::level_enum::critical, __VA_ARGS__)
 
-namespace TSEngine {
+namespace toystation {
 
 class Logger {
 public:
@@ -85,4 +85,4 @@ constexpr static void LogFatal(ARGS &&...args) {
                                  std::forward<ARGS>(args)...);
 }
 
-}  // namespace TSEngine
+}  // namespace toystation

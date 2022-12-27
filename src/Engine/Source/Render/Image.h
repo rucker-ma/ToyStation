@@ -3,7 +3,7 @@
 
 #include "VulkanContext.h"
 
-namespace TSEngine {
+namespace toystation {
 class Image {
     friend class ImageFactory;
 
@@ -31,4 +31,4 @@ private:
     uint64_t memory_size_;
     bool swap_chain_img_;
 };
-}  // namespace TSEngine
+}  // namespace toystation

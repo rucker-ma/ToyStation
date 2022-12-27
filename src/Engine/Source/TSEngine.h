@@ -2,7 +2,7 @@
 
 #include "Base/Macro.h"
 #include "Render/Render.h"
-namespace TSEngine {
+namespace toystation {
 CLASS(SINGLETON)
 class TS_CPP_API TEngine {
 public:
@@ -25,4 +25,4 @@ private:
 private:
     Render render_;
 };
-}  // namespace TSEngine
+}  // namespace toystation

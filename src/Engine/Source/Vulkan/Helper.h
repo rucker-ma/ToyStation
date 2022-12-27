@@ -1,6 +1,6 @@
 #pragma once
 #include "Render/VulkanContext.h"
-namespace TSEngine {
+namespace toystation {
 template <typename T>
 void ZeroVKStruct(T& vk_struct,
                   VkStructureType type = VK_STRUCTURE_TYPE_APPLICATION_INFO) {
@@ -8,4 +8,4 @@ void ZeroVKStruct(T& vk_struct,
     vk_struct.sType = type;
 }
 
-}  // namespace TSEngine
+}  // namespace toystation

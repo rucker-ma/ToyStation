@@ -3,7 +3,7 @@
 #include "Vulkan/CommandPool.h"
 #include "Vulkan/ResourceAllocator.h"
 
-namespace TSEngine {
+namespace toystation {
 
 class Picture {
 public:
@@ -107,4 +107,4 @@ private:
     uint32_t full_image_size_;
     VkFormat image_format_;
 };
-}  // namespace TSEngine
+}  // namespace toystation

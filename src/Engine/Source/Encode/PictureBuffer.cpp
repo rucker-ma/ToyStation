@@ -2,7 +2,7 @@
 
 #include "Vulkan/VkImageUtil.h"
 
-namespace TSEngine {
+namespace toystation {
 
 inline VkBufferCreateInfo MakeBufferCreateInfo(VkDeviceSize size,
                                                VkBufferUsageFlags usage,
@@ -369,4 +369,4 @@ void PictureBuffer::InitImageLayout(VkCommandBuffer cmd_buffer,
                                        picture->image_layout_, layout, range);
     picture->image_layout_ = layout;
 }
-}  // namespace TSEngine
+}  // namespace toystation

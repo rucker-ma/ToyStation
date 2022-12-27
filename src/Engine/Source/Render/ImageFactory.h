@@ -4,7 +4,7 @@
 
 #include "Image.h"
 #include "RenderUtils.h"
-namespace TSEngine {
+namespace toystation {
 class ImageFactory {
 public:
     static std::shared_ptr<Image> CreateImage(std::string ImgFile,
@@ -26,4 +26,4 @@ private:
                               VkImageUsageFlags usage,
                               VkMemoryPropertyFlags properties);
 };
-}  // namespace TSEngine
+}  // namespace toystation

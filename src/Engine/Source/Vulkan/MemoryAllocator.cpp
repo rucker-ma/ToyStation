@@ -1,6 +1,6 @@
 #include "MemoryAllocator.h"
 
-namespace TSEngine {
+namespace toystation {
 
 class DedicatedMemoryHandle : public MemoryHandleBase {
 public:
@@ -91,4 +91,4 @@ VkDevice VkMemoryAllocator::GetDevice() const { return device_; }
 VkPhysicalDevice VkMemoryAllocator::GetPhysicalDevice() const {
     return physical_device_;
 }
-}  // namespace TSEngine
+}  // namespace toystation

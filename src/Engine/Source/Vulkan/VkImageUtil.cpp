@@ -1,6 +1,6 @@
 #include "VkImageUtil.h"
 
-void TSEngine::VkImageUtil::CmdBarrierImageLayout(
+void toystation::VkImageUtil::CmdBarrierImageLayout(
     VkCommandBuffer cmd_buffer, VkImage image, VkImageLayout old_image_layout,
     VkImageLayout new_image_layout,
     const VkImageSubresourceRange& subresource_range) {
@@ -29,7 +29,7 @@ void TSEngine::VkImageUtil::CmdBarrierImageLayout(
                          nullptr, 0, nullptr, 1, &image_memory_barrier);
 }
 
-VkAccessFlags TSEngine::VkImageUtil::AccessFlagsFromImageLayout(
+VkAccessFlags toystation::VkImageUtil::AccessFlagsFromImageLayout(
     VkImageLayout layout) {
     switch (layout) {
         case VK_IMAGE_LAYOUT_PREINITIALIZED:
@@ -49,7 +49,7 @@ VkAccessFlags TSEngine::VkImageUtil::AccessFlagsFromImageLayout(
     }
 }
 
-VkPipelineStageFlags TSEngine::VkImageUtil::PipelineStageForLayout(
+VkPipelineStageFlags toystation::VkImageUtil::PipelineStageForLayout(
     VkImageLayout layout) {
     switch (layout) {
         case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:

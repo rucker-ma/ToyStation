@@ -5,7 +5,7 @@
 #include "Vulkan/MemoryAllocator.h"
 #include "Vulkan/ResourceAllocator.h"
 
-namespace TSEngine {
+namespace toystation {
 
 struct EncodeConfig {
     uint32_t codec;
@@ -181,4 +181,4 @@ private:
     VkQueue queue_;
     EncodeConfig* current_config_;
 };
-}  // namespace TSEngine
+}  // namespace toystation

@@ -2,7 +2,7 @@
 
 #include "VkImageUtil.h"
 
-namespace TSEngine {
+namespace toystation {
 
 VkResourceAllocator::VkResourceAllocator(VkDevice device,
                                          VkPhysicalDevice physical_device,
@@ -270,4 +270,4 @@ void DedicatedResourceAllocator::Init(VkInstance, VkDevice device,
     Init(device, physical_device, staging_block_size);
 }
 void DedicatedResourceAllocator::DeInit() {}
-}  // namespace TSEngine
+}  // namespace toystation

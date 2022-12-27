@@ -1,7 +1,7 @@
 ﻿#include "TSEngine.h"
 
 #include "Render/VulkanContext.h"
-namespace TSEngine {
+namespace toystation {
 TEngine& TEngine::Instance() {
     static TEngine Engine;
     return Engine;
@@ -12,4 +12,4 @@ void TEngine::Tick() { render_.Draw(); }
 Render* TEngine::IRender() { return &render_; }
 void TEngine::UpdateSize(VkRect2D Size) { render_.UpdateSize(Size); }
 TEngine::TEngine() : render_() {}
-}  // namespace TSEngine
+}  // namespace toystation
