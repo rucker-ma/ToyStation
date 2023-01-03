@@ -16,6 +16,7 @@ public:
         VkDevice device, uint32_t family_index,
         VkCommandPoolCreateFlags flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT,
         VkQueue default_queue = nullptr);
+
     void DeInit();
     VkCommandBuffer CreateCommandBuffer(
         VkCommandBufferLevel level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,

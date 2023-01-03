@@ -27,8 +27,8 @@ struct VkContextCreateInfo {
     std::vector<Entry> device_extensions;
     std::vector<VkQueueFlags> requested_queues;
 
-    VkQueueFlags default_queue_gct = VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT;
-    
+    VkQueueFlags default_queue_gct =
+        VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT;
 };
 
 bool operator==(const VkExtensionProperties properties,
@@ -37,10 +37,7 @@ bool operator==(const VkExtensionProperties properties,
 bool operator==(const VkLayerProperties layer,
                 const VkContextCreateInfo::Entry& entry);
 class VkContext {
-
-    struct PhysicalDeviceInfo
-    {
-        
+    struct PhysicalDeviceInfo {
         VkPhysicalDeviceMemoryProperties memory_properties;
         std::vector<VkQueueFamilyProperties> queuefamily_properties;
     };
@@ -49,7 +46,27 @@ public:
     VkContext() = default;
     bool Init(VkContextCreateInfo& info);
     void DeInit();
+    VkDevice GetDevice() const { return device_; }
+    VkPhysicalDevice GetPhysicalDevice() const { return physical_device_; }
+    void CreateRenderPass(VkRenderPassCreateInfo& create_info,
+                          VkRenderPass& render_pass);
+    void CreateDescriptorSetLayout(VkDescriptorSetLayoutCreateInfo& create_info,
+                                   VkDescriptorSetLayout& layout);
+    void CreatePipelineLayout(VkPipelineLayoutCreateInfo& create_info,
+                              VkPipelineLayout& layout);
 
+    void CreateGraphicsPipeline(uint32_t create_info_count,
+                                const VkGraphicsPipelineCreateInfo* create_info,
+                                VkPipeline& pipeline);
+
+    void CreateDescriptorPool(uint32_t pool_size_count,
+                              const VkDescriptorPoolSize* pool_size,
+                              uint32_t max_sets, VkDescriptorPool& pool);
+    void CreateFramebuffer(const VkFramebufferCreateInfo& info,VkFramebuffer& buffer);
+    VkShaderModule CreateShader(const char* data, size_t size);
+    
+    VkQueue GetQueue(VkQueueFlags flags);
+    uint32_t GetQueueFamilyIndex(VkQueueFlags flags);
 private:
     bool InitInstance(VkContextCreateInfo& info);
     void InitDebugUtils();
@@ -81,6 +98,8 @@ private:
     VkDevice device_;
     VkDebugUtilsMessengerEXT debug_messenger_;
 
+    VkQueue graphics_queue_;
+    uint32_t queue_family_;
     std::vector<std::string> used_instance_layers_;
     std::vector<std::string> used_instance_extensions_;
     std::vector<std::string> used_device_extensions_;

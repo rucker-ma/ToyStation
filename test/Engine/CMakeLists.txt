@@ -1,7 +1,7 @@
 set(MODULE_NAME engine_test)
 
 include_directories(
-    ${GTEST}/include  
+    ${GTEST}/include
     ${CMAKE_SOURCE_DIR}/src/Engine/Generated
     ${CMAKE_SOURCE_DIR}/src/Engine/Source
 
@@ -13,4 +13,10 @@ include_directories(
 file(GLOB_RECURSE SOURCE_FILE *.cpp *.h)
 
 add_executable(${MODULE_NAME} ${SOURCE_FILE})
+
+# Disable some link warning
+if(MSVC)
+    set_target_properties(${MODULE_NAME} PROPERTIES LINK_FLAGS "/ignore:4819")
+endif()
+
 target_link_libraries(${MODULE_NAME} ${GTEST_LIB} Engine)

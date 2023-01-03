@@ -19,12 +19,12 @@ DedicatedMemoryHandle* CastDedicatedMemoryHandle(MemHandle mem_handle) {
     if (!mem_handle) {
         return nullptr;
     }
-#ifndef NDEBUG
-    auto dedicated_handle = static_cast<DedicatedMemoryHandle*>(mem_handle);
-#else
-    auto dedicated_handle = dynamic_cast<DedicatedMemoryHandle*>(mem_handle);
+// #ifndef NDEBUG
+//     auto* dedicated_handle = dynamic_cast<DedicatedMemoryHandle*>(mem_handle);
+// #else
+    auto* dedicated_handle = dynamic_cast<DedicatedMemoryHandle*>(mem_handle);
     assert(dedicated_handle);
-#endif
+//#endif
 
     return dedicated_handle;
 }

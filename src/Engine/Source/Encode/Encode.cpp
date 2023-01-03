@@ -432,8 +432,7 @@ void EncodeContext::CreateSpsPps() {
 
     vkCreateVideoSessionParametersKHR(VulkanDevice, &encode_session_create_info,
                                       nullptr, &encode_session_parameters_);
-    // TODO
-    //  create command buffer
+    // TODO:create command buffer
     //  set image layout
     //  submit and wait
 }

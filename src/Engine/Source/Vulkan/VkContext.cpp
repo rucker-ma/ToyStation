@@ -60,12 +60,62 @@ void VkContextCreateInfo::RmoveDeviceExtension(const char* name) {
 void VkContextCreateInfo::AddRequestedQueue(VkQueueFlags flags) {
     requested_queues.push_back(flags);
 }
-bool VkContext::Init(VkContextCreateInfo& info) {
-    InitInstance(info);
-
-    return false;
-}
+bool VkContext::Init(VkContextCreateInfo& info) { return InitInstance(info); }
 void VkContext::DeInit() {}
+void VkContext::CreateRenderPass(VkRenderPassCreateInfo& create_info,
+                                 VkRenderPass& render_pass) {
+    vkCreateRenderPass(device_, &create_info, nullptr, &render_pass);
+}
+void VkContext::CreateDescriptorSetLayout(
+    VkDescriptorSetLayoutCreateInfo& create_info,
+    VkDescriptorSetLayout& layout) {
+    vkCreateDescriptorSetLayout(device_, &create_info, nullptr, &layout);
+}
+void VkContext::CreatePipelineLayout(VkPipelineLayoutCreateInfo& create_info,
+                                     VkPipelineLayout& layout) {
+    vkCreatePipelineLayout(device_, &create_info, nullptr, &layout);
+}
+void VkContext::CreateGraphicsPipeline(
+    uint32_t create_info_count, const VkGraphicsPipelineCreateInfo* create_info,
+    VkPipeline& pipeline) {
+    vkCreateGraphicsPipelines(device_, nullptr, create_info_count, create_info,
+                              nullptr, &pipeline);
+}
+
+void VkContext::CreateDescriptorPool(uint32_t pool_size_count,
+                                     const VkDescriptorPoolSize* pool_size,
+                                     uint32_t max_sets,
+                                     VkDescriptorPool& pool) {
+    VkDescriptorPoolCreateInfo create_info;
+    ZeroVKStruct(create_info, VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO);
+    create_info.pNext = nullptr;
+    create_info.maxSets = max_sets;
+    create_info.poolSizeCount = pool_size_count;
+    create_info.pPoolSizes = pool_size;
+    vkCreateDescriptorPool(device_, &create_info, nullptr, &pool);
+}
+
+void VkContext::CreateFramebuffer(const VkFramebufferCreateInfo& info,
+                                  VkFramebuffer& buffer) {
+    vkCreateFramebuffer(device_, &info, nullptr, &buffer);
+}
+
+VkShaderModule VkContext::CreateShader(const char* data, size_t size) {
+    VkShaderModuleCreateInfo create_info{};
+    create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    create_info.codeSize = size;
+    create_info.pCode = reinterpret_cast<const uint32_t*>(data);
+    VkShaderModule shader_module = nullptr;
+    vkCreateShaderModule(device_, &create_info, nullptr, &shader_module);
+    return shader_module;
+}
+
+VkQueue VkContext::GetQueue(VkQueueFlags flags) { return graphics_queue_; }
+
+uint32_t VkContext::GetQueueFamilyIndex(VkQueueFlags flags) {
+    return queue_family_;
+}
+
 bool VkContext::InitInstance(VkContextCreateInfo& info) {
     // create instance
     VkApplicationInfo application_info{};
@@ -75,15 +125,26 @@ bool VkContext::InitInstance(VkContextCreateInfo& info) {
     application_info.pEngineName = "No Engine";
     application_info.engineVersion = VK_MAKE_VERSION(1, 0, 0);
     application_info.apiVersion = VK_MAKE_VERSION(1, 2, 0);
-
+    LogDebug("Load Vulkan Instance layers");
     auto layer_properties = GetInstanceLayers();
+
+    for (auto&& layer : layer_properties) {
+        LogDebug("Supported Layer: " + layer.layerName);
+    }
+
     if (!FillFilteredLayers(layer_properties, info.instance_layers,
                             used_instance_layers_)) {
         LogError("FillFilteredLayers Error");
         return false;
     }
+    LogDebug("Load Vulkan Instance Extensions");
     auto extensions = GetInstanceExtensions();
-    if (!FillFilteredExtensions(extensions, info.instance_layers,
+
+    for (auto&& exten : extensions) {
+        LogDebug("Supported instance extensions: " + exten.extensionName);
+    }
+
+    if (!FillFilteredExtensions(extensions, info.instance_extensions,
                                 used_instance_extensions_)) {
         LogError("FillFilteredExtensions Error");
         return false;
@@ -107,13 +168,18 @@ bool VkContext::InitInstance(VkContextCreateInfo& info) {
     create_info.pNext = nullptr;
     vkCreateInstance(&create_info, nullptr, &instance_);
     // check enable debug
-    if (std::find(used_extension.begin(), used_extension.end(),
-                  VK_EXT_DEBUG_UTILS_EXTENSION_NAME) != used_extension.end()) {
+
+    if (std::find_if(
+            used_extension.begin(), used_extension.end(), [](const char* data) {
+                return strcmp(data, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0;
+            }) != used_extension.end()) {
         InitDebugUtils();
     }
+    InitDevice(info);
     return true;
 }
 void VkContext::InitDebugUtils() {
+    LogInfo("Set Vulkan Debug layer");
     auto create_debug_messenger_ext =
         (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
             instance_, "vkCreateDebugUtilsMessengerEXT");
@@ -123,8 +189,8 @@ void VkContext::InitDebugUtils() {
 
     if (create_debug_messenger_ext != nullptr) {
         VkDebugUtilsMessengerCreateInfoEXT create_info_ext;
-        create_info_ext.sType =
-            VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+        ZeroVKStruct(create_info_ext,
+                     VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT);
         create_info_ext.messageSeverity =
             VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
             VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
@@ -171,9 +237,10 @@ bool VkContext::InitDevice(VkContextCreateInfo& info) {
     for (auto&& request_queue : info.requested_queues) {
         for (uint32_t idx = 0;
              idx < physical_device_info_.queuefamily_properties.size(); idx++) {
+            // 通过位运算找到支持的queue family
             if ((request_queue &
                  physical_device_info_.queuefamily_properties[idx]
-                     .queueFlags) == request_queue) {  // 找到合适的queue
+                     .queueFlags) == request_queue) {
                 VkDeviceQueueCreateInfo queue_create_info;
                 ZeroVKStruct(queue_create_info,
                              VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO);
@@ -181,6 +248,8 @@ bool VkContext::InitDevice(VkContextCreateInfo& info) {
                 queue_create_info.queueCount = 1;
                 queue_create_info.pQueuePriorities = &queue_priority;
                 queue_create_infos.push_back(queue_create_info);
+                queue_family_ = idx;
+                break;
             }
         }
     }
@@ -199,6 +268,9 @@ bool VkContext::InitDevice(VkContextCreateInfo& info) {
     load_VK_EXTENSIONS(instance_, vkGetInstanceProcAddr, device_,
                        vkGetDeviceProcAddr);
     // TODO: get queue
+    vkGetDeviceQueue(device_, queue_create_infos[0].queueFamilyIndex, 0,
+                     &graphics_queue_);
+
     return true;
 }
 
@@ -270,6 +342,24 @@ VKAPI_ATTR VkBool32 VKAPI_CALL VkContext::VulkanDebugCallback(
     VkDebugUtilsMessageTypeFlagsEXT message_type,
     const VkDebugUtilsMessengerCallbackDataEXT* callback_data,
     void* user_data) {
+    switch (message_serverity) {
+        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
+            LogDebug(callback_data->pMessage);
+            break;
+        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
+            LogInfo(callback_data->pMessage);
+            break;
+        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
+            LogWarn(callback_data->pMessage);
+            break;
+        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
+            LogError(callback_data->pMessage);
+            break;
+        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_FLAG_BITS_MAX_ENUM_EXT:
+        default:
+            break;
+    }
+
     return 0;
 }
 bool operator==(const VkExtensionProperties properties,

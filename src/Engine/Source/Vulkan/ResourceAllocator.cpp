@@ -21,9 +21,11 @@ void VkResourceAllocator::Init(VkDevice device,
     physical_device_ = physical_device;
     mem_alloc_ = mem_alloc;
     vkGetPhysicalDeviceMemoryProperties(physical_device_, &memory_properties_);
+    staging_ =
+        std::make_unique<StagingMemoryManager>(mem_alloc, staging_block_size);
 }
 
-void VkResourceAllocator::DeInit() {}
+void VkResourceAllocator::DeInit() { staging_.reset(); }
 
 Buffer VkResourceAllocator::CreateBuffer(const VkBufferCreateInfo& info,
                                          VkMemoryPropertyFlags mem_usage) {
@@ -82,11 +84,12 @@ Buffer VkResourceAllocator::CreateBuffer(const VkCommandBuffer& cmd_buf,
     Buffer result_buffer = CreateBuffer(info, mem_props);
     if (data) {
         // staging command to buffer
+        staging_->CmdToBuffer(cmd_buf, result_buffer.buffer, 0, size, data);
     }
     return result_buffer;
 }
 RHIImage VkResourceAllocator::CreateImage(const VkImageCreateInfo& info,
-                                       VkMemoryPropertyFlags mem_usage) {
+                                          VkMemoryPropertyFlags mem_usage) {
     RHIImage image_result;
     CreateImageEx(info, &image_result.image);
 
@@ -118,10 +121,11 @@ RHIImage VkResourceAllocator::CreateImage(const VkImageCreateInfo& info,
     return image_result;
 }
 RHIImage VkResourceAllocator::CreateImage(const VkCommandBuffer& cmd_buffer,
-                                       size_t size, const void* data,
-                                       const VkImageCreateInfo& info,
-                                       VkImageLayout layout) {
-    RHIImage result_image = CreateImage(info, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+                                          size_t size, const void* data,
+                                          const VkImageCreateInfo& info,
+                                          VkImageLayout layout) {
+    RHIImage result_image =
+        CreateImage(info, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
     if (data != nullptr) {
         VkImageSubresourceRange subresource_range;
         subresource_range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -136,10 +140,17 @@ RHIImage VkResourceAllocator::CreateImage(const VkCommandBuffer& cmd_buffer,
         VkImageSubresourceLayers subresource = {0};
         subresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
         subresource.layerCount = 1;
-        // TODO: staging image
+
+        staging_->CmdToImage(cmd_buffer, result_image.image, offset,
+                             info.extent, subresource, size, data);
+
         VkImageUtil::CmdBarrierImageLayout(cmd_buffer, result_image.image,
                                            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                                            layout, subresource_range);
+    } else {
+        // VkImageUtil::CmdBarrierImageLayout(cmd_buffer, result_image.image,
+        //                            VK_IMAGE_LAYOUT_UNDEFINED,
+        //                            layout);
     }
     return result_image;
 }
@@ -256,6 +267,10 @@ DedicatedResourceAllocator::DedicatedResourceAllocator(
     Init(device, physical_device, staging_block_size);
 }
 DedicatedResourceAllocator::~DedicatedResourceAllocator() { DeInit(); }
+void DedicatedResourceAllocator::Init(VkContext* ctx,
+                                      VkDeviceSize staging_block_size) {
+    Init(ctx->GetDevice(), ctx->GetPhysicalDevice(), staging_block_size);
+}
 void DedicatedResourceAllocator::Init(VkDevice device,
                                       VkPhysicalDevice physical_device,
                                       VkDeviceSize staging_block_size) {
@@ -264,7 +279,7 @@ void DedicatedResourceAllocator::Init(VkDevice device,
     VkResourceAllocator::Init(device, physical_device, mem_alloc_.get(),
                               staging_block_size);
 }
-void DedicatedResourceAllocator::Init(VkInstance, VkDevice device,
+void DedicatedResourceAllocator::Init(VkInstance instance, VkDevice device,
                                       VkPhysicalDevice physical_device,
                                       VkDeviceSize staging_block_size) {
     Init(device, physical_device, staging_block_size);

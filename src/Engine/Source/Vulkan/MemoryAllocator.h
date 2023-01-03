@@ -3,6 +3,8 @@
 
 namespace toystation {
 
+#define DEFAULT_STAGING_BLOCKSIZE (VkDeviceSize(64) * 1024 * 1024)
+
 class VkMemoryAllocator {
 public:
     struct MemoryInfo {
@@ -21,7 +23,7 @@ public:
     void UnMap(MemHandle mem_handle);
 
     void SetAllocateFlags(VkMemoryAllocateFlags flags);
-
+    
     VkDevice GetDevice() const;
     VkPhysicalDevice GetPhysicalDevice() const;
 

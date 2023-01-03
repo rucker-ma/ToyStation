@@ -7,16 +7,15 @@
 #include <memory>
 #include <vector>
 
-// #define LOG_WRITE(level, ...)    \
-//     Logger::GetInstance().write( \
-//         level, "[" + std::string(__FUNCTION__) + "]" + __VA_ARGS__)
-// #define LOG_DEBUG(...) LOG_WRITE(spdlog::level::level_enum::debug,
-// __VA_ARGS__) #define LOG_INFO(...) LOG_WRITE(spdlog::level::level_enum::info,
-// __VA_ARGS__) #define LOG_WARN(...) LOG_WRITE(spdlog::level::level_enum::warn,
-// __VA_ARGS__) #define LOG_ERROR(...) LOG_WRITE(spdlog::level::level_enum::err,
-// __VA_ARGS__)
-// #define LOG_FATAL(...) \
-//     LOG_WRITE(spdlog::level::level_enum::critical, __VA_ARGS__)
+#define LOG_WRITE(log_level, ...) \
+    Logger::GetInstance()->write( \
+        log_level, "[" + std::string(__FUNCTION__) + "] " + __VA_ARGS__)
+#define LogDebug(...) LOG_WRITE(spdlog::level::level_enum::debug, __VA_ARGS__)
+#define LogInfo(...) LOG_WRITE(spdlog::level::level_enum::info, __VA_ARGS__)
+#define LogWarn(...) LOG_WRITE(spdlog::level::level_enum::warn, __VA_ARGS__)
+#define LogError(...) LOG_WRITE(spdlog::level::level_enum::err, __VA_ARGS__)
+#define LogFatal(...) \
+    LOG_WRITE(spdlog::level::level_enum::critical, __VA_ARGS__)
 
 namespace toystation {
 
@@ -37,7 +36,6 @@ public:
 
 private:
     Logger() {
-        std::vector<spdlog::sink_ptr> sink_list;
 #ifdef _DEBUG
         auto console_sink =
             std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
@@ -50,39 +48,42 @@ private:
         sink_list.push_back(basic_sink);
         logger_ = std::make_shared<spdlog::logger>("log", std::begin(sink_list),
                                                    std::end(sink_list));
+
         spdlog::register_logger(logger_);
-        logger_->flush_on(spdlog::level::err);
+        spdlog::set_level(spdlog::level::debug);
+        logger_->flush_on(spdlog::level::debug);
         std::chrono::seconds flush_seconds = std::chrono::seconds(1);
         spdlog::flush_every(flush_seconds);
     }
     ~Logger() { spdlog::drop_all(); }
     std::shared_ptr<spdlog::logger> logger_;
+    std::vector<spdlog::sink_ptr> sink_list;
 };
 
-template <typename... ARGS>
-constexpr static void LogDebug(ARGS &&...args) {
-    Logger::GetInstance()->write(spdlog::level::level_enum::debug,
-                                 std::forward<ARGS>(args)...);
-}
-template <typename... ARGS>
-constexpr static void LogInfo(ARGS &&...args) {
-    Logger::GetInstance()->write(spdlog::level::level_enum::info,
-                                 std::forward<ARGS>(args)...);
-}
-template <typename... ARGS>
-constexpr static void LogWarn(ARGS &&...args) {
-    Logger::GetInstance()->write(spdlog::level::level_enum::warn,
-                                 std::forward<ARGS>(args)...);
-}
-template <typename... ARGS>
-constexpr static void LogError(ARGS &&...args) {
-    Logger::GetInstance()->write(spdlog::level::level_enum::err,
-                                 std::forward<ARGS>(args)...);
-}
-template <typename... ARGS>
-constexpr static void LogFatal(ARGS &&...args) {
-    Logger::GetInstance()->write(spdlog::level::level_enum::critical,
-                                 std::forward<ARGS>(args)...);
-}
+// template <typename... ARGS>
+// constexpr static void LogDebug(ARGS &&...args) {
+//     Logger::GetInstance()->write(spdlog::level::level_enum::debug,
+//                                  std::forward<ARGS>(args)...);
+// }
+// template <typename... ARGS>
+// constexpr static void LogInfo(ARGS &&...args) {
+//     Logger::GetInstance()->write(spdlog::level::level_enum::info,
+//                                  std::forward<ARGS>(args)...);
+// }
+// template <typename... ARGS>
+// constexpr static void LogWarn(ARGS &&...args) {
+//     Logger::GetInstance()->write(spdlog::level::level_enum::warn,
+//                                  std::forward<ARGS>(args)...);
+// }
+// template <typename... ARGS>
+// constexpr static void LogError(ARGS &&...args) {
+//     Logger::GetInstance()->write(spdlog::level::level_enum::err,
+//                                  std::forward<ARGS>(args)...);
+// }
+// template <typename... ARGS>
+// constexpr static void LogFatal(ARGS &&...args) {
+//     Logger::GetInstance()->write(spdlog::level::level_enum::critical,
+//                                  std::forward<ARGS>(args)...);
+// }
 
 }  // namespace toystation

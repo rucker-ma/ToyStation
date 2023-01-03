@@ -21,6 +21,12 @@
 #define FUNCTION(...)
 #define REFLECTION_BODY(...)
 
+#define STR(x) #x
+
+#define TYPE_PAIR(x) \
+    { x, STR(x) }
+
+
 
 #include "Logger.h"
 

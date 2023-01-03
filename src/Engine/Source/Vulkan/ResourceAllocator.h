@@ -1,9 +1,9 @@
 #pragma once
-#include "MemoryAllocator.h"
+#include "StagingMemoryManager.h"
 
 namespace toystation {
 
-#define DEFAULT_STAGING_BLOCKSIZE (VkDeviceSize(64) * 1024 * 1024)
+
 
 struct Buffer {
     VkBuffer buffer = nullptr;
@@ -100,6 +100,7 @@ private:
     VkPhysicalDevice physical_device_ = nullptr;
     VkPhysicalDeviceMemoryProperties memory_properties_{};
     VkMemoryAllocator* mem_alloc_ = nullptr;
+    std::unique_ptr<StagingMemoryManager> staging_;
 };
 
 class DedicatedResourceAllocator : public VkResourceAllocator {
@@ -109,12 +110,15 @@ public:
         VkDevice device, VkPhysicalDevice physical_device,
         VkDeviceSize staging_block_size = DEFAULT_STAGING_BLOCKSIZE);
     virtual ~DedicatedResourceAllocator();
+    void Init(VkContext* ctx,
+              VkDeviceSize staging_block_size = DEFAULT_STAGING_BLOCKSIZE);
 
     void Init(VkDevice device, VkPhysicalDevice physical_device,
               VkDeviceSize staging_block_size = DEFAULT_STAGING_BLOCKSIZE);
     // Provided such that ResourceAllocatorDedicated, ResourceAllocatorDma and
     // ResourceAllocatorVma all have the same interface
-    void Init(VkInstance, VkDevice device, VkPhysicalDevice physical_device,
+    void Init(VkInstance instance, VkDevice device,
+              VkPhysicalDevice physical_device,
               VkDeviceSize staging_block_size = DEFAULT_STAGING_BLOCKSIZE);
 
     void DeInit();
