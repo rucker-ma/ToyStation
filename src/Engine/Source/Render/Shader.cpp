@@ -1,9 +1,6 @@
 #include "Shader.h"
 
 #include <fstream>
-#include <vector>
-
-#include "VulkanContext.h"
 
 namespace toystation {
 
@@ -29,10 +26,10 @@ VkShaderModule Shader::GetVKShaderModule() {
     create_info.pCode = reinterpret_cast<const uint32_t*>(shader_code.data());
     VkShaderModule shader_module;
 
-    if (vkCreateShaderModule(VulkanContext::Instance().Device(), &create_info,
-                             nullptr, &shader_module) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create shader module");
-    }
+    // if (vkCreateShaderModule(VulkanContext::Instance().Device(), &create_info,
+    //                          nullptr, &shader_module) != VK_SUCCESS) {
+    //     throw std::runtime_error("failed to create shader module");
+    // }
     return shader_module;
 }
 }  // namespace toystation

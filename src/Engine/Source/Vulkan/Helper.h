@@ -1,5 +1,5 @@
 #pragma once
-#include "Render/VulkanContext.h"
+#include "VkContext.h"
 namespace toystation {
 template <typename T>
 void ZeroVKStruct(T& vk_struct,

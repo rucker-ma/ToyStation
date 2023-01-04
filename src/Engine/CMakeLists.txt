@@ -6,17 +6,21 @@ include_directories(
     ${VULKAN}/Include
     ${SPDLOG}/include
     ${VK_EXTENSION}
+    ${WebRTC}/include
+    ${WebRTC}/include/third_party/abseil-cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Source
 )
 
 file(GLOB_RECURSE SOURCE_FILE *.cpp)
 file(GLOB_RECURSE HEADER_FILE *.H)
 
-add_library(${MODULE_NAME} SHARED ${SOURCE_FILE} ${HEADER_FILE})
+add_library(${MODULE_NAME} STATIC ${SOURCE_FILE} ${HEADER_FILE})
 
 if(MSVC)
     # disable warning for chinese
     set_target_properties(${MODULE_NAME} PROPERTIES COMPILE_FLAGS "/wd4819")
+    set_property(TARGET ${MODULE_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreadedDebug")
+    add_definitions(-DWEBRTC_WIN -DNOMINMAX -D_HAS_ITERATOR_DEBUGGING=0)
 endif()
 
 add_definitions(-DTS_CPP_EXPORT)
@@ -26,8 +30,10 @@ add_definitions(-DTS_CPP_EXPORT)
 # ARCHIVE_OUTPUT_NAME_DEBUG ${CMAKE_CURRENT_SOURCE_DIR}/Output
 # LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/Output
 # RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/Output)
-target_link_libraries(${MODULE_NAME} ${VULKAN_LIB} VK_EXTENSION)
 
+
+target_link_libraries(${MODULE_NAME} ${VULKAN_LIB} VK_EXTENSION)
+target_link_libraries(${MODULE_NAME} ${WebRTC_LIB})
 get_property(DIRS DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
 
 # add_custom_command(TARGET ${MODULE_NAME} PRE_BUILD

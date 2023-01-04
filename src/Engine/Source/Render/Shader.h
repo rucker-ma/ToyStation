@@ -1,8 +1,6 @@
 #pragma once
-#include <vulkan/vulkan.h>
 
-#include <string>
-
+#include "Vulkan/VkContext.h"
 namespace toystation {
 class Shader {
 public:

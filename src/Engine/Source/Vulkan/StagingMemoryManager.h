@@ -39,7 +39,7 @@ public:
     }
 
     // test if there is enough space in current allocations
-    bool FitsInAllocated(VkDeviceSize size, bool toDevice = true) const;
+    bool FitsInAllocated(VkDeviceSize size, bool to_device = true) const;
 
     // if data != nullptr memcpies to mapping and returns nullptr
     // otherwise returns temporary mapping (valid until "complete" functions)
@@ -118,8 +118,8 @@ public:
     // frees staging memory no longer in use
     void FreeUnused() { Free(true); }
 
-    float GetUtilization(VkDeviceSize& allocatedSize,
-                         VkDeviceSize& usedSize) const;
+    float GetUtilization(VkDeviceSize& allocated_size,
+                         VkDeviceSize& used_size) const;
 
 protected:
     // The implementation uses two major arrays:
@@ -165,13 +165,13 @@ protected:
         return oldValue;
     }
 
-    void Free(bool unusedOnly);
+    void Free(bool unused_only);
 
     uint32_t NewStagingIndex();
 
     void* GetStagingSpace(VkDeviceSize size, VkBuffer& buffer,
-                          VkDeviceSize& offset, bool toDevice);
+                          VkDeviceSize& offset, bool to_device);
 
-    void ReleaseResources(uint32_t stagingID);
+    void ReleaseResources(uint32_t staging_id);
 };
 }  // namespace toystation

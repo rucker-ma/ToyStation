@@ -1,7 +1,8 @@
 #include "StagingMemoryManager.h"
 namespace toystation {
 StagingMemoryManager::StagingMemoryManager(VkMemoryAllocator* allocator,
-                                           VkDeviceSize staging_block_size) {
+                                           VkDeviceSize staging_block_size)
+    : staging_index_(0), free_staging_index_(0) {
     Init(allocator, staging_block_size);
 }
 
@@ -42,21 +43,23 @@ void StagingMemoryManager::DeInit() {
 }
 
 bool StagingMemoryManager::FitsInAllocated(VkDeviceSize size,
-                                           bool toDevice /*= true*/) const {
-    return toDevice ? sub_to_device_.FitsInAllocated(size)
-                    : sub_from_device_.FitsInAllocated(size);
+                                           bool to_device /*= true*/) const {
+    return to_device ? sub_to_device_.FitsInAllocated(size)
+                     : sub_from_device_.FitsInAllocated(size);
 }
 
 void* StagingMemoryManager::CmdToImage(
     VkCommandBuffer cmd, VkImage image, const VkOffset3D& offset,
     const VkExtent3D& extent, const VkImageSubresourceLayers& subresource,
     VkDeviceSize size, const void* data, VkImageLayout layout) {
-    if (!image) return nullptr;
+    if (!image) {
+        return nullptr;
+    }
 
-    VkBuffer srcBuffer;
-    VkDeviceSize srcOffset;
+    VkBuffer src_buffer = nullptr;
+    VkDeviceSize src_offset = 0;
 
-    void* mapping = GetStagingSpace(size, srcBuffer, srcOffset, true);
+    void* mapping = GetStagingSpace(size, src_buffer, src_offset, true);
 
     assert(mapping);
 
@@ -65,14 +68,14 @@ void* StagingMemoryManager::CmdToImage(
     }
 
     VkBufferImageCopy cpy;
-    cpy.bufferOffset = srcOffset;
+    cpy.bufferOffset = src_offset;
     cpy.bufferRowLength = 0;
     cpy.bufferImageHeight = 0;
     cpy.imageSubresource = subresource;
     cpy.imageOffset = offset;
     cpy.imageExtent = extent;
 
-    vkCmdCopyBufferToImage(cmd, srcBuffer, image, layout, 1, &cpy);
+    vkCmdCopyBufferToImage(cmd, src_buffer, image, layout, 1, &cpy);
 
     return data ? nullptr : mapping;
 }
@@ -84,8 +87,8 @@ void* StagingMemoryManager::CmdToBuffer(VkCommandBuffer cmd, VkBuffer buffer,
         return nullptr;
     }
 
-    VkBuffer src_buffer;
-    VkDeviceSize src_offset;
+    VkBuffer src_buffer = nullptr;
+    VkDeviceSize src_offset = 0;
 
     void* mapping = GetStagingSpace(size, src_buffer, src_offset, true);
 
@@ -109,8 +112,8 @@ const void* StagingMemoryManager::CmdFromBuffer(VkCommandBuffer cmd,
                                                 VkBuffer buffer,
                                                 VkDeviceSize offset,
                                                 VkDeviceSize size) {
-    VkBuffer dst_buffer;
-    VkDeviceSize dst_offset;
+    VkBuffer dst_buffer = nullptr;
+    VkDeviceSize dst_offset = 0;
     void* mapping = GetStagingSpace(size, dst_buffer, dst_offset, false);
 
     VkBufferCopy cpy;
@@ -127,8 +130,8 @@ const void* StagingMemoryManager::CmdFromImage(
     VkCommandBuffer cmd, VkImage image, const VkOffset3D& offset,
     const VkExtent3D& extent, const VkImageSubresourceLayers& subresource,
     VkDeviceSize size, VkImageLayout layout) {
-    VkBuffer dst_buffer;
-    VkDeviceSize dst_offset;
+    VkBuffer dst_buffer = nullptr;
+    VkDeviceSize dst_offset = 0;
     void* mapping = GetStagingSpace(size, dst_buffer, dst_offset, false);
 
     VkBufferImageCopy cpy;
@@ -172,35 +175,35 @@ StagingMemoryManager::SetID StagingMemoryManager::FinalizeResourceSet() {
 
 void* StagingMemoryManager::GetStagingSpace(VkDeviceSize size, VkBuffer& buffer,
                                             VkDeviceSize& offset,
-                                            bool toDevice) {
+                                            bool to_device) {
     assert(sets_[staging_index_].index == staging_index_ &&
            "illegal index, did you forget finalizeResources");
 
     BufferSubAllocator::Handle handle =
-        toDevice ? sub_to_device_.SubAllocate(size)
-                 : sub_from_device_.SubAllocate(size);
+        to_device ? sub_to_device_.SubAllocate(size)
+                  : sub_from_device_.SubAllocate(size);
     assert(handle);
 
     BufferSubAllocator::Binding info =
-        toDevice ? sub_to_device_.GetSubBinding(handle)
-                 : sub_from_device_.GetSubBinding(handle);
+        to_device ? sub_to_device_.GetSubBinding(handle)
+                  : sub_from_device_.GetSubBinding(handle);
     buffer = info.buffer;
     offset = info.offset;
 
     // append used space to current staging set list
-    sets_[staging_index_].entries.push_back({handle, toDevice});
+    sets_[staging_index_].entries.push_back({handle, to_device});
 
-    return toDevice ? sub_to_device_.GetSubMapping(handle)
-                    : sub_from_device_.GetSubMapping(handle);
+    return to_device ? sub_to_device_.GetSubMapping(handle)
+                     : sub_from_device_.GetSubMapping(handle);
 }
 
-void StagingMemoryManager::ReleaseResources(uint32_t stagingID) {
-    if (stagingID == INVALID_ID_INDEX) {
+void StagingMemoryManager::ReleaseResources(uint32_t staging_id) {
+    if (staging_id == INVALID_ID_INDEX) {
         return;
     }
 
-    StagingSet& set = sets_[stagingID];
-    assert(set.index == stagingID);
+    StagingSet& set = sets_[staging_id];
+    assert(set.index == staging_id);
 
     // free used allocation ranges
     for (auto& itentry : set.entries) {
@@ -233,44 +236,44 @@ void StagingMemoryManager::ReleaseResources() {
     }
 }
 
-float StagingMemoryManager::GetUtilization(VkDeviceSize& allocatedSize,
-                                           VkDeviceSize& usedSize) const {
-    VkDeviceSize aSize = 0;
-    VkDeviceSize uSize = 0;
-    sub_from_device_.GetUtilization(aSize, uSize);
+float StagingMemoryManager::GetUtilization(VkDeviceSize& allocated_size,
+                                           VkDeviceSize& used_size) const {
+    VkDeviceSize asize = 0;
+    VkDeviceSize usize = 0;
+    sub_from_device_.GetUtilization(asize, usize);
 
-    allocatedSize = aSize;
-    usedSize = uSize;
-    sub_to_device_.GetUtilization(aSize, uSize);
-    allocatedSize += aSize;
-    usedSize += uSize;
+    allocated_size = asize;
+    used_size = usize;
+    sub_to_device_.GetUtilization(asize, usize);
+    allocated_size += asize;
+    used_size += usize;
 
-    return float(double(usedSize) / double(allocatedSize));
+    return float(double(used_size) / double(allocated_size));
 }
 
-void StagingMemoryManager::Free(bool unusedOnly) {
-    sub_to_device_.Free(unusedOnly);
-    sub_from_device_.Free(unusedOnly);
+void StagingMemoryManager::Free(bool unused_only) {
+    sub_to_device_.Free(unused_only);
+    sub_from_device_.Free(unused_only);
 }
 
 uint32_t StagingMemoryManager::NewStagingIndex() {
     // find free slot
     if (free_staging_index_ != INVALID_ID_INDEX) {
-        uint32_t newIndex = free_staging_index_;
+        uint32_t new_index = free_staging_index_;
         // this updates the free link-list
-        free_staging_index_ = SetIndexValue(sets_[newIndex].index, newIndex);
-        assert(sets_[newIndex].index == newIndex);
-        return sets_[newIndex].index;
+        free_staging_index_ = SetIndexValue(sets_[new_index].index, new_index);
+        assert(sets_[new_index].index == new_index);
+        return sets_[new_index].index;
     }
 
     // otherwise push to end
-    uint32_t newIndex = (uint32_t)sets_.size();
+    uint32_t new_index = (uint32_t)sets_.size();
 
     StagingSet info;
-    info.index = newIndex;
+    info.index = new_index;
     sets_.push_back(info);
 
-    assert(sets_[newIndex].index == newIndex);
-    return newIndex;
+    assert(sets_[new_index].index == new_index);
+    return new_index;
 }
 }  // namespace toystation

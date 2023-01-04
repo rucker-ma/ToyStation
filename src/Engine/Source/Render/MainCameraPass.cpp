@@ -1,16 +1,26 @@
 #include "MainCameraPass.h"
 
 #include "File/FileUtil.h"
-#include "Vertex.h"
 #include "Vulkan/Images.h"
 #include "Vulkan/Pipeline.h"
+#include "Vulkan/VkImageUtil.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image.h"
+#include "stb_image_write.h"
 namespace toystation {
 
 struct UniformBuffer {
     glm::mat4 model;
     glm::mat4 view;
     glm::mat4 proj;
+};
+
+struct Vertex{
+    glm::vec3 pos;
+    glm::vec3 color;
+    glm::vec2 tex_coord;
 };
 
 const std::vector<Vertex> kVertices = {
@@ -30,7 +40,6 @@ struct TestBuffer {
     Buffer indices;
     Buffer uniform;
 };
-
 
 TestBuffer kShaderBuffer;
 
@@ -58,6 +67,7 @@ void MainCameraPass::Draw() {
     VkViewport* viewport = context_->GetSwapchain()->GetViewport();
     VkRect2D* scissor = context_->GetSwapchain()->GetScissor();
 
+    UpdateUniform();
     render_begin_info.renderPass = render_pass_;
     render_begin_info.framebuffer = framebuffers_.front();
     render_begin_info.renderArea = *scissor;
@@ -85,6 +95,7 @@ void MainCameraPass::Draw() {
 
     vkCmdEndRenderPass(cmd);
     context_->GetCommandPool()->SubmitAndWait(cmd);
+    SaveImage();
 }
 
 void MainCameraPass::SetAttachmentResource() {}
@@ -165,7 +176,7 @@ void MainCameraPass::SetupDescriptorSetLayout(RenderPassInitInfo& info) {
                               VK_SHADER_STAGE_FRAGMENT_BIT);
     descriptor_.layout = set_container_.InitLayout();
     // how to set default set? now use default 3
-    set_container_.InitPool(1);
+    set_container_.InitPool(2);
 
     std::vector<VkWriteDescriptorSet> sets;
     kShaderBuffer.uniform = info.context->GetAllocator()->CreateBuffer(
@@ -178,15 +189,12 @@ void MainCameraPass::SetupDescriptorSetLayout(RenderPassInitInfo& info) {
     buffer_info.offset = 0;
     buffer_info.range = sizeof(toystation::UniformBuffer);
 
-    // MakeImage2DCreateInfo create_info = MakeImage2DCreateInfo()
-    // context_->GetAllocator()->CreateImage();
-
-
+    LoadTexture();
 
     sets.push_back(
         set_container_.MakeWrite(0, 0, &buffer_info /* uniform buffer*/));
-    // sets.push_back(
-    //     set_container_.MakeWrite(1, 1, (VkDescriptorImageInfo*)nullptr));
+
+    sets.push_back(set_container_.MakeWrite(0, 1, &sampler_tex_.descriptor));
     set_container_.UpdateSets(sets);
 
     // 加载顶点数据到显存
@@ -246,7 +254,7 @@ void MainCameraPass::SetupPipeline(RenderPassInitInfo& info) {
     vertex_state.AddAtributeDescription(0, 1, VK_FORMAT_R32G32_SFLOAT,
                                         offsetof(Vertex, color));
     vertex_state.AddAtributeDescription(0, 2, VK_FORMAT_R32G32_SFLOAT,
-                                        offsetof(Vertex, texCoord));
+                                        offsetof(Vertex, tex_coord));
 
     VkPipelineInputAssemblyStateCreateInfo input_assembly{};
     input_assembly.sType =
@@ -341,15 +349,16 @@ void MainCameraPass::SetupFrameBuffer(RenderPassInitInfo& info) {
         MakeImage2DCreateInfo(scissor->extent, VK_FORMAT_D32_SFLOAT,
                               VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
 
-    RHIImage color_image = alloc->CreateImage(image_create_info);
+    color_image_ = alloc->CreateImage(image_create_info);
     RHIImage depth_image = alloc->CreateImage(depth_create_info);
 
-    VkImageViewCreateInfo color_view = MakeImage2DViewCreateInfo(
-        color_image.image, VK_IMAGE_ASPECT_COLOR_BIT, VK_FORMAT_B8G8R8A8_UNORM);
+    VkImageViewCreateInfo color_view =
+        MakeImage2DViewCreateInfo(color_image_.image, VK_IMAGE_ASPECT_COLOR_BIT,
+                                  VK_FORMAT_B8G8R8A8_UNORM);
     VkImageViewCreateInfo depth_view = MakeImage2DViewCreateInfo(
         depth_image.image, VK_IMAGE_ASPECT_DEPTH_BIT, VK_FORMAT_D32_SFLOAT);
 
-    Texture color_tex = alloc->CreateTexture(color_image, color_view);
+    Texture color_tex = alloc->CreateTexture(color_image_, color_view);
     Texture depth_tex = alloc->CreateTexture(depth_image, depth_view);
 
     std::vector<VkImageView> attachments;
@@ -368,5 +377,87 @@ void MainCameraPass::SetupFrameBuffer(RenderPassInitInfo& info) {
     VkFramebuffer framebuffer = nullptr;
     info.context->GetContext()->CreateFramebuffer(create_info, framebuffer);
     framebuffers_.push_back(framebuffer);
+}
+void MainCameraPass::LoadTexture() {
+    int tex_w = 0;
+    int tex_h = 0;
+    int tex_ch = 0;
+    std::string image_file =
+        "D:/project/cpp/graphics/vk-demo/image/texture.jpg";
+    stbi_uc* pixels =
+        stbi_load(image_file.c_str(), &tex_w, &tex_h, &tex_ch, STBI_rgb_alpha);
+
+    VkDeviceSize image_size = tex_w * tex_h * 4;
+    VkExtent2D extent = {tex_w, tex_h};
+    VkImageCreateInfo create_info = MakeImage2DCreateInfo(extent);
+    VkCommandBuffer cmd = context_->GetCommandPool()->CreateCommandBuffer(
+        VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+    // VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+    RHIImage img = context_->GetAllocator()->CreateImage(
+        cmd, image_size, pixels, create_info,
+        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+    VkImageViewCreateInfo view_create_info =
+        MakeImage2DViewCreateInfo(img.image, VK_IMAGE_ASPECT_COLOR_BIT);
+    VkSamplerCreateInfo sampler_create_info{};
+    sampler_tex_ = context_->GetAllocator()->CreateTexture(
+        img, view_create_info, sampler_create_info);
+
+    context_->GetCommandPool()->SubmitAndWait(cmd);
+}
+void MainCameraPass::UpdateUniform() {
+    static auto start_time = std::chrono::high_resolution_clock::now();
+    auto current_time = std::chrono::high_resolution_clock::now();
+    float time = std::chrono::duration<float, std::chrono::seconds::period>(
+                     current_time - start_time)
+                     .count();
+    UniformBuffer ubo{};
+    ubo.model = glm::rotate(glm::mat4(1.0F), time * glm::radians(90.0F),
+                            glm::vec3(0.0F, 0.0F, 1.0F));
+    ubo.view =
+        glm::lookAt(glm::vec3(2.0F, 2.0F, 2.0F), glm::vec3(0.0F, 0.0F, 0.0F),
+                    glm::vec3(0.0F, 0.0F, 1.0F));
+
+    ubo.proj =
+        glm::perspective(glm::radians(45.0F), 1920 / (float)1080, 0.1F, 10.0F);
+    ubo.proj[1][1] *= -1;
+
+    void* data = context_->GetAllocator()->Map(kShaderBuffer.uniform);
+
+    memcpy(data, &ubo, sizeof(ubo));
+    context_->GetAllocator()->UnMap(kShaderBuffer.uniform);
+}
+void MainCameraPass::SaveImage() {
+    VkRect2D* rect = context_->GetSwapchain()->GetScissor();
+    VkDeviceSize mem_size = rect->extent.width * rect->extent.height * 4;
+    Buffer buf = context_->GetAllocator()->CreateBuffer(
+        mem_size,
+        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+
+    VkCommandBuffer cmd = context_->GetCommandPool()->CreateCommandBuffer();
+
+    VkImageSubresourceRange sub_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
+
+    VkImageUtil::CmdBarrierImageLayout(
+        cmd, color_image_.image, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, sub_range);
+    VkBufferImageCopy copy_region{};
+    copy_region.imageSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+    copy_region.imageExtent = {rect->extent.width, rect->extent.height, 1};
+    vkCmdCopyImageToBuffer(cmd, color_image_.image,
+                           VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, buf.buffer, 1,
+                           &copy_region);
+    VkImageUtil::CmdBarrierImageLayout(
+        cmd, color_image_.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+        VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, sub_range);
+    context_->GetCommandPool()->SubmitAndWait(cmd);
+    void* data = context_->GetAllocator()->Map(buf);
+    std::string save_file = "test.bmp";
+    // stbi_write_png(save_file.c_str(), rect->extent.width, rect->extent.height,
+    //                4, data, 0);
+    stbi_write_bmp(save_file.c_str(), rect->extent.width, rect->extent.height,4,data);
+    context_->GetAllocator()->UnMap(buf);
+    context_->GetAllocator()->Destroy(buf);
 }
 }  // namespace toystation

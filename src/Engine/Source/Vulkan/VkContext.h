@@ -1,5 +1,18 @@
 #pragma once
-#include "Render/VulkanContext.h"
+#include <string>
+#include <vector>
+
+#ifdef _WIN32
+#include <Windows.h>
+#define VK_USE_PLATFORM_WIN32_KHR
+#endif
+
+#define VK_ENABLE_BETA_EXTENSIONS
+
+#include <vulkan/vulkan.h>
+#include <extensions_vk.hpp>
+
+#include "Base/Macro.h"
 
 namespace toystation {
 
@@ -62,11 +75,13 @@ public:
     void CreateDescriptorPool(uint32_t pool_size_count,
                               const VkDescriptorPoolSize* pool_size,
                               uint32_t max_sets, VkDescriptorPool& pool);
-    void CreateFramebuffer(const VkFramebufferCreateInfo& info,VkFramebuffer& buffer);
+    void CreateFramebuffer(const VkFramebufferCreateInfo& info,
+                           VkFramebuffer& buffer);
     VkShaderModule CreateShader(const char* data, size_t size);
-    
+
     VkQueue GetQueue(VkQueueFlags flags);
     uint32_t GetQueueFamilyIndex(VkQueueFlags flags);
+
 private:
     bool InitInstance(VkContextCreateInfo& info);
     void InitDebugUtils();
