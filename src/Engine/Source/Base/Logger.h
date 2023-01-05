@@ -60,30 +60,4 @@ private:
     std::vector<spdlog::sink_ptr> sink_list;
 };
 
-// template <typename... ARGS>
-// constexpr static void LogDebug(ARGS &&...args) {
-//     Logger::GetInstance()->write(spdlog::level::level_enum::debug,
-//                                  std::forward<ARGS>(args)...);
-// }
-// template <typename... ARGS>
-// constexpr static void LogInfo(ARGS &&...args) {
-//     Logger::GetInstance()->write(spdlog::level::level_enum::info,
-//                                  std::forward<ARGS>(args)...);
-// }
-// template <typename... ARGS>
-// constexpr static void LogWarn(ARGS &&...args) {
-//     Logger::GetInstance()->write(spdlog::level::level_enum::warn,
-//                                  std::forward<ARGS>(args)...);
-// }
-// template <typename... ARGS>
-// constexpr static void LogError(ARGS &&...args) {
-//     Logger::GetInstance()->write(spdlog::level::level_enum::err,
-//                                  std::forward<ARGS>(args)...);
-// }
-// template <typename... ARGS>
-// constexpr static void LogFatal(ARGS &&...args) {
-//     Logger::GetInstance()->write(spdlog::level::level_enum::critical,
-//                                  std::forward<ARGS>(args)...);
-// }
-
 }  // namespace toystation
