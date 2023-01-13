@@ -50,4 +50,5 @@ protected:
     rtc::scoped_refptr<webrtc::DataChannelInterface> datachl_interface_;
     std::vector<rtc::scoped_refptr<webrtc::RtpSenderInterface>> tracks_;
 };
+
 }  // namespace toystation

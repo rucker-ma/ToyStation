@@ -10,6 +10,9 @@
 
 namespace toystation {
 void SessionCreator::Initialize() { SetupFactory(); }
+std::shared_ptr<TransferSession> SessionCreator::CreateSession() {
+    return std::make_shared<TransferSession>();
+}
 void SessionCreator::SetupFactory() {
     RTC_CHECK(!peer_connection_factory_);
     peer_connection_factory_ = webrtc::CreatePeerConnectionFactory(
@@ -27,7 +30,9 @@ void SessionCreator::SetupTracks() {
     //     "audio",
     //     peer_connection_factory_->CreateAudioSource(cricket::AudioOptions()));
     // TODO:imple video source
-    // video_track_ =
-    // peer_connection_factory_->CreateVideoTrack("video",peer_connection_factory_->)
+
+    video_source_ = new rtc::RefCountedObject<RenderVideoSource>();
+    video_track_ =
+        peer_connection_factory_->CreateVideoTrack("video", video_source_);
 }
 }  // namespace toystation

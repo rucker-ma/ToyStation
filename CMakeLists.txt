@@ -12,13 +12,14 @@ set(SPDLOG "${CMAKE_CURRENT_SOURCE_DIR}/src/ThirdParty/spdlog")
 set(VK_EXTENSION "${CMAKE_CURRENT_SOURCE_DIR}/src/ThirdParty/vk_extension")
 set(GTEST "${CMAKE_CURRENT_SOURCE_DIR}/src/ThirdParty/googletest")
 set(WebRTC "${CMAKE_CURRENT_SOURCE_DIR}/src/ThirdParty/webrtc-m94")
-
+set(FFMPEG "${CMAKE_CURRENT_SOURCE_DIR}/src/ThirdParty/ffmpeg-5.1.2")
 
 find_library(ASTYLE_LIB NAMES AStyleLibd PATHS ${ASTYLE}/lib)
 find_library(LIBCLANG_LIB NAMES libclang PATHS ${LLVM}/lib)
 find_library(VULKAN_LIB NAMES vulkan-1 PATHS ${VULKAN}/Lib)
 find_library(GTEST_LIB NAMES gtestd PATHS ${GTEST}/lib)
 find_library(WebRTC_LIB NAMES webrtc PATHS ${WebRTC}/lib)
+find_library(FFMPEG_LIB NAMES avcodec avdevice avformat avutil postproc swresample PATHS ${FFMPEG}/lib)
 # set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/src/Engine/Output)
 # set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/src/Engine/Output)
 # 设置输出目录要Editor bin目录

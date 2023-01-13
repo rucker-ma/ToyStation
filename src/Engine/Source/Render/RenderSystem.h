@@ -19,4 +19,6 @@ public:
 private:
     std::shared_ptr<RenderPipeline> render_pipeline_;
 };
+
+
 }  // namespace toystation

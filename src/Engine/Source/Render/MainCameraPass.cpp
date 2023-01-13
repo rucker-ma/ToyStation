@@ -96,6 +96,7 @@ void MainCameraPass::Draw() {
     vkCmdEndRenderPass(cmd);
     context_->GetCommandPool()->SubmitAndWait(cmd);
     SaveImage();
+    //RenderEvent::OnRenderDone()
 }
 
 void MainCameraPass::SetAttachmentResource() {}

@@ -1,4 +1,7 @@
 #include "TransferSession.h"
+
+#include "Base/Macro.h"
+
 namespace toystation {
 
 class DummySetSessionDescriptionObserver
@@ -7,12 +10,13 @@ public:
     static DummySetSessionDescriptionObserver* Create() {
         return new rtc::RefCountedObject<DummySetSessionDescriptionObserver>();
     }
-    virtual void OnSuccess() {
+    void OnSuccess() override{
         // LOG(INFO) << __FUNCTION__;
     }
-    virtual void OnFailure(webrtc::RTCError error) {
+    void OnFailure(webrtc::RTCError error) override{
         // LOG(INFO) << __FUNCTION__ << " " << ToString(error.type()) << ": "
         //	<< error.message();
+        LogError("Set Sdp error", error.message());
     }
 };
 

@@ -16,7 +16,5 @@ void RenderSystem::Initialize() {
     render_pipeline_ = std::make_shared<RenderPipeline>();
     render_pipeline_->Initialize();
 }
-void RenderSystem::Tick() {
-    render_pipeline_->Tick();
-}
+void RenderSystem::Tick() { render_pipeline_->Tick(); }
 }  // namespace toystation

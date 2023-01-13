@@ -8,6 +8,7 @@ include_directories(
     ${VK_EXTENSION}
     ${WebRTC}/include
     ${WebRTC}/include/third_party/abseil-cpp
+    ${FFMPEG}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/Source
 )
 
@@ -34,6 +35,7 @@ add_definitions(-DTS_CPP_EXPORT)
 
 target_link_libraries(${MODULE_NAME} ${VULKAN_LIB} VK_EXTENSION)
 target_link_libraries(${MODULE_NAME} ${WebRTC_LIB})
+target_link_libraries(${MODULE_NAME} ${FFMPEG_LIB})
 get_property(DIRS DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
 
 # add_custom_command(TARGET ${MODULE_NAME} PRE_BUILD

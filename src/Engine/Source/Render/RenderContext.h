@@ -9,6 +9,18 @@
 
 namespace toystation {
 
+
+class RenderFrame
+{
+
+};
+
+class RenderEvent
+{
+public:
+static std::function<void(RenderFrame&)> OnRenderDone; 
+};
+
 struct RenderContextCreateInfo {
     enum RenderMode { RENDER_LOCAL, RENDER_REMOTE, RENDER_INVALID };
 
