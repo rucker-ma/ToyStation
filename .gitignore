@@ -4,6 +4,7 @@
 build/
 tools/
 out/
+resource/
 
 **/obj/
 *.pdb

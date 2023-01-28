@@ -11,6 +11,8 @@ include_directories(
     ${WebRTC}/include
     ${WebRTC}/include/third_party/abseil-cpp
 
+    ${ASIO}/include
+    ${WEBSOCKETPP}
     ${VK_EXTENSION}
 )
 file(GLOB_RECURSE SOURCE_FILE *.cpp *.h)

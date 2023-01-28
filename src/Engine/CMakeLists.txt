@@ -9,6 +9,8 @@ include_directories(
     ${WebRTC}/include
     ${WebRTC}/include/third_party/abseil-cpp
     ${FFMPEG}/include
+    ${ASIO}/include
+    ${WEBSOCKETPP}
     ${CMAKE_CURRENT_SOURCE_DIR}/Source
 )
 

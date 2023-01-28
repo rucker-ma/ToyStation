@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 
 namespace Editor.Views
@@ -9,11 +10,22 @@ namespace Editor.Views
         {
             AvaloniaXamlLoader.Load(this);
             Renderer.DrawFps= true;
-            //PlatformImpl.ScalingChanged
-            var vulkanPage = this.Get<Editor.Views.VulkanPage>("VulkanPage");
-            vulkanPage.SetScaling(PlatformImpl.RenderScaling);
-            PlatformImpl.ScalingChanged = scaling => vulkanPage.SetScaling(scaling);
-            PlatformImpl.Resized = (size, reason) => vulkanPage.OnResize(size);
+            
+        }
+
+        private void Button_StartPlay(object? sender, RoutedEventArgs e)
+        {
+            this.FindControl<PlayerView>("RemotePlayer").OpenPlay();
+        }
+
+        private void Button_StopPlay(object? sender, RoutedEventArgs e)
+        {
+            this.FindControl<PlayerView>("RemotePlayer").StopPlay();
+        }
+
+        private void Button_StartWebRtc(object? sender, RoutedEventArgs e)
+        {
+            this.FindControl<WebRtcView>("RemoteWebRtc").OpenPlay();
         }
     }
 }

@@ -13,6 +13,9 @@ set(VK_EXTENSION "${CMAKE_CURRENT_SOURCE_DIR}/src/ThirdParty/vk_extension")
 set(GTEST "${CMAKE_CURRENT_SOURCE_DIR}/src/ThirdParty/googletest")
 set(WebRTC "${CMAKE_CURRENT_SOURCE_DIR}/src/ThirdParty/webrtc-m94")
 set(FFMPEG "${CMAKE_CURRENT_SOURCE_DIR}/src/ThirdParty/ffmpeg-5.1.2")
+set(ASIO "${CMAKE_CURRENT_SOURCE_DIR}/src/ThirdParty/asio-1.18.2")
+set(WEBSOCKETPP "${CMAKE_CURRENT_SOURCE_DIR}/src/ThirdParty/websocketpp-0.8.2")
+
 
 find_library(ASTYLE_LIB NAMES AStyleLibd PATHS ${ASTYLE}/lib)
 find_library(LIBCLANG_LIB NAMES libclang PATHS ${LLVM}/lib)

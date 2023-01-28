@@ -10,7 +10,7 @@ namespace toystation {
 class SessionCreator {
 public:
     void Initialize();
-    std::shared_ptr<TransferSession> CreateSession();
+    std::shared_ptr<TransferSession> CreateSession(std::unique_ptr<SessionClient> client);
 private:
     void SetupFactory();
     void SetupTracks();

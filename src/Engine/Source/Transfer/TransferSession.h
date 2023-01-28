@@ -1,14 +1,28 @@
 #pragma once
 #include <api/media_stream_interface.h>
 #include <api/peer_connection_interface.h>
+
+#include "WebSocket/WebSocketServer.h"
 namespace toystation {
+
+class SessionClient {
+public:
+    SessionClient(websocketpp::connection_hdl hdl,
+                  std::shared_ptr<SocketInterface> server);
+
+private:
+    websocketpp::connection_hdl hdl_;
+    std::shared_ptr<SocketInterface> socket_;
+};
+
 class TransferSession : public webrtc::PeerConnectionObserver,
                         webrtc::CreateSessionDescriptionObserver {
 public:
+
+    TransferSession(std::unique_ptr<SessionClient> client);
     void CreateOffer();
     void SetRemoteAnswer(webrtc::SessionDescriptionInterface* sdp);
     void SetRemoteIceCandidate(webrtc::IceCandidateInterface* candidate);
-
 
     void AddSinkToTack();
     //
@@ -49,6 +63,8 @@ protected:
     rtc::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection_;
     rtc::scoped_refptr<webrtc::DataChannelInterface> datachl_interface_;
     std::vector<rtc::scoped_refptr<webrtc::RtpSenderInterface>> tracks_;
+
+    std::unique_ptr<SessionClient> client_;
 };
 
 }  // namespace toystation

@@ -1,8 +1,6 @@
 using System;
 using Avalonia;
-using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.ReactiveUI;
-using ToyStation.Vulkan;
 
 namespace Editor
 {
@@ -19,9 +17,9 @@ namespace Editor
         public static AppBuilder BuildAvaloniaApp()
             => AppBuilder.Configure<App>()
                 .UsePlatformDetect()
+                .With(new SkiaOptions { MaxGpuResourceSizeBytes = 8096000 })
                 .LogToTrace()
-                .UseReactiveUI()
                 .UseSkia()
-                .UseVulkan();
+                .UseReactiveUI();
     }
 }

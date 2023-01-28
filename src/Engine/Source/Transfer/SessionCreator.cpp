@@ -10,8 +10,9 @@
 
 namespace toystation {
 void SessionCreator::Initialize() { SetupFactory(); }
-std::shared_ptr<TransferSession> SessionCreator::CreateSession() {
-    return std::make_shared<TransferSession>();
+std::shared_ptr<TransferSession> SessionCreator::CreateSession(
+    std::unique_ptr<SessionClient> client) {
+    return std::make_shared<TransferSession>(std::move(client));
 }
 void SessionCreator::SetupFactory() {
     RTC_CHECK(!peer_connection_factory_);

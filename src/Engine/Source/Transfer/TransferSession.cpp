@@ -10,15 +10,22 @@ public:
     static DummySetSessionDescriptionObserver* Create() {
         return new rtc::RefCountedObject<DummySetSessionDescriptionObserver>();
     }
-    void OnSuccess() override{
+    void OnSuccess() override {
         // LOG(INFO) << __FUNCTION__;
     }
-    void OnFailure(webrtc::RTCError error) override{
+    void OnFailure(webrtc::RTCError error) override {
         // LOG(INFO) << __FUNCTION__ << " " << ToString(error.type()) << ": "
         //	<< error.message();
         LogError("Set Sdp error", error.message());
     }
 };
+
+SessionClient::SessionClient(websocketpp::connection_hdl hdl,
+                             std::shared_ptr<SocketInterface> server)
+    : hdl_(hdl), socket_(server) {}
+
+TransferSession::TransferSession(std::unique_ptr<SessionClient> client)
+    : client_(std::move(client)) {}
 
 void TransferSession::CreateOffer() {
     peer_connection_->CreateOffer(
@@ -76,4 +83,5 @@ void TransferSession::OnIceCandidateError(const std::string& host_candidate,
 void TransferSession::OnNegotiationNeededEvent(uint32_t event_id) {}
 void TransferSession::OnSuccess(webrtc::SessionDescriptionInterface* desc) {}
 void TransferSession::OnFailure(webrtc::RTCError error) {}
+
 }  // namespace toystation
