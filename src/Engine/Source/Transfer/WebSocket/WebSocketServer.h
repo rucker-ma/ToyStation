@@ -1,7 +1,7 @@
 #pragma once
 
-#include <set>
 #include <functional>
+#include <set>
 
 #ifndef ASIO_STANDALONE
 #define ASIO_STANDALONE
@@ -16,19 +16,14 @@
 
 namespace toystation {
 
-
-class SocketInterface
-{
+class SocketInterface {
 public:
-
-    virtual void Send(websocketpp::connection_hdl hdl,std::string msg){}
+    virtual void Send(websocketpp::connection_hdl hdl, std::string msg) {}
 };
 
-
-class SocketServer:public SocketInterface {
+class SocketServer : public SocketInterface {
     typedef websocketpp::server<websocketpp::config::asio> server;
     typedef server::message_ptr message_ptr;
-
 
 public:
     void Init();
@@ -36,10 +31,13 @@ public:
     void OnClose(websocketpp::connection_hdl hdl);
     void OnMessage(websocketpp::connection_hdl hdl, message_ptr msg);
 
-    void Send(websocketpp::connection_hdl hdl,std::string msg)override;
+    void Send(websocketpp::connection_hdl hdl, std::string msg) override;
 
-    std::function<void(websocketpp::connection_hdl hdl, message_ptr msg)> OnMessageEvent;
+    std::function<void(websocketpp::connection_hdl hdl, message_ptr msg)>
+        OnMessageEvent;
     std::function<void(websocketpp::connection_hdl hdl)> OnOpenEvent;
+    std::function<void(websocketpp::connection_hdl hdl)> OnCloseEvent;
+
 private:
     server server_;
     std::set<websocketpp::connection_hdl,

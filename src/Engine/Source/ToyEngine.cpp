@@ -1,16 +1,20 @@
 ﻿#include "ToyEngine.h"
+#include "Base/Global.h"
 
 namespace toystation {
-ToyEngine& ToyEngine::Instance() {
-    static ToyEngine engine;
-    return engine;
-}
 
-void ToyEngine::Init() {  // render_.Init();
+constexpr int TickIntervalMS = 30;
+
+
+void ToyEngine::Init() {
+    render_system_.Initialize();
+    transfer_system_.Initialize();
 }
-void ToyEngine::Tick() {  // render_.Draw();
+void ToyEngine::Run() {
+    while (true) {
+        kMesssageQueue.Post(kRendThread.get_id(),std::make_shared<RenderMessage>(kRenderMessageID));
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(TickIntervalMS));
+    }
 }
-// Render* TEngine::IRender() { return &render_; }
-// void TEngine::UpdateSize(VkRect2D Size) { render_.UpdateSize(Size); }
-ToyEngine::ToyEngine() {}
 }  // namespace toystation

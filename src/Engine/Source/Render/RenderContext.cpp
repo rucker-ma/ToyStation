@@ -2,6 +2,8 @@
 
 namespace toystation {
 
+std::function<void(const RenderFrame&)> RenderEvent::OnRenderDone;
+
 std::map<RenderContextCreateInfo::RenderMode, std::string>
     RenderContextCreateInfo::kRenderModeStr = {
         TYPE_PAIR(RenderContextCreateInfo::RENDER_LOCAL),

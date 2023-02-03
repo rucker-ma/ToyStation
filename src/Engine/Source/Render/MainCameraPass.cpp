@@ -1,14 +1,11 @@
 #include "MainCameraPass.h"
 
+#include "Base/Global.h"
 #include "File/FileUtil.h"
 #include "Vulkan/Images.h"
 #include "Vulkan/Pipeline.h"
 #include "Vulkan/VkImageUtil.h"
 
-#define STB_IMAGE_IMPLEMENTATION
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image.h"
-#include "stb_image_write.h"
 namespace toystation {
 
 struct UniformBuffer {
@@ -17,7 +14,7 @@ struct UniformBuffer {
     glm::mat4 proj;
 };
 
-struct Vertex{
+struct Vertex {
     glm::vec3 pos;
     glm::vec3 color;
     glm::vec2 tex_coord;
@@ -95,8 +92,14 @@ void MainCameraPass::Draw() {
 
     vkCmdEndRenderPass(cmd);
     context_->GetCommandPool()->SubmitAndWait(cmd);
-    SaveImage();
-    //RenderEvent::OnRenderDone()
+    // SaveImage();
+    if (RenderEvent::OnRenderDone) {
+        kMesssageQueue.Post(kTransferThread.get_id(),
+                            std::make_shared<DataMsg<RenderFrame>>(
+                                kTransferMessageID,
+                                static_cast<RenderFrame*>(new RenderFrameImpl(
+                                    context_, color_image_))));
+    }
 }
 
 void MainCameraPass::SetAttachmentResource() {}
@@ -385,8 +388,11 @@ void MainCameraPass::LoadTexture() {
     int tex_ch = 0;
     std::string image_file =
         "D:/project/cpp/graphics/vk-demo/image/texture.jpg";
-    stbi_uc* pixels =
-        stbi_load(image_file.c_str(), &tex_w, &tex_h, &tex_ch, STBI_rgb_alpha);
+    // stbi_uc* pixels =
+    //     stbi_load(image_file.c_str(), &tex_w, &tex_h, &tex_ch,
+    //     STBI_rgb_alpha);
+
+    unsigned char* pixels = FileUtil::ReadImg(image_file, tex_w, tex_h, tex_ch);
 
     VkDeviceSize image_size = tex_w * tex_h * 4;
     VkExtent2D extent = {tex_w, tex_h};
@@ -455,10 +461,61 @@ void MainCameraPass::SaveImage() {
     context_->GetCommandPool()->SubmitAndWait(cmd);
     void* data = context_->GetAllocator()->Map(buf);
     std::string save_file = "test.bmp";
-    // stbi_write_png(save_file.c_str(), rect->extent.width, rect->extent.height,
+    // stbi_write_png(save_file.c_str(), rect->extent.width,
+    // rect->extent.height,
     //                4, data, 0);
-    stbi_write_bmp(save_file.c_str(), rect->extent.width, rect->extent.height,4,data);
+    // stbi_write_bmp(save_file.c_str(), rect->extent.width,
+    // rect->extent.height,
+    //                4, data);
+
+    FileUtil::WriteBmp("test.bmp", static_cast<unsigned char*>(data),
+                       rect->extent.width, rect->extent.height);
+
     context_->GetAllocator()->UnMap(buf);
     context_->GetAllocator()->Destroy(buf);
 }
+RenderFrameImpl::RenderFrameImpl(std::shared_ptr<RenderContext> context,
+                                 const RHIImage& img)
+    : context_(context) {
+    VkRect2D* rect = context_->GetSwapchain()->GetScissor();
+    VkDeviceSize mem_size = rect->extent.width * rect->extent.height * 4;
+    width_ = rect->extent.width;
+    height_ = rect->extent.height;
+
+    buf_ = context_->GetAllocator()->CreateBuffer(
+        mem_size,
+        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+    VkCommandBuffer cmd = context_->GetCommandPool()->CreateCommandBuffer();
+    VkImageSubresourceRange sub_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
+    VkImageUtil::CmdBarrierImageLayout(
+        cmd, img.image, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, sub_range);
+    VkBufferImageCopy copy_region{};
+    copy_region.imageSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+    copy_region.imageExtent = {rect->extent.width, rect->extent.height, 1};
+    vkCmdCopyImageToBuffer(cmd, img.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                           buf_.buffer, 1, &copy_region);
+
+    VkImageUtil::CmdBarrierImageLayout(
+        cmd, img.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+        VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, sub_range);
+    context_->GetCommandPool()->SubmitAndWait(cmd);
+    data_ = static_cast<unsigned char*>(context_->GetAllocator()->Map(buf_));
+}
+
+RenderFrameImpl::~RenderFrameImpl() {
+    data_ = nullptr;
+    context_->GetAllocator()->UnMap(buf_);
+    context_->GetAllocator()->Destroy(buf_);
+}
+
+unsigned char* RenderFrameImpl::Data() const { return data_; }
+
+unsigned int RenderFrameImpl::Width() const { return width_; }
+
+unsigned int RenderFrameImpl::Height() const { return height_; }
+
+RenderFrameType RenderFrameImpl::Type() { return RenderFrameType::FRAME_RGBA; }
+
 }  // namespace toystation

@@ -1,5 +1,6 @@
 #pragma once
 #include <media/base/adapted_video_track_source.h>
+#include <api/video/i420_buffer.h>
 
 #include "Render/RenderContext.h"
 
@@ -8,11 +9,13 @@ class RenderVideoSource : public rtc::AdaptedVideoTrackSource {
 public:
     virtual ~RenderVideoSource();
     void Initialize();
-    void ReceiveFrame(RenderFrame& frame);
+    void ReceiveFrame(const RenderFrame& frame);
     // implement AdaptedVideoTrackSource
     bool remote() const override;
     absl::optional<bool> needs_denoising() const override;
     webrtc::MediaSourceInterface::SourceState state() const override;
     bool is_screencast() const override;
+private:
+    rtc::scoped_refptr<webrtc::I420Buffer> i420_buffer_;
 };
 }  // namespace toystation

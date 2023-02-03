@@ -12,6 +12,7 @@ extern "C" {
 namespace toystation {
 class ToyVideoEncoder : public webrtc::VideoEncoder {
 public:
+    ToyVideoEncoder();
     virtual ~ToyVideoEncoder();
     // webrtc::VideoEncoder
     int InitEncode(const webrtc::VideoCodec* codec_settings,
@@ -32,7 +33,7 @@ private:
     int InitX264Encoder(const webrtc::VideoCodec* codec_settings,
                         const VideoEncoder::Settings& settings);
 
-    AVCodec* encoder_;
+    const AVCodec* encoder_;
     AVCodecContext* ctx_;
     AVFrame* encode_frame_;
     webrtc::EncodedImageCallback* encoded_done_;

@@ -15,7 +15,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Serilog;
 using Serilog.Extensions.Logging;
-
+using Newtonsoft.Json;
 
 namespace Editor.ViewModels
 {
@@ -42,7 +42,11 @@ namespace Editor.ViewModels
         }
     }
 
-    
+    public class SignalingMessage
+    {
+        public string type { get; set;}
+        public string? payload { get; set; }
+    }
     
     public class WebRtcClientModel : ViewModelBase
     {
@@ -55,10 +59,11 @@ namespace Editor.ViewModels
         private static LibVLC _libVlc;
         private static MediaPlayer _mediaPlayer;
         private static RTCPeerConnection _activePeerConnection;
-        private static WebSocketServer _webSocketServer;
 
         private static WebSocket _websocket;
 
+
+        private WebRtcClient _client;
         /// <summary>
         /// To filter the audio or video codecs when the initial offer is from the remote party
         /// add the desired codecs to these two lists. Leave empty to accept all codecs.
@@ -93,10 +98,43 @@ namespace Editor.ViewModels
             };
             _websocket.OnMessage += (sender, e) =>
             {
-                Console.WriteLine("Get Message");
+
+                var message = JsonConvert.DeserializeObject<SignalingMessage>(e.Data);
+                if(message.type == "welcome")
+                {
+                    _client = new WebRtcClient();
+                    _client.pc = CreatePC();
+
+                    SignalingMessage send_msg= new SignalingMessage();
+                    send_msg.type = "join";
+
+                    string send_str = JsonConvert.SerializeObject(send_msg);
+                    _websocket.Send(send_str);
+                }
+                if(message.type == "offer")
+                {
+                    if (message.payload!=null)
+                    {
+                        SetOffer(_client.pc, message.payload);
+                        string answer = _client.pc.localDescription.sdp.ToString();
+                        SignalingMessage send_msg = new SignalingMessage() ;
+                        send_msg.type = "answer";
+                        send_msg.payload = answer;
+                        _websocket.Send(JsonConvert.SerializeObject(send_msg));
+
+                    }
+                }
+                if(message.type == "candidate")
+                {
+                    if (message.payload!=null)
+                    {
+                        var candInit = Newtonsoft.Json.JsonConvert.DeserializeObject<RTCIceCandidateInit>(message.payload);
+                        _client.pc.addIceCandidate(candInit);
+                    }
+                }
             };
             _websocket.Connect();
-
+            
             //_webSocketServer = new WebSocketServer(IPAddress.Any, WEBSOCKET_PORT);
             //_webSocketServer.AddWebSocketService<WebRtcClient>("/", (client) =>
             //{
@@ -106,10 +144,13 @@ namespace Editor.ViewModels
             //_webSocketServer.Start();
 
         }
-        
+        private static async void SetOffer(RTCPeerConnection pc,string message)
+        {
+            await WebSocketMessageReceived(pc, message);
+        }
         private static async Task<RTCPeerConnection> SendOffer(WebSocketContext context)
         {
-            var pc = CreatePC(context);
+            var pc = CreatePC();
             MediaStreamTrack audioTrack = new MediaStreamTrack(SDPMediaTypesEnum.audio, false, AudioOfferFormats, MediaStreamStatusEnum.RecvOnly);
             pc.addTrack(audioTrack);
             MediaStreamTrack videoTrack = new MediaStreamTrack(SDPMediaTypesEnum.video, false, VideoOfferFormats, MediaStreamStatusEnum.RecvOnly);
@@ -120,7 +161,7 @@ namespace Editor.ViewModels
             context.WebSocket.Send(offerInit.sdp);
             return pc;
         }
-        private static RTCPeerConnection CreatePC(WebSocketContext context)
+        private static RTCPeerConnection CreatePC()
         {
            var pc = new RTCPeerConnection();
            pc.GetRtpChannel().OnStunMessageReceived += (msg, ep, isRelay) =>
@@ -131,29 +172,35 @@ namespace Editor.ViewModels
            };
            pc.onicecandidateerror += (candidate, error) => logger.LogWarning($"Error adding remote ICE candidate. {error} {candidate}");
            pc.oniceconnectionstatechange += (state) => logger.LogDebug($"ICE connection state change to {state}.");
-           //pc.OnReceiveReport += (type, rtcp) => logger.LogDebug($"RTCP {type} report received.");
-           pc.OnRtcpBye += (reason) => logger.LogDebug($"RTCP BYE receive, reason: {(string.IsNullOrWhiteSpace(reason) ? "<none>" : reason)}.");
-           //pc.onicecandidate += (candidate) =>
-           //{
-           //    if (pc.signalingState == RTCSignalingState.have_local_offer ||
-           //        pc.signalingState == RTCSignalingState.have_remote_offer)
-           //    {
-           //        context.WebSocket.Send($"candidate:{candidate}");
-           //    }
-           //};
-           pc.onconnectionstatechange += (state) =>
-           {
+           // pc.OnReceiveReport += (type, rtcp) => logger.LogDebug($"RTCP {type} report received.");
+            pc.OnRtcpBye += (reason) => logger.LogDebug($"RTCP BYE receive, reason: {(string.IsNullOrWhiteSpace(reason) ? "<none>" : reason)}.");
+            pc.onicecandidate += (candidate) =>
+            {
+                if (pc.signalingState == RTCSignalingState.have_local_offer ||
+                    pc.signalingState == RTCSignalingState.have_remote_offer)
+                {
+                    Console.WriteLine(candidate.ToString() );
+
+                    //context.WebSocket.Send($"candidate:{candidate}");
+                }
+            };
+            pc.onconnectionstatechange += (state) =>
+            {
                if (state == RTCPeerConnectionState.connected)
                {
                    var rtpSession =
                        CreateRtpSession(pc.AudioLocalTrack?.Capabilities, pc.VideoLocalTrack?.Capabilities);
+                   
                    Core.Initialize();
                    _libVlc = new LibVLC();
+                   
                    _mediaPlayer = new MediaPlayer(_libVlc);
+                   
                    var sdpFullPath = Path.Combine(Directory.GetParent(typeof(Program).Assembly.Location).FullName,
                        FFPLAY_DEFAULT_SDP_PATH);
                    using var media = new Media(_libVlc, new Uri(sdpFullPath));
                    _mediaPlayer.Play(media);
+                   
                    //if (_activePeerConnection != null)
                    {
                        // request key frames
@@ -173,15 +220,25 @@ namespace Editor.ViewModels
                        }
                        else if (media == SDPMediaTypesEnum.video && rtpSession.VideoDestinationEndPoint != null)
                        {
-                           //logger.LogDebug($"Forwarding {media} RTP packet to ffplay timestamp {rtpPkt.Header.Timestamp}.");
+                           logger.LogInformation($"Forwarding {media} RTP packet to ffplay timestamp {rtpPkt.Header.Timestamp}.");
                            rtpSession.SendRtpRaw(media, rtpPkt.Payload, rtpPkt.Header.Timestamp,
-                               rtpPkt.Header.MarkerBit, rtpPkt.Header.PayloadType);
+                               rtpPkt.Header.MarkerBit, rtpPkt.Header.PayloadType);                          
                        }
 
                    };
-                   pc.OnRtpClosed += (reason) => rtpSession.Close(reason);
-               }
+                   pc.OnRtpClosed += (reason) => { 
+                       
+                       logger.LogInformation($"{reason}");
+                       rtpSession.Close(reason);
+                   };
+                    pc.OnVideoFrameReceived += (rep,idx, bytes, format) =>
+                    {
+                      
+                        logger.LogInformation(format.ToString());
+                    };
+                }
            };
+
            _activePeerConnection = pc;
            return pc;
         }
@@ -197,7 +254,7 @@ namespace Editor.ViewModels
             if (audioFormats != null && audioFormats.Count > 0)
             {
                 MediaStreamTrack audioTrack = new MediaStreamTrack(SDPMediaTypesEnum.audio, false, audioFormats,
-                    MediaStreamStatusEnum.SendRecv);
+                    MediaStreamStatusEnum.RecvOnly);
                 rtpSession.addTrack(audioTrack);
                 hasAudio = true;
             }
@@ -205,12 +262,13 @@ namespace Editor.ViewModels
             if (videoFormats != null && videoFormats.Count > 0)
             {
                 MediaStreamTrack videoTrack = new MediaStreamTrack(SDPMediaTypesEnum.video, false, videoFormats,
-                    MediaStreamStatusEnum.SendRecv);
+                    MediaStreamStatusEnum.RecvOnly);
                 rtpSession.addTrack(videoTrack);
                 hasVideo = true;
             }
-
+            
             var sdpOffer = rtpSession.CreateOffer(null);
+            
             if (hasAudio)
             {
                 sdpOffer.Media.Single(x => x.Media == SDPMediaTypesEnum.audio).Port = FFPLAY_DEFAULT_AUDIO_PORT;
@@ -227,15 +285,21 @@ namespace Editor.ViewModels
             }
 
             rtpSession.Start();
-            rtpSession.SetDestination(SDPMediaTypesEnum.audio, new IPEndPoint(IPAddress.Loopback, FFPLAY_DEFAULT_AUDIO_PORT), 
-                new IPEndPoint(IPAddress.Loopback, FFPLAY_DEFAULT_AUDIO_PORT + 1));
-            rtpSession.SetDestination(SDPMediaTypesEnum.video, new IPEndPoint(IPAddress.Loopback, FFPLAY_DEFAULT_VIDEO_PORT), 
-                new IPEndPoint(IPAddress.Loopback, FFPLAY_DEFAULT_VIDEO_PORT + 1));
-
+            if (hasAudio)
+            {
+                rtpSession.SetDestination(SDPMediaTypesEnum.audio, new IPEndPoint(IPAddress.Loopback, FFPLAY_DEFAULT_AUDIO_PORT),
+                    new IPEndPoint(IPAddress.Loopback, FFPLAY_DEFAULT_AUDIO_PORT + 1));
+            }
+            if (hasVideo)
+            {
+                rtpSession.SetDestination(SDPMediaTypesEnum.video, new IPEndPoint(IPAddress.Loopback, FFPLAY_DEFAULT_VIDEO_PORT),
+                    new IPEndPoint(IPAddress.Loopback, FFPLAY_DEFAULT_VIDEO_PORT + 1));
+                
+            }
             return rtpSession;
         }
 
-        private static async Task WebSocketMessageReceived(WebSocketContext context, RTCPeerConnection pc,
+        private static async Task WebSocketMessageReceived(RTCPeerConnection pc,
             string message)
         {
             try
@@ -254,7 +318,7 @@ namespace Editor.ViewModels
                     var answer = pc.createAnswer(null);
                     await pc.setLocalDescription(answer);
                     Console.WriteLine(answer.sdp);
-                    context.WebSocket.Send(answer.sdp);
+                    //context.WebSocket.Send(answer.sdp);
                     
                 }else if (pc.remoteDescription == null)
                 {

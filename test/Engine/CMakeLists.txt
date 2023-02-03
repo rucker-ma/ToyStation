@@ -27,4 +27,4 @@ if(MSVC)
     set_property(TARGET ${MODULE_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreadedDebug")
 endif()
 
-target_link_libraries(${MODULE_NAME} ${GTEST_LIB} Engine)
+# target_link_libraries(${MODULE_NAME} ${GTEST_LIB} Engine ${JSONCPP_LIB})

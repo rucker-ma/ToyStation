@@ -4,8 +4,10 @@
 
 #include "WebSocket/WebSocketServer.h"
 namespace toystation {
-
+class TransferSession;
 class SessionClient {
+    friend class TransferSession;
+
 public:
     SessionClient(websocketpp::connection_hdl hdl,
                   std::shared_ptr<SocketInterface> server);
@@ -17,12 +19,14 @@ private:
 
 class TransferSession : public webrtc::PeerConnectionObserver,
                         webrtc::CreateSessionDescriptionObserver {
-public:
+    friend class SessionCreator;
 
+public:
     TransferSession(std::unique_ptr<SessionClient> client);
+    virtual ~TransferSession();
     void CreateOffer();
-    void SetRemoteAnswer(webrtc::SessionDescriptionInterface* sdp);
-    void SetRemoteIceCandidate(webrtc::IceCandidateInterface* candidate);
+    void SetRemoteAnswer(std::string sdp);
+    void SetRemoteIceCandidate(std::string mid,int index,std::string sdp);
 
     void AddSinkToTack();
     //
@@ -62,7 +66,6 @@ public:
 protected:
     rtc::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection_;
     rtc::scoped_refptr<webrtc::DataChannelInterface> datachl_interface_;
-    std::vector<rtc::scoped_refptr<webrtc::RtpSenderInterface>> tracks_;
 
     std::unique_ptr<SessionClient> client_;
 };

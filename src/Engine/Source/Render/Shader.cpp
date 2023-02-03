@@ -4,7 +4,7 @@
 
 namespace toystation {
 
-std::vector<char> read_file(const std::string filename) {
+std::vector<char> ReadShaderFile(const std::string filename) {
     std::ifstream file(filename, std::ios::ate | std::ios::binary);
     if (!file.is_open()) {
         throw std::runtime_error("failed to open file");
@@ -19,7 +19,7 @@ std::vector<char> read_file(const std::string filename) {
 
 Shader::Shader(std::string& file) : shader_file_(file) {}
 VkShaderModule Shader::GetVKShaderModule() {
-    std::vector<char> shader_code = read_file(shader_file_);
+    std::vector<char> shader_code = ReadShaderFile(shader_file_);
     VkShaderModuleCreateInfo create_info{};
     create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
     create_info.codeSize = shader_code.size();

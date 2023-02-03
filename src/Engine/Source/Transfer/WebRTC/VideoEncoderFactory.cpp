@@ -1,18 +1,24 @@
 #include "VideoEncoderFactory.h"
 
-#include <api/video_codecs/h264_profile_level_id.h>
+#include <media/base/codec.h>
 #include <media/base/media_constants.h>
+
+#include "VideoEncoder.h"
+
+
 namespace toystation {
 
 webrtc::SdpVideoFormat CreateH264Format(webrtc::H264Profile profile,
                                         webrtc::H264Level level,
                                         const std::string& packetization_mode) {
-    const absl::optional<std::string> profile_string =
-        webrtc::H264ProfileLevelIdToString(
-            webrtc::H264ProfileLevelId(profile, level));
+    // const absl::optional<std::string> profile_string =
+    //     webrtc::H264ProfileLevelIdToString(
+    //         webrtc::H264ProfileLevelId(profile, level));
+    std::string profile_string = webrtc::H264ProfileLevelIdToString(
+            webrtc::H264ProfileLevelId(profile, level)).value();
     return webrtc::SdpVideoFormat(
         cricket::kH264CodecName,
-        {{cricket::kH264FmtpProfileLevelId, *profile_string},
+        {{cricket::kH264FmtpProfileLevelId,  profile_string},
          {cricket::kH264FmtpLevelAsymmetryAllowed, "1"},
          {cricket::kH264FmtpPacketizationMode, packetization_mode}});
 }
@@ -37,6 +43,6 @@ ToyVideoEncoderFactory::QueryVideoEncoder(
 std::unique_ptr<webrtc::VideoEncoder>
 ToyVideoEncoderFactory::CreateVideoEncoder(
     const webrtc::SdpVideoFormat& format) {
-    return std::unique_ptr<webrtc::VideoEncoder>{};
+    return std::make_unique<ToyVideoEncoder>();
 }
 }  // namespace toystation

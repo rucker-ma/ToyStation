@@ -30,13 +30,14 @@ void SocketServer::OnOpen(websocketpp::connection_hdl hdl) {
     OnOpenEvent(hdl);
 }
 void SocketServer::OnClose(websocketpp::connection_hdl hdl) {
+    OnCloseEvent(hdl);
     connections_.erase(hdl);
 }
 void SocketServer::OnMessage(websocketpp::connection_hdl hdl, message_ptr msg) {
-    LogInfo("get socket server msg: ", msg->get_payload());
-    OnMessageEvent(hdl,msg);
+    LogDebug("get socket server msg: ", msg->get_payload());
+    OnMessageEvent(hdl, msg);
 }
 void SocketServer::Send(websocketpp::connection_hdl hdl, std::string msg) {
-    server_.send(hdl,msg,websocketpp::frame::opcode::TEXT);
+    server_.send(hdl, msg, websocketpp::frame::opcode::TEXT);
 }
 }  // namespace toystation

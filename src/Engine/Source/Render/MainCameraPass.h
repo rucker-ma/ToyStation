@@ -9,6 +9,28 @@
 #include "Vulkan/DescriptorSets.h"
 
 namespace toystation {
+
+class RenderFrameImpl : public RenderFrame {
+public:
+    RenderFrameImpl() = delete;
+    RenderFrameImpl(const RenderFrameImpl& frame) = delete;
+    RenderFrameImpl& operator=(const RenderFrameImpl& frame) = delete;
+
+    RenderFrameImpl(std::shared_ptr<RenderContext> context, const RHIImage& img);
+    virtual ~RenderFrameImpl();
+    virtual unsigned char* Data()const;
+    virtual unsigned int Width()const;
+    virtual unsigned int Height()const;
+    virtual RenderFrameType Type();
+
+private:
+    Buffer buf_;
+    std::shared_ptr<RenderContext> context_;
+    unsigned int width_;
+    unsigned int height_;
+    unsigned char* data_;
+};
+
 class MainCameraPass : public RenderPassBase {
 public:
     void Initialize(RenderPassInitInfo& info) override;

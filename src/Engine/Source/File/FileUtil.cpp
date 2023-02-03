@@ -4,6 +4,11 @@
 
 #include "Base/Macro.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image.h"
+#include "stb_image_write.h"
+
 namespace toystation {
 void FileUtil::ReadBinary(const std::string path, std::vector<char>& out_data) {
     LogDebug("Start Read " + path);
@@ -19,5 +24,13 @@ void FileUtil::ReadBinary(const std::string path, std::vector<char>& out_data) {
     file.read(out_data.data(), file_size);
     file.close();
     LogDebug("Read " + path + "Success, Size is " + std::to_string(file_size));
+}
+void FileUtil::WriteBmp(std::string name, unsigned char* data, int width,
+                        int height) {
+    stbi_write_bmp(name.c_str(), width, height, 4, data);
+}
+unsigned char* FileUtil::ReadImg(std::string name, int& width, int& height,
+                                 int& channel) {
+    return stbi_load(name.c_str(), &width, &height, &channel, STBI_rgb_alpha);
 }
 }  // namespace toystation

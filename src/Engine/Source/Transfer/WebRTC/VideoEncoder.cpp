@@ -6,6 +6,12 @@
 #include "Base/Macro.h"
 
 namespace toystation {
+ToyVideoEncoder::ToyVideoEncoder()
+    : webrtc::VideoEncoder(),
+      ctx_(nullptr),
+      encode_frame_(nullptr),
+      encoder_(nullptr) {}
+
 ToyVideoEncoder::~ToyVideoEncoder() {}
 int ToyVideoEncoder::InitEncode(const webrtc::VideoCodec* codec_settings,
                                 const VideoEncoder::Settings& settings) {
@@ -28,12 +34,14 @@ int32_t ToyVideoEncoder::RegisterEncodeCompleteCallback(
     return WEBRTC_VIDEO_CODEC_OK;
 }
 int32_t ToyVideoEncoder::Release() {
-    if (ctx_) {
-        avcodec_free_context(&ctx_);
-    }
     if (encode_frame_) {
         av_frame_free(&encode_frame_);
     }
+    if (ctx_) {
+        avcodec_free_context(&ctx_);
+        encoder_ = nullptr;
+    }
+
     return WEBRTC_VIDEO_CODEC_OK;
 }
 int32_t ToyVideoEncoder::Encode(
@@ -52,6 +60,18 @@ int32_t ToyVideoEncoder::Encode(
 
     encode_frame_->flags = 0;
     encode_frame_->pts = frame.timestamp();
+    const webrtc::I420BufferInterface* i420_buffer =
+        frame.video_frame_buffer()->GetI420();
+
+    int height = i420_buffer->height();
+    const uint8_t* datay = i420_buffer->DataY();
+    long stridey_size = i420_buffer->width() * i420_buffer->height();
+    memcpy(encode_frame_->data[0], i420_buffer->DataY(), stridey_size);
+    memcpy(encode_frame_->data[1], i420_buffer->DataU(),
+           i420_buffer->StrideU() * i420_buffer->height() / 2);
+    memcpy(encode_frame_->data[2], i420_buffer->DataV(),
+           i420_buffer->StrideV() * i420_buffer->height() / 2);
+
     AVPacket* packet = av_packet_alloc();
     int ret = avcodec_send_frame(ctx_, encode_frame_);
     if (ret < 0) {
@@ -112,11 +132,15 @@ webrtc::VideoEncoder::EncoderInfo ToyVideoEncoder::GetEncoderInfo() const {
     encoder_info.implementation_name = "ToyStation";
     encoder_info.preferred_pixel_formats = {
         webrtc::VideoFrameBuffer::Type::kI420};
+    encoder_info.scaling_settings = VideoEncoder::ScalingSettings(35, 45);
+    // TODO: test simulcast support
+    encoder_info.supports_simulcast = false;
+
     return encoder_info;
 }
 int ToyVideoEncoder::InitX264Encoder(const webrtc::VideoCodec* codec_settings,
                                      const VideoEncoder::Settings& settings) {
-    encoder_ = (AVCodec*)avcodec_find_encoder_by_name("libx264");
+    encoder_ = avcodec_find_encoder_by_name("libx264");
     if (!encoder_) {
         LogError("Not find libx264 encoder");
         return WEBRTC_VIDEO_CODEC_ERROR;
@@ -134,11 +158,19 @@ int ToyVideoEncoder::InitX264Encoder(const webrtc::VideoCodec* codec_settings,
     ctx_->height = codec_settings->height;
     ctx_->bit_rate = codec_settings->maxBitrate * 1000;
     ctx_->time_base = {1, 90000};
-    ctx_->gop_size = codec_settings->H264().keyFrameInterval;
+    ctx_->gop_size = (codec_settings->H264().keyFrameInterval) *
+                     codec_settings->maxFramerate / 1000;
+
     ctx_->codec_type = AVMediaType::AVMEDIA_TYPE_VIDEO;
     ctx_->pix_fmt = AV_PIX_FMT_YUV420P;
 
-    int ret = avcodec_open2(ctx_, encoder_, nullptr);
+    AVDictionary* dictionary = nullptr;
+    // X264_WEIGHTP_NONE =0
+    // fix ` Streams with pred_weight_table unsupported` error
+    int ret = av_dict_set_int(&dictionary, "weightb", 0, 0);
+    ret = av_dict_set_int(&dictionary, "weightp", 0, 0);
+
+    ret = avcodec_open2(ctx_, encoder_, &dictionary);
     if (ret < 0) {
         LogError("open encoder error");
         avcodec_free_context(&ctx_);

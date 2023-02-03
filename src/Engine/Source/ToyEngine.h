@@ -1,27 +1,24 @@
 ﻿#pragma once
 
 #include "Base/Macro.h"
+#include "Base/MessageQueue.h"
+
+#include "Render/RenderSystem.h"
+#include "Transfer/TransferSystem.h"
+
 namespace toystation {
-CLASS(SINGLETON)
+CLASS()
 class TS_CPP_API ToyEngine {
 public:
-    static ToyEngine& Instance();
+    ToyEngine(){};
 
     FUNCTION(CSHARP)
     void Init();
     FUNCTION(CSHARP)
-    void Tick();
-
-    // FUNCTION(CSHARP)
-    // Render* IRender();
-
-    // FUNCTION(CSHARP)
-    // void UpdateSize(VkRect2D Size);
+    void Run();
 
 private:
-    ToyEngine();
-
-private:
-    //Render render_;
+    TransferSystem transfer_system_;
+    RenderSystem render_system_;
 };
 }  // namespace toystation

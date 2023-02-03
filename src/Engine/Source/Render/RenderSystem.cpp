@@ -1,5 +1,7 @@
 #include "RenderSystem.h"
 
+#include "Base/Global.h"
+
 namespace toystation {
 
 RenderGlobalData RenderSystem::kRenderGlobalData = {};
@@ -15,6 +17,22 @@ void RenderSystem::Initialize() {
 
     render_pipeline_ = std::make_shared<RenderPipeline>();
     render_pipeline_->Initialize();
+
+    Global::SetRenderThread(std::thread([this] { Run(); }));
 }
 void RenderSystem::Tick() { render_pipeline_->Tick(); }
+void RenderSystem::Run() {
+    std::shared_ptr<Msg> msg;
+    while (true) {
+        if (kMesssageQueue.Get(msg)) {
+            if (msg->GetID() == kRenderMessageID) {
+                auto* render_msg = dynamic_cast<RenderMessage*>(msg.get());
+                if (render_msg) {
+                    LogDebug("RenderSystem Tick");
+                    Tick();
+                }
+            }
+        }
+    }
+}
 }  // namespace toystation
