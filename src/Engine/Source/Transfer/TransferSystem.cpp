@@ -1,5 +1,6 @@
 #include "TransferSystem.h"
 
+#include "Base/Calculagraph.h"
 #include "Base/Global.h"
 #include "Base/Macro.h"
 #include "SessionCreator.h"
@@ -30,10 +31,11 @@ void TransferSystem::Initialize() {
         std::bind(&TransferSystem::OnUserClose, this, std::placeholders::_1);
 
     sserver_thread_ = std::thread([this] { session_server_->Init(); });
-
+    // webrtc线程间通信依赖于平台实现的消息机制，所以需要一个线程来处理平台的消息传递
     msg_thread_ = std::thread([this] {
         MSG msg;
         BOOL gm;
+
         while ((gm = GetMessage(&msg, NULL, 0, 0)) != 0 && gm != -1) {
             TranslateMessage(&msg);
             DispatchMessage(&msg);
@@ -74,15 +76,23 @@ void TransferSystem::OnUserClose(websocketpp::connection_hdl hdl) {
 
 void TransferSystem::Run() {
     std::shared_ptr<Msg> msg;
+    Calculagraph calcu("Transfer FrameRate", 1, 1);
+    calcu.OnEnd = [](double result,long long duration) {
+        LogDebug("Receive Render Frame,Process Time: " +
+                 std::to_string(static_cast<int>(duration)));
+    };
+    calcu.Start();
     while (true) {
         if (kMesssageQueue.Get(msg)) {
             if (msg->GetID() == kTransferMessageID) {
                 auto* frame_msg =
                     dynamic_cast<DataMsg<RenderFrame>*>(msg.get());
                 if (frame_msg) {
-                    LogDebug("Receive Render Frame");
                     auto& payload = frame_msg->GetPayload();
+
                     RenderEvent::OnRenderDone(payload);
+                    calcu.Step();
+
                 }
             }
         }

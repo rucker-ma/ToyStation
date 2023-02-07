@@ -23,13 +23,20 @@ void RenderSystem::Initialize() {
 void RenderSystem::Tick() { render_pipeline_->Tick(); }
 void RenderSystem::Run() {
     std::shared_ptr<Msg> msg;
+    //计算渲染帧率
+    Calculagraph calcu("Render FrameRate",100,1000);
+    calcu.OnEnd = [this](double result,long long){
+        LogInfo("Render FrameRate: " + std::to_string(static_cast<int>(result)));  
+    };
+    calcu.Start();
     while (true) {
         if (kMesssageQueue.Get(msg)) {
             if (msg->GetID() == kRenderMessageID) {
                 auto* render_msg = dynamic_cast<RenderMessage*>(msg.get());
                 if (render_msg) {
-                    LogDebug("RenderSystem Tick");
+                    //LogDebug("RenderSystem Tick");
                     Tick();
+                    calcu.Step();
                 }
             }
         }

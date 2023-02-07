@@ -10,6 +10,9 @@
 #include "stb_image_write.h"
 
 namespace toystation {
+
+constexpr int kDefaultJpgQuality = 75;
+
 void FileUtil::ReadBinary(const std::string path, std::vector<char>& out_data) {
     LogDebug("Start Read " + path);
     std::ifstream file(path, std::ios::ate | std::ios::binary);
@@ -28,6 +31,16 @@ void FileUtil::ReadBinary(const std::string path, std::vector<char>& out_data) {
 void FileUtil::WriteBmp(std::string name, unsigned char* data, int width,
                         int height) {
     stbi_write_bmp(name.c_str(), width, height, 4, data);
+}
+void FileUtil::WritePng(std::string name, unsigned char* data, int width,
+                        int height) {
+    stbi_write_png(name.c_str(), width, height, 4, data, width * 4);
+}
+
+void FileUtil::WriteJpg(std::string name, unsigned char* data, int width,
+                        int height) {
+    // jpg quality from 1(worst) to 95 (best)
+    stbi_write_jpg(name.c_str(), width, height, 4, data, kDefaultJpgQuality);
 }
 unsigned char* FileUtil::ReadImg(std::string name, int& width, int& height,
                                  int& channel) {

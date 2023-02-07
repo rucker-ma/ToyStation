@@ -30,7 +30,7 @@ bool SwapChain::Init(VkContext* ctx, VkQueue queue, uint32_t queue_family_index,
     vkGetPhysicalDeviceSurfaceFormatsKHR(VkPhysicalDevice(ctx), surface_,
                                          &count, surface_formats.data());
 
-    surface_format_ = VK_FORMAT_B8G8R8A8_UNORM;
+    surface_format_ = VK_FORMAT_R8G8B8A8_UNORM;
     surface_color_ = surface_formats[0].colorSpace;
     for (auto iter = surface_formats.begin(); iter != surface_formats.end();
          iter++) {
@@ -114,7 +114,7 @@ Size2d SwapChain::Update(int width, int height) {
 }
 
 SwapChainOffline::SwapChainOffline() : SwapChainBase() {
-    surface_format_ = VK_FORMAT_B8G8R8A8_UNORM;
+    surface_format_ = VK_FORMAT_R8G8B8A8_UNORM;
     scissor_ = {0};
     scissor_.extent.width = SURFACE_DEFAULT_WIDTH;
     scissor_.extent.height = SURFACE_DEFAULT_HEIGHT;

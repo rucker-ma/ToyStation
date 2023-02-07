@@ -49,8 +49,6 @@ std::shared_ptr<TransferSession> SessionCreator::CreateSession(
     config.enable_dtls_srtp = true;
     auto session = std::make_shared<TransferSession>(std::move(client));
 
-    // auto* dependencies =  new
-    // webrtc::PeerConnectionDependencies(session.get());
     session->peer_connection_ = peer_connection_factory_->CreatePeerConnection(
         config, nullptr, nullptr, session.get());
 
@@ -59,7 +57,7 @@ std::shared_ptr<TransferSession> SessionCreator::CreateSession(
     return session;
 }
 void SessionCreator::InitWebRtc() {
-    rtc::LogMessage::AddLogToStream(&rtc_log_, rtc::LS_VERBOSE);
+    rtc::LogMessage::AddLogToStream(&rtc_log_, rtc::LS_WARNING);
     rtc::InitializeSSL();
     rtc::WinsockInitializer winsock_init;
 

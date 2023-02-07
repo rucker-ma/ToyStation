@@ -7,9 +7,21 @@
 #include <memory>
 #include <vector>
 
-#define LOG_WRITE(log_level, ...) \
-    Logger::GetInstance()->write( \
-        log_level, "[" + std::string(__FUNCTION__) + "] " + __VA_ARGS__)
+constexpr const char *FilenameWithoutPath(const char *path) {
+    const char *result = path;
+    while (*path != '\0')
+        if (*path++ == '\\') {
+            result = path;
+        }
+
+    return result;
+}
+
+#define LOG_WRITE(log_level, ...)                                             \
+    Logger::GetInstance()->write(                                             \
+        log_level, "[" + std::string(FilenameWithoutPath(__FILE__)) + ":" + \
+                       std::to_string(__LINE__) + "] " + __VA_ARGS__)
+
 #define LogDebug(...) LOG_WRITE(spdlog::level::level_enum::debug, __VA_ARGS__)
 #define LogInfo(...) LOG_WRITE(spdlog::level::level_enum::info, __VA_ARGS__)
 #define LogWarn(...) LOG_WRITE(spdlog::level::level_enum::warn, __VA_ARGS__)

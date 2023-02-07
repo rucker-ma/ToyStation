@@ -31,7 +31,6 @@ void RenderContext::Initialize(RenderContextCreateInfo& info) {
         //     VK_KHR_VIDEO_ENCODE_QUEUE_EXTENSION_NAME);
         // context_create_info.AddDeviceExtension(
         //     VK_EXT_VIDEO_ENCODE_H264_EXTENSION_NAME);
-
         swapchain_ = std::make_shared<SwapChainOffline>();
         
     }

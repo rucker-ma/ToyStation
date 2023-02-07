@@ -233,7 +233,7 @@ void MainCameraPass::SetupPipeline(RenderPassInitInfo& info) {
         VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     vert_shaderstage_info.stage = VK_SHADER_STAGE_VERTEX_BIT;
     vert_shaderstage_info.module =
-        GetShader("D:/project/cpp/graphics/vk-demo/shader/vert.spv",
+        GetShader("D:/project/ToyStation/src/Engine/Shader/vert.spv",
                   info.context->GetContext());
 
     vert_shaderstage_info.pName = "main";
@@ -243,7 +243,7 @@ void MainCameraPass::SetupPipeline(RenderPassInitInfo& info) {
         VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     frag_shaderstage_info.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
     frag_shaderstage_info.module =
-        GetShader("D:/project/cpp/graphics/vk-demo/shader/frag.spv",
+        GetShader("D:/project/ToyStation/src/Engine/Shader/frag.spv",
                   info.context->GetContext());
     frag_shaderstage_info.pName = "main";
 
@@ -358,7 +358,7 @@ void MainCameraPass::SetupFrameBuffer(RenderPassInitInfo& info) {
 
     VkImageViewCreateInfo color_view =
         MakeImage2DViewCreateInfo(color_image_.image, VK_IMAGE_ASPECT_COLOR_BIT,
-                                  VK_FORMAT_B8G8R8A8_UNORM);
+                                  VK_FORMAT_R8G8B8A8_UNORM);
     VkImageViewCreateInfo depth_view = MakeImage2DViewCreateInfo(
         depth_image.image, VK_IMAGE_ASPECT_DEPTH_BIT, VK_FORMAT_D32_SFLOAT);
 
@@ -388,14 +388,15 @@ void MainCameraPass::LoadTexture() {
     int tex_ch = 0;
     std::string image_file =
         "D:/project/cpp/graphics/vk-demo/image/texture.jpg";
-    // stbi_uc* pixels =
-    //     stbi_load(image_file.c_str(), &tex_w, &tex_h, &tex_ch,
-    //     STBI_rgb_alpha);
 
     unsigned char* pixels = FileUtil::ReadImg(image_file, tex_w, tex_h, tex_ch);
 
-    VkDeviceSize image_size = tex_w * tex_h * 4;
-    VkExtent2D extent = {tex_w, tex_h};
+    VkDeviceSize image_size = static_cast<long long>(tex_w * tex_h * 4);
+    if (tex_w < 0 || tex_h < 0) {
+        LogFatal("Read texture image error");
+    }
+    VkExtent2D extent = {static_cast<uint32_t>(tex_w),
+                         static_cast<uint32_t>(tex_h)};
     VkImageCreateInfo create_info = MakeImage2DCreateInfo(extent);
     VkCommandBuffer cmd = context_->GetCommandPool()->CreateCommandBuffer(
         VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
@@ -404,8 +405,8 @@ void MainCameraPass::LoadTexture() {
         cmd, image_size, pixels, create_info,
         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-    VkImageViewCreateInfo view_create_info =
-        MakeImage2DViewCreateInfo(img.image, VK_IMAGE_ASPECT_COLOR_BIT);
+    VkImageViewCreateInfo view_create_info = MakeImage2DViewCreateInfo(
+        img.image, VK_IMAGE_ASPECT_COLOR_BIT, VK_FORMAT_R8G8B8A8_UNORM);
     VkSamplerCreateInfo sampler_create_info{};
     sampler_tex_ = context_->GetAllocator()->CreateTexture(
         img, view_create_info, sampler_create_info);
@@ -434,6 +435,7 @@ void MainCameraPass::UpdateUniform() {
     memcpy(data, &ubo, sizeof(ubo));
     context_->GetAllocator()->UnMap(kShaderBuffer.uniform);
 }
+// SaveImage for test and debug
 void MainCameraPass::SaveImage() {
     VkRect2D* rect = context_->GetSwapchain()->GetScissor();
     VkDeviceSize mem_size = rect->extent.width * rect->extent.height * 4;
@@ -460,13 +462,6 @@ void MainCameraPass::SaveImage() {
         VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, sub_range);
     context_->GetCommandPool()->SubmitAndWait(cmd);
     void* data = context_->GetAllocator()->Map(buf);
-    std::string save_file = "test.bmp";
-    // stbi_write_png(save_file.c_str(), rect->extent.width,
-    // rect->extent.height,
-    //                4, data, 0);
-    // stbi_write_bmp(save_file.c_str(), rect->extent.width,
-    // rect->extent.height,
-    //                4, data);
 
     FileUtil::WriteBmp("test.bmp", static_cast<unsigned char*>(data),
                        rect->extent.width, rect->extent.height);
