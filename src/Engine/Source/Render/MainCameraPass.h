@@ -6,30 +6,18 @@
 
 #include "RenderContext.h"
 #include "RenderPassBase.h"
+#include "RenderResource.h"
+
 #include "Vulkan/DescriptorSets.h"
 
 namespace toystation {
 
-class RenderFrameImpl : public RenderFrame {
-public:
-    RenderFrameImpl() = delete;
-    RenderFrameImpl(const RenderFrameImpl& frame) = delete;
-    RenderFrameImpl& operator=(const RenderFrameImpl& frame) = delete;
-
-    RenderFrameImpl(std::shared_ptr<RenderContext> context, const RHIImage& img);
-    virtual ~RenderFrameImpl();
-    virtual unsigned char* Data()const;
-    virtual unsigned int Width()const;
-    virtual unsigned int Height()const;
-    virtual RenderFrameType Type();
-
-private:
-    Buffer buf_;
-    std::shared_ptr<RenderContext> context_;
-    unsigned int width_;
-    unsigned int height_;
-    unsigned char* data_;
+enum MainCameraSubpassType{
+    SUBPASS_BASEPASS = 0,
+    SUBPASS_YUV_TRANSFER = 1
 };
+
+VkShaderModule GetShader(std::string path, std::shared_ptr<VkContext> ctx);
 
 class MainCameraPass : public RenderPassBase {
 public:
@@ -46,10 +34,10 @@ private:
     void LoadTexture();
     void UpdateUniform();
     void SaveImage();
-    DescriptorSetContainer set_container_;
+
     std::shared_ptr<RenderContext> context_;
-    std::vector<VkFramebuffer> framebuffers_;
-    Texture sampler_tex_;
-    RHIImage color_image_;
+    std::shared_ptr<RenderResource> resource_;
+
+    Texture image_tex_;
 };
 }  // namespace toystation

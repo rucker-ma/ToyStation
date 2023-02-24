@@ -1,5 +1,6 @@
 #pragma once
 #include "RenderContext.h"
+#include "RenderResource.h"
 
 namespace toystation {
 
@@ -7,10 +8,12 @@ class RenderAttachRef {
 public:
     static constexpr uint32_t kRenderAttachRefColor = 0;
     static constexpr uint32_t kRenderAttachRefDepth = 1;
+    static constexpr uint32_t kRenderAttachRefYuv420 = 2;
 };
 
 struct RenderPassInitInfo {
     std::shared_ptr<RenderContext> context;
+    std::shared_ptr<RenderResource> resource;
 };
 
 class RenderPassBase {
@@ -27,7 +30,7 @@ public:
     virtual void Initialize(RenderPassInitInfo& info){};
     virtual void PostInitialize(){};
     virtual void PrepareData(){};
-    virtual void Draw(){};
+    virtual void Draw()=0;
 protected:
     VkRenderPass render_pass_;
     RenderPipeline pipeline_;

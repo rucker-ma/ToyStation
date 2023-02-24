@@ -9,13 +9,13 @@ class RenderVideoSource : public rtc::AdaptedVideoTrackSource {
 public:
     virtual ~RenderVideoSource();
     void Initialize();
-    void ReceiveFrame(const RenderFrame& frame);
+    void ReceiveFrame(std::shared_ptr<RenderFrame> frame);
     // implement AdaptedVideoTrackSource
     bool remote() const override;
     absl::optional<bool> needs_denoising() const override;
     webrtc::MediaSourceInterface::SourceState state() const override;
     bool is_screencast() const override;
 private:
-    rtc::scoped_refptr<webrtc::I420Buffer> i420_buffer_;
+    rtc::scoped_refptr<webrtc::I420BufferInterface> i420_buffer_;
 };
 }  // namespace toystation

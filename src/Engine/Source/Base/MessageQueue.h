@@ -27,7 +27,14 @@ public:
 
     DataMsg(int message_id, DataType* payload)
         : Msg(message_id), payload_(payload) {}
-    DataType& GetPayload() const { return *payload_; }
+    DataType& GetPayload() const {
+        assert(payload_);
+        return *payload_;
+    }
+    std::shared_ptr<DataType> SharedPayload() {
+        assert(payload_);
+        return std::move(payload_);
+    }
     virtual ~DataMsg() {}
 
 private:

@@ -71,6 +71,10 @@ public:
     void CreateGraphicsPipeline(uint32_t create_info_count,
                                 const VkGraphicsPipelineCreateInfo* create_info,
                                 VkPipeline& pipeline);
+    
+    void CreateComputePipeline(uint32_t create_info_count,
+                                const VkComputePipelineCreateInfo* create_info,
+                                VkPipeline& pipeline);
 
     void CreateDescriptorPool(uint32_t pool_size_count,
                               const VkDescriptorPoolSize* pool_size,

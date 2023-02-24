@@ -3,7 +3,7 @@
 
 namespace toystation {
 
-constexpr int TickIntervalMS = 30;
+constexpr int kTickIntervalMS = 30;
 
 
 void ToyEngine::Init() {
@@ -13,8 +13,7 @@ void ToyEngine::Init() {
 void ToyEngine::Run() {
     while (true) {
         kMesssageQueue.Post(kRendThread.get_id(),std::make_shared<RenderMessage>(kRenderMessageID));
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(TickIntervalMS));
+        std::this_thread::sleep_for(std::chrono::milliseconds(kTickIntervalMS));
     }
 }
 }  // namespace toystation

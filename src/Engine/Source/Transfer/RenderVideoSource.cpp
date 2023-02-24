@@ -3,31 +3,35 @@
 #include <third_party/libyuv/include/libyuv.h>
 
 #include "File/FileUtil.h"
+#include "WebRTC/RTCI420Buffer.h"
+
+
 namespace toystation {
 RenderVideoSource::~RenderVideoSource() {}
 
 void RenderVideoSource::Initialize() {
-    RenderEvent::OnRenderDone = [this](const RenderFrame& frame){
+    RenderEvent::OnRenderDone = [this](std::shared_ptr<RenderFrame> frame) {
         ReceiveFrame(frame);
     };
 }
 
-void RenderVideoSource::ReceiveFrame(const RenderFrame& frame) {
+void RenderVideoSource::ReceiveFrame(std::shared_ptr<RenderFrame> frame) {
     // LogDebug("Get One Frame");
-    int frame_width =
-        frame.Width() > INT_MAX ? 0 : static_cast<int>(frame.Width());
-    int frame_height =
-        frame.Height() > INT_MAX ? 0 : static_cast<int>(frame.Height());
 
-    if (!i420_buffer_.get()) {
-        i420_buffer_ = webrtc::I420Buffer::Create(frame_width, frame_height);
+    if (frame->Type() != RenderFrameType::FRAME_YCbCr) {
+        return;
     }
+    std::shared_ptr<RenderFrameYCbCr> frame_yuv =
+        std::dynamic_pointer_cast<RenderFrameYCbCr>(frame);
+
+    i420_buffer_ = RTCI420Buffer::Create(frame_yuv);
     // FileUtil::WriteBmp("test.bmp",frame.Data(),frame.Width(),frame.Height());
-    libyuv::ABGRToI420(frame.Data(), frame_width * 4,
-                       i420_buffer_->MutableDataY(), i420_buffer_->StrideY(),
-                       i420_buffer_->MutableDataU(), i420_buffer_->StrideU(),
-                       i420_buffer_->MutableDataV(), i420_buffer_->StrideV(),
-                       frame_width, frame_height);
+    // TODO:优化格式转换
+    // libyuv::ABGRToI420(frame.Data(), frame_width * 4,
+    //                    i420_buffer_->MutableDataY(), i420_buffer_->StrideY(),
+    //                    i420_buffer_->MutableDataU(), i420_buffer_->StrideU(),
+    //                    i420_buffer_->MutableDataV(), i420_buffer_->StrideV(),
+    //                    frame_width, frame_height);
 
     OnFrame(webrtc::VideoFrame(i420_buffer_, webrtc::kVideoRotation_0, 0));
 }

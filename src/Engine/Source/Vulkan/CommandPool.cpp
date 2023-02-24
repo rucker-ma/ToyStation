@@ -90,7 +90,8 @@ void CommandPool::Submit(const std::vector<VkCommandBuffer>& cmds,
 void CommandPool::SubmitAndWait(size_t count, const VkCommandBuffer* cmds,
                                 VkQueue queue) {
     Submit(count, cmds, queue);
-    VkResult result = vkQueueWaitIdle(queue);
+    //VkResult result = 
+    vkQueueWaitIdle(queue);
     vkFreeCommandBuffers(device_, command_pool_, (uint32_t)count, cmds);
 }
 

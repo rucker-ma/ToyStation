@@ -14,5 +14,7 @@ public:
     static void WriteJpg(std::string name, unsigned char* data, int width,
                          int height);
     static unsigned char* ReadImg(std::string name,int& width,int& height,int& channel);
+
+    
 };
 }  // namespace toystation

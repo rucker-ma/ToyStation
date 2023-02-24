@@ -82,6 +82,13 @@ void VkContext::CreateGraphicsPipeline(
                               nullptr, &pipeline);
 }
 
+void VkContext::CreateComputePipeline(
+    uint32_t create_info_count, const VkComputePipelineCreateInfo* create_info,
+    VkPipeline& pipeline) {
+    vkCreateComputePipelines(device_, nullptr, create_info_count, create_info,
+                             nullptr, &pipeline);
+}
+
 void VkContext::CreateDescriptorPool(uint32_t pool_size_count,
                                      const VkDescriptorPoolSize* pool_size,
                                      uint32_t max_sets,

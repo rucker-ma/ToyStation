@@ -160,8 +160,7 @@ Texture VkResourceAllocator::CreateTexture(
     result_texture.image = image.image;
     result_texture.handle = image.handle;
     result_texture.descriptor.imageLayout =
-        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
+        VK_IMAGE_LAYOUT_GENERAL;
     assert(imageview_create_info.image == image.image);
     vkCreateImageView(device_, &imageview_create_info, nullptr,
                       &result_texture.descriptor.imageView);

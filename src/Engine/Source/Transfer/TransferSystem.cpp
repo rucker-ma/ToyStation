@@ -88,9 +88,7 @@ void TransferSystem::Run() {
                 auto* frame_msg =
                     dynamic_cast<DataMsg<RenderFrame>*>(msg.get());
                 if (frame_msg) {
-                    auto& payload = frame_msg->GetPayload();
-
-                    RenderEvent::OnRenderDone(payload);
+                    RenderEvent::OnRenderDone(frame_msg->SharedPayload());
                     calcu.Step();
 
                 }
