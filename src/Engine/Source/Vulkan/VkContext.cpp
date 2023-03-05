@@ -1,5 +1,12 @@
 #include "VkContext.h"
 
+#ifdef _WIN32
+#include <Windows.h>
+#define VK_USE_PLATFORM_WIN32_KHR
+#endif
+
+#include <extensions_vk.hpp>
+
 #include "Helper.h"
 namespace toystation {
 

@@ -6,18 +6,20 @@
 #include "Vulkan/Pipeline.h"
 #include "Vulkan/VkImageUtil.h"
 
+#include "ToyEngine.h"
+
 namespace toystation {
 
 struct UniformBuffer {
-    glm::mat4 model;
-    glm::mat4 view;
-    glm::mat4 proj;
+    Matrix4 model;
+    Matrix4 view;
+    Matrix4 proj;
 };
 
 struct Vertex {
-    glm::vec3 pos;
-    glm::vec3 color;
-    glm::vec2 tex_coord;
+    Vector3 pos;
+    Vector3 color;
+    Vector2 tex_coord;
 };
 
 const std::vector<Vertex> kVertices = {
@@ -468,21 +470,29 @@ void MainCameraPass::LoadTexture() {
     context_->GetCommandPool()->SubmitAndWait(cmd);
 }
 void MainCameraPass::UpdateUniform() {
+
     static auto start_time = std::chrono::high_resolution_clock::now();
     auto current_time = std::chrono::high_resolution_clock::now();
     float time = std::chrono::duration<float, std::chrono::seconds::period>(
                      current_time - start_time)
                      .count();
+
+    //TODO:check input to update camera position
+//    context_->GetCamera()->GetPosition();
+//    kEngine.GetInputSystem().IsPress(127);
+
     UniformBuffer ubo{};
     ubo.model = glm::rotate(glm::mat4(1.0F), time * glm::radians(90.0F),
                             glm::vec3(0.0F, 0.0F, 1.0F));
-    ubo.view =
-        glm::lookAt(glm::vec3(2.0F, 2.0F, 2.0F), glm::vec3(0.0F, 0.0F, 0.0F),
-                    glm::vec3(0.0F, 0.0F, 1.0F));
+    // ubo.view =
+    //     glm::lookAt(glm::vec3(2.0F, 2.0F, 2.0F), glm::vec3(0.0F, 0.0F, 0.0F),
+    //                 glm::vec3(0.0F, 0.0F, 1.0F));
 
-    ubo.proj =
-        glm::perspective(glm::radians(45.0F), 1920 / (float)1080, 0.1F, 10.0F);
-    ubo.proj[1][1] *= -1;
+    ubo.view = context_->GetCamera()->GetView();
+    ubo.proj = context_->GetCamera()->GetProjection();
+    // ubo.proj =
+    //     glm::perspective(glm::radians(45.0F), 1920 / (float)1080, 0.1F, 10.0F);
+    // ubo.proj[1][1] *= -1;
 
     void* data = context_->GetAllocator()->Map(kShaderBuffer.uniform);
 

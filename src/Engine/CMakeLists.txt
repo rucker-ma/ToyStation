@@ -23,7 +23,7 @@ file(GLOB_RECURSE SOURCE_FILE *.cpp)
 file(GLOB_RECURSE HEADER_FILE *.H)
 
 # add_library(${MODULE_NAME} STATIC ${SOURCE_FILE} ${HEADER_FILE})
-add_executable(${MODULE_NAME} ${SOURCE_FILE} ${HEADER_FILE})
+add_executable(${MODULE_NAME} ${SOURCE_FILE} ${HEADER_FILE} Source/Input/InputSystem.cpp Source/Input/InputSystem.h)
 if(MSVC)
     # disable warning for chinese
     set_target_properties(${MODULE_NAME} PROPERTIES COMPILE_FLAGS "/wd4819")

@@ -5,6 +5,7 @@
 
 #include "Render/RenderSystem.h"
 #include "Transfer/TransferSystem.h"
+#include "Input/InputSystem.h"
 
 namespace toystation {
 CLASS()
@@ -17,8 +18,14 @@ public:
     FUNCTION(CSHARP)
     void Run();
 
+    InputSystem& GetInputSystem();
+private:
+    void SystemTick();
 private:
     TransferSystem transfer_system_;
     RenderSystem render_system_;
+    InputSystem input_system_;
 };
+
+extern ToyEngine kEngine;
 }  // namespace toystation

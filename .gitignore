@@ -5,6 +5,7 @@ build/
 tools/
 out/
 resource/
+cmake-build-debug-visual-studio/
 
 **/obj/
 *.pdb

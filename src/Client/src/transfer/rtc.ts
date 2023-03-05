@@ -2,13 +2,24 @@ export { RtcClient };
 class RtcClient {
   pc: RTCPeerConnection;
   ws: WebSocket | undefined;
+  input_datachannel:RTCDataChannel |undefined;
+
   constructor() {
     this.pc = new RTCPeerConnection();
   }
   connect(): void {
     this.ws = new WebSocket("ws://127.0.0.1:9002");
     this.ws.onmessage = this.wsMessage.bind(this);
+
+    this.pc.ondatachannel = this.getDatachannel.bind(this)
     console.log("connect to ...");
+  }
+
+  getDatachannel(event:RTCDataChannelEvent):void{
+    this.input_datachannel = event.channel;
+  }
+  sendInput(message:string):void{
+    this.input_datachannel?.send(message)
   }
   async wsMessage(ev: MessageEvent): Promise<void> {
     let payload = JSON.parse(ev.data);

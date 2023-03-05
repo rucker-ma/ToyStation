@@ -29,15 +29,36 @@ SessionClient::SessionClient(websocketpp::connection_hdl hdl,
                              std::shared_ptr<SocketInterface> server)
     : hdl_(hdl), socket_(server) {}
 
-TransferSession::TransferSession(std::unique_ptr<SessionClient> client)
-    : client_(std::move(client)) {}
+TransferSession::TransferSession(
+    std::unique_ptr<SessionClient> client)
+    : client_(std::move(client)){
+}
 
 TransferSession::~TransferSession() {
-    if(peer_connection_){
+    if (input_observer_) {
+        input_observer_ = nullptr;
+    }
+    if (peer_connection_) {
         peer_connection_->Close();
         peer_connection_ = nullptr;
     }
 }
+
+void TransferSession::SetPeerConnection(
+    rtc::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection) {
+        peer_connection_ = peer_connection;
+            webrtc::DataChannelInit init;
+    auto dc_err = peer_connection_->CreateDataChannelOrError(
+        std::string("user_input"), &init);
+
+    if (dc_err.ok()) {
+        input_observer_ = std::make_unique<InpuDataChannelObserver>();
+        //RegisterObserver at SetDataChannel and UnregisterObserver at destructor
+        input_observer_->SetDataChannel(dc_err.value());
+    } else {
+        LogError("PeerConnect Create Datachannel Error");
+    }
+    }
 
 void TransferSession::CreateOffer() {
     webrtc::PeerConnectionInterface::RTCOfferAnswerOptions options;
@@ -45,6 +66,11 @@ void TransferSession::CreateOffer() {
     options.offer_to_receive_audio = 0;
 
     peer_connection_->CreateOffer(this, options);
+}
+void TransferSession::PeerConnectionAddTrack(
+    rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track,
+    const std::vector<std::string>& stream_ids) {
+    peer_connection_->AddTrack(track, stream_ids);
 }
 void TransferSession::SetRemoteAnswer(std::string sdp) {
     std::unique_ptr<webrtc::SessionDescriptionInterface> answer =

@@ -10,7 +10,6 @@
 
 #include "Base/Macro.h"
 #include "TransferSystem.h"
-
 #include "WebRTC/VideoEncoderFactory.h"
 namespace toystation {
 
@@ -49,11 +48,10 @@ std::shared_ptr<TransferSession> SessionCreator::CreateSession(
     config.enable_dtls_srtp = true;
     auto session = std::make_shared<TransferSession>(std::move(client));
 
-    session->peer_connection_ = peer_connection_factory_->CreatePeerConnection(
-        config, nullptr, nullptr, session.get());
-
+    session->SetPeerConnection(peer_connection_factory_->CreatePeerConnection(
+        config, nullptr, nullptr, session.get()));
     // session->peer_connection_->AddTrack(audio_track_, {"audio"});
-    session->peer_connection_->AddTrack(video_track_, {"video"});
+    session->PeerConnectionAddTrack(video_track_, {"video"});
     return session;
 }
 void SessionCreator::InitWebRtc() {
@@ -94,9 +92,9 @@ void SessionCreator::SetupFactory() {
         webrtc::CreateBuiltinAudioDecoderFactory(),
         // webrtc::CreateBuiltinVideoEncoderFactory(),
         std::make_unique<ToyVideoEncoderFactory>(),
-         webrtc::CreateBuiltinVideoDecoderFactory(),
-        //std::make_unique<ToyVideoDecoderFactory>(),
-         nullptr, nullptr);
+        webrtc::CreateBuiltinVideoDecoderFactory(),
+        // std::make_unique<ToyVideoDecoderFactory>(),
+        nullptr, nullptr);
 
     if (!peer_connection_factory_) {
         LogError("Failed to initialize webrtc PeerConnectionFactory");

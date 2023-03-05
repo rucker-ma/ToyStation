@@ -3,6 +3,7 @@
 #include <api/peer_connection_interface.h>
 
 #include "WebSocket/WebSocketServer.h"
+#include "InputDataChannelObserver.h"
 namespace toystation {
 class TransferSession;
 class SessionClient {
@@ -24,7 +25,10 @@ class TransferSession : public webrtc::PeerConnectionObserver,
 public:
     TransferSession(std::unique_ptr<SessionClient> client);
     virtual ~TransferSession();
+    void SetPeerConnection(rtc::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection);
     void CreateOffer();
+    void PeerConnectionAddTrack(rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track, 
+    const std::vector<std::string> &stream_ids);
     void SetRemoteAnswer(std::string sdp);
     void SetRemoteIceCandidate(std::string mid,int index,std::string sdp);
 
@@ -68,6 +72,7 @@ protected:
     rtc::scoped_refptr<webrtc::DataChannelInterface> datachl_interface_;
 
     std::unique_ptr<SessionClient> client_;
+    std::unique_ptr<InpuDataChannelObserver> input_observer_;
 };
 
 }  // namespace toystation

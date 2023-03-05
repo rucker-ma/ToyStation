@@ -49,6 +49,8 @@ void RenderContext::Initialize(RenderContextCreateInfo& info) {
     cmd_pool_ = std::make_shared<CommandPool>();
     cmd_pool_->Init(vkctx_->GetDevice(),
                     vkctx_->GetQueueFamilyIndex(VK_QUEUE_GRAPHICS_BIT));
+    
+    camera_ = std::make_shared<RenderCamera>();
 }
 
 std::shared_ptr<VkContext> RenderContext::GetContext() const { return vkctx_; }
@@ -61,6 +63,10 @@ std::shared_ptr<VkResourceAllocator> RenderContext::GetAllocator() const {
 }
 std::shared_ptr<CommandPool> RenderContext::GetCommandPool() const {
     return cmd_pool_;
+}
+
+std::shared_ptr<RenderCamera> RenderContext::GetCamera() const {
+    return camera_;
 }
 
 void RenderContext::SaveToImage(std::string filename, RHIImage& image,

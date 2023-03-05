@@ -3,6 +3,7 @@
 
 namespace toystation {
 
+
 class Global {
 public:
     static const std::thread& GetRenderThread() {
@@ -23,6 +24,7 @@ private:
     static std::thread kRenderThreadInternal;
     static std::thread kTransferThreadInternal;
 };
+
 // set after render system initialized
 extern const std::thread& kRendThread;
 // set after transfer system initialized

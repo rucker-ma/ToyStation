@@ -30,7 +30,6 @@ constexpr const char *FilenameWithoutPath(const char *path) {
     LOG_WRITE(spdlog::level::level_enum::critical, __VA_ARGS__)
 
 namespace toystation {
-
 class Logger {
 public:
     Logger(const Logger &) = delete;

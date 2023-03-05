@@ -76,10 +76,12 @@ void TransferSystem::OnUserClose(websocketpp::connection_hdl hdl) {
 
 void TransferSystem::Run() {
     std::shared_ptr<Msg> msg;
-    Calculagraph calcu("Transfer FrameRate", 1, 1);
+    Calculagraph calcu("Transfer FrameRate", 100, 1000);
     calcu.OnEnd = [](double result,long long duration) {
-        LogDebug("Receive Render Frame,Process Time: " +
-                 std::to_string(static_cast<int>(duration)));
+        // LogDebug("Receive Render Frame,Process Time: " +
+        //          std::to_string(static_cast<int>(duration)));
+
+        LogInfo("Post to WebRtc FrameRate: " + std::to_string((int)result));
     };
     calcu.Start();
     while (true) {
@@ -90,7 +92,6 @@ void TransferSystem::Run() {
                 if (frame_msg) {
                     RenderEvent::OnRenderDone(frame_msg->SharedPayload());
                     calcu.Step();
-
                 }
             }
         }

@@ -38,7 +38,6 @@ void RenderSystem::Run() {
             if (msg->GetID() == kRenderMessageID) {
                 auto* render_msg = dynamic_cast<RenderMessage*>(msg.get());
                 if (render_msg) {
-                    // LogDebug("RenderSystem Tick");
                     Tick();
                     calcu.Step();
                 }

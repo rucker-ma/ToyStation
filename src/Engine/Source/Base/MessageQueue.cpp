@@ -1,12 +1,16 @@
 #include "MessageQueue.h"
 
+#include "Base/Logger.h"
+
 namespace toystation {
 ThreadSafeQueue::ThreadSafeQueue(ThreadSafeQueue&& queue) {
     msg_queue_ = std::move(queue.msg_queue_);
 }
 
 ThreadSafeQueue& ThreadSafeQueue::operator=(ThreadSafeQueue&& queue) {
-    if (&queue == this){ return *this;}
+    if (&queue == this) {
+        return *this;
+    }
 
     msg_queue_ = std::move(queue.msg_queue_);
     return *this;
@@ -14,9 +18,12 @@ ThreadSafeQueue& ThreadSafeQueue::operator=(ThreadSafeQueue&& queue) {
 void ThreadSafeQueue::Push(std::shared_ptr<Msg>&& msg) {
     {
         std::unique_lock<std::mutex> lck(mtx_);
-        if(msg_queue_.size()>=max_size_)
-        {
+        if (msg_queue_.size() >= max_size_) {
             msg_queue_.pop_front();
+            LogDebug(
+                "Message Queue is full,pop the earliest and push newer, msg id "
+                ":" +
+                std::to_string(msg->GetID()));
         }
         msg_queue_.push_back(std::forward<std::shared_ptr<Msg>>(msg));
     }

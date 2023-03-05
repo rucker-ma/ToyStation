@@ -21,8 +21,6 @@ private:
 
 private:
     std::shared_ptr<SessionCreator> session_creator_;
-    // std::shared_ptr<TransferSession> session_;
-
     std::shared_ptr<SocketServer> session_server_;
     std::thread sserver_thread_;
     std::thread msg_thread_;

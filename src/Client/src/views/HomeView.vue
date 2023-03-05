@@ -1,9 +1,13 @@
 <script setup lang="ts">
-import TheWelcome from "../components/RemoteVideo.vue";
+import RemoteVideo from "../components/RemoteVideo.vue";
 </script>
 
 <template>
   <main>
-    <TheWelcome />
+    <RemoteVideo />
   </main>
 </template>
+
+<style scoped>
+
+</style>
