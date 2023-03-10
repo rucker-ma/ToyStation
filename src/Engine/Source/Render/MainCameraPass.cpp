@@ -478,12 +478,28 @@ void MainCameraPass::UpdateUniform() {
                      .count();
 
     //TODO:check input to update camera position
-//    context_->GetCamera()->GetPosition();
-//    kEngine.GetInputSystem().IsPress(127);
-
+    Vector3& position = context_->GetCamera()->GetPosition();
+    switch (kEngine.GetInputSystem().PressedKey()) {
+        case KEY_W:
+            position+=Vector3(-0.1,0,0);
+            break ;
+        case KEY_S:
+            position+=Vector3(0.1,0,0);
+            break ;
+        case KEY_A:
+            position+=Vector3(0.0,-0.1,0);
+            break ;
+        case KEY_D:
+            position+=Vector3(0.0,0.1,0);
+            break ;
+    }
     UniformBuffer ubo{};
-    ubo.model = glm::rotate(glm::mat4(1.0F), time * glm::radians(90.0F),
-                            glm::vec3(0.0F, 0.0F, 1.0F));
+//    ubo.model = glm::rotate(glm::mat4(1.0F), time * glm::radians(90.0F),
+//                            glm::vec3(0.0F, 0.0F, 1.0F));
+    ubo.model = glm::mat4(1.0F);
+    ubo.model[3][0] = 2.0;
+    ubo.model[3][1] = 0.0;
+    ubo.model[3][2]= -0.3;
     // ubo.view =
     //     glm::lookAt(glm::vec3(2.0F, 2.0F, 2.0F), glm::vec3(0.0F, 0.0F, 0.0F),
     //                 glm::vec3(0.0F, 0.0F, 1.0F));

@@ -122,8 +122,12 @@ int32_t ToyVideoEncoder::Encode(
 void ToyVideoEncoder::SetRates(const RateControlParameters& parameters) {
     ctx_->bit_rate = parameters.target_bitrate.get_sum_bps();
 }
-void ToyVideoEncoder::OnPacketLossRateUpdate(float packet_loss_rate) {}
-void ToyVideoEncoder::OnRttUpdate(int64_t rtt_ms) {}
+void ToyVideoEncoder::OnPacketLossRateUpdate(float packet_loss_rate) {
+    LogDebug("Packet loss rate: "+std::to_string(int(packet_loss_rate*100)));
+}
+void ToyVideoEncoder::OnRttUpdate(int64_t rtt_ms) {
+    LogDebug("video stream rtt: "+ std::to_string(rtt_ms));
+}
 void ToyVideoEncoder::OnLossNotification(
     const LossNotification& loss_notification) {}
 webrtc::VideoEncoder::EncoderInfo ToyVideoEncoder::GetEncoderInfo() const {
@@ -158,9 +162,9 @@ int ToyVideoEncoder::InitX264Encoder(const webrtc::VideoCodec* codec_settings,
     ctx_->height = codec_settings->height;
     ctx_->bit_rate = codec_settings->maxBitrate * 1000;
     ctx_->time_base = {1, 90000};
-    ctx_->gop_size = (codec_settings->H264().keyFrameInterval) *
-                     codec_settings->maxFramerate / 1000;
-
+//    ctx_->gop_size = (codec_settings->H264().keyFrameInterval) *
+//                     codec_settings->maxFramerate / 1000;
+    ctx_->gop_size = codec_settings->H264().keyFrameInterval;
     ctx_->codec_type = AVMediaType::AVMEDIA_TYPE_VIDEO;
     ctx_->pix_fmt = AV_PIX_FMT_YUV420P;
 

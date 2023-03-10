@@ -1,7 +1,7 @@
 #include "RenderSystem.h"
 
 #include "Base/Global.h"
-
+#include "Base/Thread.h"
 namespace toystation {
 
 RenderGlobalData RenderSystem::kRenderGlobalData = {};
@@ -25,6 +25,7 @@ void RenderSystem::Tick() {
     ProcessEvent();
 }
 void RenderSystem::Run() {
+    ThreadUtil::SetCurrentThreadName("render_thread");
     std::shared_ptr<Msg> msg;
     // 计算渲染帧率
     Calculagraph calcu("Render FrameRate", 100, 1000);

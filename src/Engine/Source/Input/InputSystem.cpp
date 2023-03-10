@@ -15,11 +15,14 @@ void InputSystem::OnKey(InputAction action,int keycode) {
                               pressed_keys_.end(),keycode);
     switch (action) {
         case PRESS:
-            assert(iter == pressed_keys_.end());
-            pressed_keys_.push_back(keycode);
+            if(iter == pressed_keys_.end()){
+                pressed_keys_.push_back(keycode);
+            }
+            break ;
         case RELEASE:
             assert(iter!=pressed_keys_.end());
             pressed_keys_.erase(iter);
+            break ;
     }
 }
 void InputSystem::OnCursorPosition() {}
@@ -30,4 +33,12 @@ bool InputSystem::IsPress(int keycode){
     return std::find(pressed_keys_.begin(),pressed_keys_.end(),keycode)
            !=pressed_keys_.end();
 }
+int InputSystem::PressedKey()
+{
+    if(pressed_keys_.empty()){
+        return KEY_INVALID;
+    }
+    return pressed_keys_.front();
+}
+
 }

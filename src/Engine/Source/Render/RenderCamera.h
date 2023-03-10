@@ -4,17 +4,17 @@
 
 namespace toystation {
 //          world space
-//           y
+//           z
 //           |
 //           |
 //           |
 //           |
-//           ----------------> x
+//           ----------------> y
 //          /
 //         /
 //        /
 //       /
-//      z
+//      x
 
 class RenderCamera {
 public:
@@ -26,7 +26,7 @@ public:
     RenderCamera();
     Matrix4 GetView();
     Matrix4 GetProjection();
-    Vector3 GetPosition();
+    Vector3& GetPosition();
     void SetAspect(float aspect);
 
 private:
@@ -42,8 +42,8 @@ private:
     Vector3 view_right_;
 
     float aspect_{1.77};
-    float yaw_{-90};
-    float pitch_{0};
+    float yaw_;
+    float pitch_;
     float fovy_{60};
 };
 

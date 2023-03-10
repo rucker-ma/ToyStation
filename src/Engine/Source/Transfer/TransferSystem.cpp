@@ -3,6 +3,7 @@
 #include "Base/Calculagraph.h"
 #include "Base/Global.h"
 #include "Base/Macro.h"
+#include "Base/Thread.h"
 #include "SessionCreator.h"
 #include "SignalingMessage.h"
 
@@ -75,6 +76,7 @@ void TransferSystem::OnUserClose(websocketpp::connection_hdl hdl) {
 }
 
 void TransferSystem::Run() {
+    ThreadUtil::SetCurrentThreadName("transfer_thread");
     std::shared_ptr<Msg> msg;
     Calculagraph calcu("Transfer FrameRate", 100, 1000);
     calcu.OnEnd = [](double result,long long duration) {

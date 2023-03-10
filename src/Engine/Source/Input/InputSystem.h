@@ -8,6 +8,15 @@
 
 namespace toystation{
 
+constexpr int KEY_A = 65;
+constexpr int KEY_D = 68;
+constexpr int KEY_E = 69;
+constexpr int KEY_S = 83;
+constexpr int KEY_Q = 81;
+constexpr int KEY_W = 87;
+
+constexpr int KEY_INVALID = 0;
+
 enum InputAction{
     PRESS,
     RELEASE
@@ -25,6 +34,8 @@ public:
 
     bool IsFoucs();
     bool IsPress(int keycode);
+    //consider multi key pressed,now only assume one key for move
+    int PressedKey();
 private:
     //TODO:record key press time
     std::list<int> pressed_keys_;

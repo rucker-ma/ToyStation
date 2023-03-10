@@ -15,7 +15,7 @@ set(WebRTC "${CMAKE_CURRENT_SOURCE_DIR}/src/ThirdParty/webrtc-m94")
 # set(FFMPEG "${CMAKE_CURRENT_SOURCE_DIR}/src/ThirdParty/ffmpeg-5.1.2")
 set(ASIO "${CMAKE_CURRENT_SOURCE_DIR}/src/ThirdParty/asio-1.18.2")
 set(WEBSOCKETPP "${CMAKE_CURRENT_SOURCE_DIR}/src/ThirdParty/websocketpp-0.8.2")
-
+set(FREETYPE "${CMAKE_CURRENT_SOURCE_DIR}/src/ThirdParty/freetype-2.13")
 
 find_library(ASTYLE_LIB NAMES AStyleLibd PATHS ${ASTYLE}/lib)
 find_library(LIBCLANG_LIB NAMES libclang PATHS ${LLVM}/lib)
@@ -23,6 +23,7 @@ find_library(VULKAN_LIB NAMES vulkan-1 PATHS ${VULKAN}/Lib)
 find_library(GTEST_LIB NAMES gtestd PATHS ${GTEST}/lib)
 find_library(WebRTC_LIB NAMES webrtc PATHS ${WebRTC}/lib)
 find_library(JSONCPP_LIB NAMES jsoncpp PATHS ${WebRTC}/lib)
+find_library(FREETYPE_LIB NAMES freetype PATHS ${FREETYPE}/lib)
 # find_library(FFMPEG_LIB NAMES avcodec avdevice avformat avutil postproc swresample PATHS ${FFMPEG}/lib)
 
 # set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/src/Engine/Output)

@@ -16,6 +16,7 @@ include_directories(
     ${FFMPEG_INCLUDE_DIR}
 
     ${WEBSOCKETPP}
+    ${FREETYPE}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/Source
 )
 
@@ -23,7 +24,7 @@ file(GLOB_RECURSE SOURCE_FILE *.cpp)
 file(GLOB_RECURSE HEADER_FILE *.H)
 
 # add_library(${MODULE_NAME} STATIC ${SOURCE_FILE} ${HEADER_FILE})
-add_executable(${MODULE_NAME} ${SOURCE_FILE} ${HEADER_FILE} Source/Input/InputSystem.cpp Source/Input/InputSystem.h)
+add_executable(${MODULE_NAME} ${SOURCE_FILE} ${HEADER_FILE})
 if(MSVC)
     # disable warning for chinese
     set_target_properties(${MODULE_NAME} PROPERTIES COMPILE_FLAGS "/wd4819")
@@ -34,7 +35,6 @@ endif()
 
 add_definitions(-DTS_CPP_EXPORT)
 
-# set_target_properties(${MODULE_NAME}
 # PROPERTIES
 # ARCHIVE_OUTPUT_NAME_DEBUG ${CMAKE_CURRENT_SOURCE_DIR}/Output
 # LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/Output
@@ -46,6 +46,7 @@ target_link_libraries(${MODULE_NAME} ${WebRTC_LIB})
 target_link_libraries(${MODULE_NAME} ${FFMPEG_LIB})
 target_link_libraries(${MODULE_NAME} ${JSONCPP_LIB})
 target_link_libraries(${MODULE_NAME} ${FFMPEG_LIBRARIES})
+target_link_libraries(${MODULE_NAME} ${FREETYPE_LIB})
 # get_property(DIRS DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
 
 # add_custom_command(TARGET ${MODULE_NAME} PRE_BUILD

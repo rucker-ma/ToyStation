@@ -3,17 +3,19 @@
 namespace toystation {
 
 RenderCamera::RenderCamera() {
-    position_ = {2.0, 2.0, 2.0};
-    forward_ = {0.0, 0.0, -1.0};
-    up_ = {0.0, 1.0, 0.0};
-
+    position_ = {0.0, 0.0, 0.0};
+    forward_ = {1.0, 0.0, 0.0};
+    up_ = {0.0, 0.0, 1.0};
+    yaw_ = 0;
+    pitch_ = 0;
     view_up_ = up_;
     Update();
 }
 Matrix4 RenderCamera::GetView() {
-    return glm::lookAt(glm::vec3(2.0F, 2.0F, 2.0F), glm::vec3(0.0F, 0.0F, 0.0F),
-                     glm::vec3(0.0F, 0.0F, 1.0F));
-    //return glm::lookAt(position_, position_ + forward_, view_up_);
+//    return glm::lookAt(position_, glm::vec3(0.0F, 0.0F, 0.0F),
+//                     glm::vec3(0.0F, 0.0F, 1.0F));
+    Update();
+    return glm::lookAt(position_, position_ + forward_, view_up_);
 }
 Matrix4 RenderCamera::GetProjection() {
     Matrix4 projection =
@@ -22,7 +24,7 @@ Matrix4 RenderCamera::GetProjection() {
     projection[1][1] *= -1;
     return projection;
 }
-Vector3 RenderCamera::GetPosition() { return position_; }
+Vector3& RenderCamera::GetPosition() { return position_; }
 void RenderCamera::SetAspect(float aspect) { aspect_ = aspect; }
 
 void RenderCamera::Update() {

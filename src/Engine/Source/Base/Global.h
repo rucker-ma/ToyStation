@@ -18,8 +18,8 @@ public:
     }
     static void SetTransferThread(std::thread& thread) {
         kTransferThreadInternal.swap(thread);
-    }
 
+    }
 private:
     static std::thread kRenderThreadInternal;
     static std::thread kTransferThreadInternal;
