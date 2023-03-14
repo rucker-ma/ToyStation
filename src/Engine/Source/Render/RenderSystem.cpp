@@ -2,12 +2,16 @@
 
 #include "Base/Global.h"
 #include "Base/Thread.h"
+#include "RenderDocCapture.h"
+#include "ToyEngine.h"
+
 namespace toystation {
 
 RenderGlobalData RenderSystem::kRenderGlobalData = {};
 
 void RenderSystem::Initialize() {
     LogDebug("RenderSystem Initialize..");
+    RenderDocCapture::Instance().Init();
     // vulkan环境初始化,根据渲染模式的不同配置不同的instance,device扩展
     RenderContextCreateInfo context_create_info{};
     context_create_info.mode = RenderContextCreateInfo::RENDER_REMOTE;
@@ -17,9 +21,17 @@ void RenderSystem::Initialize() {
     kRenderGlobalData.render_resource = std::make_shared<RenderResource>();
     render_pipeline_ = std::make_shared<RenderPipeline>();
     render_pipeline_->Initialize();
+#ifdef TOYSTATION_CUDA //如果有cuda环境就使用cuda
+    frame_convert_ = std::make_shared<FrameConvertNV12Pass>();
+#else
+    frame_convert_ = std::make_shared<FrameConvertYCrCbPass>();
+#endif
+    auto init_info = render_pipeline_->GetRenderPassInitInfo();
+    frame_convert_->Initialize(init_info);
 
     Global::SetRenderThread(std::thread([this] { Run(); }));
 }
+
 void RenderSystem::Tick() {
     render_pipeline_->Tick();
     ProcessEvent();
@@ -29,7 +41,7 @@ void RenderSystem::Run() {
     std::shared_ptr<Msg> msg;
     // 计算渲染帧率
     Calculagraph calcu("Render FrameRate", 100, 1000);
-    calcu.OnEnd = [this](double result, long long) {
+    calcu.OnEnd = [](double result, long long) {
         LogInfo("Render FrameRate: " +
                 std::to_string(static_cast<int>(result)));
     };
@@ -39,7 +51,15 @@ void RenderSystem::Run() {
             if (msg->GetID() == kRenderMessageID) {
                 auto* render_msg = dynamic_cast<RenderMessage*>(msg.get());
                 if (render_msg) {
-                    Tick();
+                    switch (render_msg->GetPayload().Action()) {
+                        case RenderAction::Render_General:
+                            Tick();
+                            break;
+                        case RenderAction::Render_RenderDocCapture:
+                            RenderDocCapture::Instance().StartCapture();
+                            Tick();
+                            RenderDocCapture::Instance().EndCapture();
+                    }
                     calcu.Step();
                 }
             }
@@ -48,17 +68,12 @@ void RenderSystem::Run() {
 }
 void RenderSystem::ProcessEvent() {
     if (RenderEvent::OnRenderDone) {
-        kMesssageQueue.Post(kTransferThread.get_id(),
-                            std::make_shared<DataMsg<RenderFrame>>(
-                                kTransferMessageID,
-                                static_cast<RenderFrame*>(new RenderFrameYCbCr(
-                                    kRenderGlobalData.render_context,
-                                    kRenderGlobalData.render_resource
-                                        ->convert_pass_resource_.comp_y,
-                                    kRenderGlobalData.render_resource
-                                        ->convert_pass_resource_.comp_cb,
-                                    kRenderGlobalData.render_resource
-                                        ->convert_pass_resource_.comp_cr))));
+        frame_convert_->Draw();
+        kMesssageQueue.Post(
+            kTransferThread.get_id(),
+            std::make_shared<DataMsg<RenderFrame>>(
+                kTransferMessageID,
+                frame_convert_->GetConvertFrame()));
     }
 }
 }  // namespace toystation

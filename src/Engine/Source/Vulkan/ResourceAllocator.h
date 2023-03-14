@@ -42,10 +42,13 @@ public:
 
     virtual Buffer CreateBuffer(
         const VkBufferCreateInfo& info,
-        VkMemoryPropertyFlags mem_usage = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        VkMemoryPropertyFlags mem_usage = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        void* memory_export = nullptr);
     Buffer CreateBuffer(
         VkDeviceSize size = 0, VkBufferUsageFlags usage = VkBufferUsageFlags(),
         VkMemoryPropertyFlags mem_usage = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    Buffer CreateExternalBuffer(VkDeviceSize size, VkBufferUsageFlags usage = VkBufferUsageFlags(),
+                                VkMemoryPropertyFlags mem_usage = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
     Buffer CreateBuffer(
         const VkCommandBuffer& cmd_buf, const VkDeviceSize& size,

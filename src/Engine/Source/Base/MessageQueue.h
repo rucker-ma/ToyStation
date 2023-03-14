@@ -4,6 +4,7 @@
 #include <memory>
 #include <mutex>
 #include <thread>
+#include <cassert>
 
 namespace toystation {
 
@@ -24,6 +25,11 @@ public:
     DataMsg(int message_id, Args&&... args)
         : Msg(message_id),
           payload_(new DataType(std::forward<Args>(args)...)) {}
+
+
+    DataMsg(int message_id, std::unique_ptr<DataType>&& data)
+        : Msg(message_id),
+          payload_(std::move(data)) {}
 
     DataMsg(int message_id, DataType* payload)
         : Msg(message_id), payload_(payload) {}

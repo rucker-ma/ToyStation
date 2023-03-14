@@ -16,6 +16,8 @@ set(WebRTC "${CMAKE_CURRENT_SOURCE_DIR}/src/ThirdParty/webrtc-m94")
 set(ASIO "${CMAKE_CURRENT_SOURCE_DIR}/src/ThirdParty/asio-1.18.2")
 set(WEBSOCKETPP "${CMAKE_CURRENT_SOURCE_DIR}/src/ThirdParty/websocketpp-0.8.2")
 set(FREETYPE "${CMAKE_CURRENT_SOURCE_DIR}/src/ThirdParty/freetype-2.13")
+set(TINY_GLTF "${CMAKE_CURRENT_SOURCE_DIR}/src/ThirdParty/tinygltf-2.8.3")
+set(RENDERDOC "${CMAKE_CURRENT_SOURCE_DIR}/src/ThirdParty/renderdoc")
 
 find_library(ASTYLE_LIB NAMES AStyleLibd PATHS ${ASTYLE}/lib)
 find_library(LIBCLANG_LIB NAMES libclang PATHS ${LLVM}/lib)
@@ -34,6 +36,9 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_SOURCE_DIR}/src/Editor/Editor/b
 # add .cmake folder to module_path for search depends libraries
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
 
+set(TINYGLTF_HEADER_ONLY ON CACHE INTERNAL "" FORCE)
+set(TINYGLTF_INSTALL OFF CACHE INTERNAL "" FORCE)
+add_subdirectory(./src/ThirdParty/tinygltf-2.8.3)
 add_subdirectory(./src/ThirdParty/vk_extension)
 add_subdirectory(./src/Parser)
 add_subdirectory(./src/Engine)

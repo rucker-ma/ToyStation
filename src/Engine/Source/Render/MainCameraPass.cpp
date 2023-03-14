@@ -167,47 +167,6 @@ void MainCameraPass::SetupRenderPass(RenderPassInitInfo& info) {
     dependencies.push_back(dependency);
     subpasses.push_back(base_pass);
 
-    // rgb to yuv subpass,use compute shader process
-    //  VkAttachmentDescription yuv420_color_attachment{};
-    //  yuv420_color_attachment.format = VK_FORMAT_G8_B8_R8_3PLANE_420_UNORM;
-    //  //420 3plane format yuv420_color_attachment.samples =
-    //  VK_SAMPLE_COUNT_1_BIT; yuv420_color_attachment.loadOp =
-    //  VK_ATTACHMENT_LOAD_OP_CLEAR; yuv420_color_attachment.storeOp =
-    //  VK_ATTACHMENT_STORE_OP_STORE; yuv420_color_attachment.stencilLoadOp =
-    //  VK_ATTACHMENT_LOAD_OP_DONT_CARE; yuv420_color_attachment.stencilStoreOp
-    //  = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    //  yuv420_color_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    //  yuv420_color_attachment.finalLayout =
-    //  VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL;
-
-    // VkAttachmentReference yuv420_attachment_ref{};
-    // yuv420_attachment_ref.attachment =
-    // RenderAttachRef::kRenderAttachRefYuv420; yuv420_attachment_ref.layout =
-    // VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-    // VkSubpassDependency trans_dependency{};
-    // trans_dependency.srcSubpass = static_cast<uint32_t>(
-    // MainCameraSubpassType::SUBPASS_BASEPASS); trans_dependency.dstSubpass =
-    // static_cast<uint32_t>( MainCameraSubpassType::SUBPASS_YUV_TRANSFER);
-    // trans_dependency.srcStageMask =
-    // VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
-    //                           VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-    // trans_dependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
-    // trans_dependency.dstStageMask =
-    // VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT|
-    // VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-    //     trans_dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT
-    //     ;
-
-    // VkSubpassDescription yuv_pass{};
-    // yuv_pass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_COMPUTE;
-    // yuv_pass.colorAttachmentCount = 1;
-    // yuv_pass.pColorAttachments = &yuv420_attachment_ref;
-
-    // attachments.push_back(yuv420_color_attachment);
-    // dependencies.push_back(trans_dependency);
-    // subpasses.push_back(yuv_pass);
-
     VkRenderPassCreateInfo pass_create_info{};
     pass_create_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
     pass_create_info.attachmentCount = attachments.size();

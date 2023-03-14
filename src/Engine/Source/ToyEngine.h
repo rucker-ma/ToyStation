@@ -17,14 +17,17 @@ public:
     void Init();
     FUNCTION(CSHARP)
     void Run();
-
+    void PushRenderFlag(RenderAction flag);
     InputSystem& GetInputSystem();
 private:
     void SystemTick();
+    void RenderTick();
 private:
     TransferSystem transfer_system_;
     RenderSystem render_system_;
     InputSystem input_system_;
+    std::deque<RenderAction> render_flags_;
+    std::mutex mtx_;
 };
 
 extern ToyEngine kEngine;

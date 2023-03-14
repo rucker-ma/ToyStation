@@ -77,6 +77,10 @@ MemoryAllocateInfo& MemoryAllocateInfo::SetPriority(const float priority) {
     priority_ = priority;
     return *this;
 }
+MemoryAllocateInfo& MemoryAllocateInfo::SetExportable(void* ptr){
+    export_=ptr;
+    return *this;
+}
 VkImage MemoryAllocateInfo::GetImage() const { return image_; }
 VkBuffer MemoryAllocateInfo::GetBuffer() const { return buffer_; }
 VkMemoryAllocateFlags MemoryAllocateInfo::GetAllocateFlags() const {
@@ -91,7 +95,7 @@ const VkMemoryPropertyFlags& MemoryAllocateInfo::GetMemoryProperties() const {
 }
 std::string MemoryAllocateInfo::GetDebugName() const { return debug_name_; }
 float MemoryAllocateInfo::GetPriority() const { return priority_; }
-
+void* MemoryAllocateInfo::GetExportable()const{return export_;}
 bool MemoryAllocateUtils::FillBakedAllocateInfo(
     const VkPhysicalDeviceMemoryProperties& mem_props,
     const MemoryAllocateInfo& info, BakedAllocateInfo& baked) {
@@ -110,18 +114,18 @@ bool MemoryAllocateUtils::FillBakedAllocateInfo(
         baked.dedicated_info.image = info.GetImage();
     }
 
-    //   if(info.getExportable())
-    //   {
-    //     baked.exportInfo.pNext   = baked.memAllocInfo.pNext;
-    //     baked.memAllocInfo.pNext = &baked.exportInfo;
-    // #ifdef WIN32
-    //     baked.exportInfo.handleTypes =
-    //     VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT;
-    // #else
-    //     baked.exportInfo.handleTypes =
-    //     VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT;
-    // #endif
-    //   }
+       if(info.GetExportable())
+       {
+         baked.export_info.pNext   = info.GetExportable();
+         baked.mem_alloc_info.pNext = &baked.export_info;
+     #ifdef WIN32
+         baked.export_info.handleTypes =
+         VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT;
+     #else
+         baked.export_info.handleTypes =
+         VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT;
+     #endif
+       }
 
     if (info.GetDeviceMask() || info.GetAllocateFlags()) {
         baked.flags_info.pNext = baked.mem_alloc_info.pNext;

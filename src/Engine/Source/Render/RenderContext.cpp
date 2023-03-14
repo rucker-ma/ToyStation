@@ -2,6 +2,10 @@
 
 #include "File/FileUtil.h"
 #include "Vulkan/VkImageUtil.h"
+#ifdef _WIN64
+#include <Windows.h>
+#include <vulkan/vulkan_win32.h>
+#endif
 namespace toystation {
 
 std::function<void(std::shared_ptr<RenderFrame>)> RenderEvent::OnRenderDone;
@@ -24,6 +28,7 @@ std::string ToStr(RenderContextCreateInfo::RenderMode mode) {
 void RenderContext::Initialize(RenderContextCreateInfo& info) {
     vkctx_ = std::make_shared<VkContext>();
     VkContextCreateInfo context_create_info;
+
     if (info.mode == RenderContextCreateInfo::RENDER_REMOTE) {
         // context_create_info.AddDeviceExtension(
         //     VK_EXT_YCBCR_2PLANE_444_FORMATS_EXTENSION_NAME);
@@ -42,7 +47,10 @@ void RenderContext::Initialize(RenderContextCreateInfo& info) {
         // for local render, we also need `VK_KHR_surface` and
         // `VK_KHR_win32_surface` or other platform surface,now not test
     }
-
+#ifdef _WIN64
+    context_create_info.AddDeviceExtension(VK_KHR_EXTERNAL_MEMORY_EXTENSION_NAME);
+    context_create_info.AddDeviceExtension(VK_KHR_EXTERNAL_MEMORY_WIN32_EXTENSION_NAME);
+#endif
     vkctx_->Init(context_create_info);
     allocator_ = std::make_shared<DedicatedResourceAllocator>();
     allocator_->Init(vkctx_.get());

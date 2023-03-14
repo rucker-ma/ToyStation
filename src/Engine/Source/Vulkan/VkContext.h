@@ -2,8 +2,6 @@
 #include <string>
 #include <vector>
 
-
-
 #define VK_ENABLE_BETA_EXTENSIONS
 
 #include <vulkan/vulkan.h>
@@ -57,6 +55,7 @@ public:
     bool Init(VkContextCreateInfo& info);
     void DeInit();
     VkDevice GetDevice() const { return device_; }
+    VkInstance GetInstance()const{return instance_;}
     VkPhysicalDevice GetPhysicalDevice() const { return physical_device_; }
     void CreateRenderPass(VkRenderPassCreateInfo& create_info,
                           VkRenderPass& render_pass);

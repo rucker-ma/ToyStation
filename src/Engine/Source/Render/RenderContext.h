@@ -46,7 +46,7 @@ private:
     std::shared_ptr<CommandPool> cmd_pool_;
     std::shared_ptr<RenderCamera> camera_;
 };
-enum RenderFrameType { FRAME_RGB, FRAME_RGBA, FRAME_YCbCr };
+enum RenderFrameType { FRAME_RGB, FRAME_RGBA, FRAME_YCbCr,FRAME_NV12};
 
 class RenderFrame {
 public:
@@ -56,7 +56,7 @@ public:
     virtual unsigned int Height() const { return 0; }
     virtual RenderFrameType Type() const { return RenderFrameType::FRAME_RGB; }
 };
-
+//将RGBA格式VkImage映射到CPU内存空间data指针（大小：width*height*4）
 class RenderFrameImpl : public RenderFrame {
 public:
     RenderFrameImpl() = delete;
@@ -79,6 +79,8 @@ private:
     unsigned char* data_;
 };
 
+//将Comupute shader处理后的Y,Cb,Cr三个VkImage分别映射到CPU空间DataY(width*height) ,
+// DataCb(1/4 DataY Size),DataCr(1/4 DataY Size)
 class RenderFrameYCbCr : public RenderFrame {
 public:
     RenderFrameYCbCr(std::shared_ptr<RenderContext> context,
@@ -110,6 +112,7 @@ private:
     unsigned char* datau_;
     unsigned char* datav_;
 };
+
 
 class RenderEvent {
 public:

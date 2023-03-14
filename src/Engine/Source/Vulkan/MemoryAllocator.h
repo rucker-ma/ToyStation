@@ -34,4 +34,9 @@ private:
     VkMemoryAllocateFlags flags_{0};
 };
 
+class MemHandleUtils{
+public:
+    static VkDeviceSize GetSize(MemHandle mem_handle);
+    static void* GetExternalWin32Handle(VkDevice device,MemHandle mem_handle);
+};
 }  // namespace toystation

@@ -31,6 +31,7 @@ public:
     MemoryAllocateInfo& SetDeviceMask(uint32_t mask);
     MemoryAllocateInfo& SetDebugName(const std::string& name);
     MemoryAllocateInfo& SetPriority(const float priority = 1.0);
+    MemoryAllocateInfo& SetExportable(void* ptr);
 
     VkImage GetImage() const;
     VkBuffer GetBuffer() const;
@@ -40,7 +41,7 @@ public:
     const VkMemoryPropertyFlags& GetMemoryProperties() const;
     std::string GetDebugName() const;
     float GetPriority() const;
-
+    void* GetExportable()const;
 private:
     VkBuffer buffer_{nullptr};
     VkImage image_{nullptr};
@@ -51,6 +52,7 @@ private:
     float priority_{1.0};
     std::string debug_name_;
     bool is_tiling_optimal_;
+    void* export_{nullptr};
 };
 
 struct BakedAllocateInfo {
@@ -82,7 +84,9 @@ public:
         const VkPhysicalDeviceMemoryProperties& memory_properties,
         uint32_t type_bits, const VkMemoryPropertyFlags& properties);
 };
-
+//class MemoryHandleUtils{
+//    static void* Get
+//};
 class MemoryHandleBase {
 public:
     MemoryHandleBase() = default;

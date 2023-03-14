@@ -5,7 +5,6 @@ build/
 tools/
 out/
 resource/
-cmake-build-debug-visual-studio/
 
 **/obj/
 *.pdb
@@ -13,3 +12,4 @@ cmake-build-debug-visual-studio/
 *.dll
 !src/ThirdParty/LLVM/bin/libclang.dll
 !src/ThirdParty/Vulkan/Bin/VkLayer_khronos_validation.dll
+src/ThirdParty/tinygltf-2.8.3/examples

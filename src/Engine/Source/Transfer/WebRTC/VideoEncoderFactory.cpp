@@ -4,7 +4,8 @@
 #include <media/base/media_constants.h>
 
 #include "VideoEncoder.h"
-
+#include "NvencEncoder.h"
+#include "Device/Cuda/CudaPlatform.h"
 
 namespace toystation {
 
@@ -43,6 +44,9 @@ ToyVideoEncoderFactory::QueryVideoEncoder(
 std::unique_ptr<webrtc::VideoEncoder>
 ToyVideoEncoderFactory::CreateVideoEncoder(
     const webrtc::SdpVideoFormat& format) {
+    if(CudaPlatform::Instance().IsSupported()){
+        return std::make_unique<NvencEncoder>();
+    }
     return std::make_unique<ToyVideoEncoder>();
 }
 }  // namespace toystation

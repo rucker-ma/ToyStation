@@ -2,8 +2,86 @@
 
 #include "VkImageUtil.h"
 
+#ifdef _WIN64
+#include <AclAPI.h>
+#include <vulkan/vulkan_win32.h>
+#endif
+
 namespace toystation {
 
+//---------------------Helper set SECURITY_ATTRIBUTES --------------------//
+#ifdef _WIN64
+//from Nvidia Cuda Examples 5_simpleVulkan
+class WindowsSecurityAttributes {
+protected:
+    SECURITY_ATTRIBUTES m_winSecurityAttributes;
+    PSECURITY_DESCRIPTOR m_winPSecurityDescriptor;
+
+public:
+    WindowsSecurityAttributes();
+    SECURITY_ATTRIBUTES *operator&();
+    ~WindowsSecurityAttributes();
+};
+
+WindowsSecurityAttributes::WindowsSecurityAttributes() {
+    m_winPSecurityDescriptor = (PSECURITY_DESCRIPTOR)calloc(
+        1, SECURITY_DESCRIPTOR_MIN_LENGTH + 2 * sizeof(void **));
+    if (!m_winPSecurityDescriptor) {
+        throw std::runtime_error(
+            "Failed to allocate memory for security descriptor");
+    }
+
+    PSID *ppSID = (PSID *)((PBYTE)m_winPSecurityDescriptor +
+                          SECURITY_DESCRIPTOR_MIN_LENGTH);
+    PACL *ppACL = (PACL *)((PBYTE)ppSID + sizeof(PSID *));
+
+    InitializeSecurityDescriptor(m_winPSecurityDescriptor,
+                                 SECURITY_DESCRIPTOR_REVISION);
+
+    SID_IDENTIFIER_AUTHORITY sidIdentifierAuthority =
+        SECURITY_WORLD_SID_AUTHORITY;
+    AllocateAndInitializeSid(&sidIdentifierAuthority, 1, SECURITY_WORLD_RID, 0, 0,
+                             0, 0, 0, 0, 0, ppSID);
+
+    EXPLICIT_ACCESS explicitAccess;
+    ZeroMemory(&explicitAccess, sizeof(EXPLICIT_ACCESS));
+    explicitAccess.grfAccessPermissions =
+        STANDARD_RIGHTS_ALL | SPECIFIC_RIGHTS_ALL;
+    explicitAccess.grfAccessMode = SET_ACCESS;
+    explicitAccess.grfInheritance = INHERIT_ONLY;
+    explicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_SID;
+    explicitAccess.Trustee.TrusteeType = TRUSTEE_IS_WELL_KNOWN_GROUP;
+    explicitAccess.Trustee.ptstrName = (LPTSTR)*ppSID;
+
+    SetEntriesInAcl(1, &explicitAccess, NULL, ppACL);
+
+    SetSecurityDescriptorDacl(m_winPSecurityDescriptor, TRUE, *ppACL, FALSE);
+
+    m_winSecurityAttributes.nLength = sizeof(m_winSecurityAttributes);
+    m_winSecurityAttributes.lpSecurityDescriptor = m_winPSecurityDescriptor;
+    m_winSecurityAttributes.bInheritHandle = TRUE;
+}
+
+SECURITY_ATTRIBUTES *WindowsSecurityAttributes::operator&() {
+    return &m_winSecurityAttributes;
+}
+
+WindowsSecurityAttributes::~WindowsSecurityAttributes() {
+    PSID *ppSID = (PSID *)((PBYTE)m_winPSecurityDescriptor +
+                          SECURITY_DESCRIPTOR_MIN_LENGTH);
+    PACL *ppACL = (PACL *)((PBYTE)ppSID + sizeof(PSID *));
+
+    if (*ppSID) {
+        FreeSid(*ppSID);
+    }
+    if (*ppACL) {
+        LocalFree(*ppACL);
+    }
+    free(m_winPSecurityDescriptor);
+}
+#endif /* _WIN64 */
+
+//---------------------VkResourceAllocator --------------------//
 VkResourceAllocator::VkResourceAllocator(VkDevice device,
                                          VkPhysicalDevice physical_device,
                                          VkMemoryAllocator* mem_alloc,
@@ -28,7 +106,8 @@ void VkResourceAllocator::Init(VkDevice device,
 void VkResourceAllocator::DeInit() { staging_.reset(); }
 
 Buffer VkResourceAllocator::CreateBuffer(const VkBufferCreateInfo& info,
-                                         VkMemoryPropertyFlags mem_usage) {
+                                         VkMemoryPropertyFlags mem_usage,
+                                         void* memory_export) {
     Buffer result_buffer;
     CreateBufferEx(info, &result_buffer.buffer);
     VkMemoryRequirements2 mem_reqs;
@@ -51,6 +130,8 @@ Buffer VkResourceAllocator::CreateBuffer(const VkBufferCreateInfo& info,
     if (dedicated_reqs.requiresDedicatedAllocation) {
         alloc_info.SetBuffer(result_buffer.buffer);
     }
+    alloc_info.SetExportable(memory_export);
+
     result_buffer.handle = mem_alloc_->AllocMemory(alloc_info);
     if (result_buffer.handle) {
         const auto mem_info = mem_alloc_->GetMemoryInfo(result_buffer.handle);
@@ -71,6 +152,47 @@ Buffer VkResourceAllocator::CreateBuffer(VkDeviceSize size,
     info.usage = usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 
     return CreateBuffer(info, mem_usage);
+}
+Buffer VkResourceAllocator::CreateExternalBuffer(VkDeviceSize size,
+                                                 VkBufferUsageFlags usage,
+                                                 VkMemoryPropertyFlags mem_usage){
+    VkBufferCreateInfo info;
+    ZeroVKStruct(info, VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO);
+    info.size = size;
+    info.usage = usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+
+    VkExternalMemoryBufferCreateInfo external_memory_info;
+    ZeroVKStruct(external_memory_info,VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_BUFFER_CREATE_INFO);
+#ifdef _WIN64
+    external_memory_info.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT;
+#else//linux
+    external_memory_info.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT;
+#endif
+    info.pNext = &external_memory_info;
+#ifdef _WIN64
+    WindowsSecurityAttributes security_attributes;
+    VkExportMemoryWin32HandleInfoKHR export_memory_win32_info = {};
+    export_memory_win32_info.sType =
+        VK_STRUCTURE_TYPE_EXPORT_MEMORY_WIN32_HANDLE_INFO_KHR;
+    export_memory_win32_info.pNext = NULL;
+    export_memory_win32_info.pAttributes = &security_attributes;
+    export_memory_win32_info.dwAccess =
+        ( 0x80000000L ) | ( 1 );//DXGI_SHARED_RESOURCE_READ|DXGI_SHARED_RESOURCE_WRITE
+    export_memory_win32_info.name = (LPCWSTR)NULL;
+#endif /* _WIN64 */
+    VkExportMemoryAllocateInfoKHR export_memory_alloc_info = {};
+    export_memory_alloc_info.sType =
+        VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO_KHR;
+#ifdef _WIN64
+    export_memory_alloc_info.pNext =&export_memory_win32_info;
+    export_memory_alloc_info.handleTypes = external_memory_info.handleTypes;
+#else
+    export_memory_alloc_info.pNext = NULL;
+    export_memory_alloc_info.handleTypes =
+        VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT;
+#endif /* _WIN64 */
+
+    return CreateBuffer(info, mem_usage,&export_memory_alloc_info);
 }
 Buffer VkResourceAllocator::CreateBuffer(const VkCommandBuffer& cmd_buf,
                                          const VkDeviceSize& size,
@@ -305,4 +427,6 @@ void DedicatedResourceAllocator::Init(VkInstance instance, VkDevice device,
     Init(device, physical_device, staging_block_size);
 }
 void DedicatedResourceAllocator::DeInit() {}
+
+
 }  // namespace toystation

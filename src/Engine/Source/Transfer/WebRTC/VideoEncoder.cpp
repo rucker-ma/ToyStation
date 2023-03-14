@@ -63,8 +63,8 @@ int32_t ToyVideoEncoder::Encode(
     const webrtc::I420BufferInterface* i420_buffer =
         frame.video_frame_buffer()->GetI420();
 
-    int height = i420_buffer->height();
-    const uint8_t* datay = i420_buffer->DataY();
+//    int height = i420_buffer->height();
+//    const uint8_t* datay = i420_buffer->DataY();
     long stridey_size = i420_buffer->width() * i420_buffer->height();
     memcpy(encode_frame_->data[0], i420_buffer->DataY(), stridey_size);
     memcpy(encode_frame_->data[1], i420_buffer->DataU(),

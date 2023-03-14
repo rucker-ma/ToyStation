@@ -1,5 +1,7 @@
 #include "MemoryAllocator.h"
-
+#ifdef _WIN32
+#include <vulkan/vulkan_win32.h>
+#endif
 namespace toystation {
 
 class DedicatedMemoryHandle : public MemoryHandleBase {
@@ -91,4 +93,40 @@ VkDevice VkMemoryAllocator::GetDevice() const { return device_; }
 VkPhysicalDevice VkMemoryAllocator::GetPhysicalDevice() const {
     return physical_device_;
 }
+
+
+VkDeviceSize MemHandleUtils::GetSize(MemHandle mem_handle){
+    auto* dedicated_handle = CastDedicatedMemoryHandle(mem_handle);
+    if(dedicated_handle){
+        return dedicated_handle->GetSize();
+    }
+    LogError("Memory handle cast error");
+    assert(dedicated_handle);
+    return 0;
+}
+void* MemHandleUtils::GetExternalWin32Handle(VkDevice device,MemHandle mem_handle){
+    auto* dedicated_handle = CastDedicatedMemoryHandle(mem_handle);
+    HANDLE handle = 0;
+    VkMemoryGetWin32HandleInfoKHR win32_handle_info;
+    ZeroVKStruct(win32_handle_info,VK_STRUCTURE_TYPE_MEMORY_GET_WIN32_HANDLE_INFO_KHR);
+    win32_handle_info.memory = dedicated_handle->GetMemory();
+    win32_handle_info.handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT;
+
+    PFN_vkGetMemoryWin32HandleKHR fpGetMemoryWin32HandleKHR = (PFN_vkGetMemoryWin32HandleKHR)vkGetDeviceProcAddr(
+        device,"vkGetMemoryWin32HandleKHR"
+        );
+    if(!fpGetMemoryWin32HandleKHR){
+        LogError("Failed to retrieve vkGetMemoryWin32HandleKHR");
+        return nullptr;
+    }
+    VkResult res = fpGetMemoryWin32HandleKHR(device,&win32_handle_info,&handle);
+    if(res !=VK_SUCCESS){
+        LogError("Get Memory win32 handle error, confirm memory is exportable");
+        return nullptr;
+    }
+    return static_cast<void*>(handle);
+}
+
+
+
 }  // namespace toystation

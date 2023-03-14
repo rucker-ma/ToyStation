@@ -17,8 +17,17 @@ include_directories(
 
     ${WEBSOCKETPP}
     ${FREETYPE}/include
+    ${TINY_GLTF}
+    ${RENDERDOC}
     ${CMAKE_CURRENT_SOURCE_DIR}/Source
 )
+#查找cuda库
+find_package(CUDAToolkit)
+IF(${CUDAToolkit_FOUND})
+    add_definitions(-DTOYSTATION_CUDA)
+    include_directories(${CUDAToolkit_INCLUDE_DIRS})
+ENDIF(${CUDAToolkit_FOUND})
+
 
 file(GLOB_RECURSE SOURCE_FILE *.cpp)
 file(GLOB_RECURSE HEADER_FILE *.H)
@@ -47,6 +56,10 @@ target_link_libraries(${MODULE_NAME} ${FFMPEG_LIB})
 target_link_libraries(${MODULE_NAME} ${JSONCPP_LIB})
 target_link_libraries(${MODULE_NAME} ${FFMPEG_LIBRARIES})
 target_link_libraries(${MODULE_NAME} ${FREETYPE_LIB})
+
+IF(${CUDAToolkit_FOUND})
+    target_link_libraries(${MODULE_NAME} CUDA::cudart)
+ENDIF(${CUDAToolkit_FOUND})
 # get_property(DIRS DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
 
 # add_custom_command(TARGET ${MODULE_NAME} PRE_BUILD

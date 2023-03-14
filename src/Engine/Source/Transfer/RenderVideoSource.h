@@ -16,6 +16,6 @@ public:
     webrtc::MediaSourceInterface::SourceState state() const override;
     bool is_screencast() const override;
 private:
-    rtc::scoped_refptr<webrtc::I420BufferInterface> i420_buffer_;
+    rtc::scoped_refptr<webrtc::VideoFrameBuffer> video_buffer_;
 };
 }  // namespace toystation

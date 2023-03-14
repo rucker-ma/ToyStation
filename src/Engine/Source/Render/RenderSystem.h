@@ -5,17 +5,23 @@
 #include "RenderContext.h"
 #include "RenderPipeline.h"
 #include "RenderResource.h"
-
+#include "ConvertPass.h"
 #include "Vulkan/VkContext.h"
 
 namespace toystation {
 
+enum class RenderAction{
+    Render_General,
+    Render_RenderDocCapture
+};
+
 class RenderPayload {
 public:
-    RenderPayload() = default;
-
+    RenderPayload() {action_ = RenderAction::Render_General;}
+    RenderPayload(RenderAction action):action_(action){}
+    RenderAction Action(){return action_;}
 private:
-    int placeholder;
+    RenderAction action_;
 };
 
 using RenderMessage = DataMsg<RenderPayload>;
@@ -37,6 +43,7 @@ private:
     void ProcessEvent();
 private:
     std::shared_ptr<RenderPipeline> render_pipeline_;
+    std::shared_ptr<FrameConvertPass> frame_convert_;
 };
 
 }  // namespace toystation

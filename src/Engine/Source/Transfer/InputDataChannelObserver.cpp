@@ -4,6 +4,7 @@
 #include "json/json.h"
 #include "ToyEngine.h"
 
+
 namespace toystation {
 
 namespace {
@@ -63,9 +64,11 @@ void InpuDataChannelObserver::OnMessage(const webrtc::DataBuffer& buffer) {
     if (kJsonParse.parse(buffer.data.data<char>(), buffer.size(), msg)) {
         if(msg["type"].asString() == std::string("keydown")){
             kEngine.GetInputSystem().OnKey(PRESS,msg["value"].asInt());
+            kEngine.PushRenderFlag(RenderAction::Render_RenderDocCapture);
         }
         if(msg["type"].asString() == std::string("keyup")){
             kEngine.GetInputSystem().OnKey(RELEASE,msg["value"].asInt());
+
         }
     }
 }
