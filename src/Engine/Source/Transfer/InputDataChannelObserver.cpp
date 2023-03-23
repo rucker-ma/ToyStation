@@ -1,7 +1,7 @@
 #include "InputDataChannelObserver.h"
 
 #include "Base/Logger.h"
-#include "json/json.h"
+#include "File/FileUtil.h"
 #include "ToyEngine.h"
 
 
@@ -22,25 +22,7 @@ const char* ToString(DataChannelInterface::DataState state) {
     }
     return nullptr;
 }
-class JsonParseHelper {
-public:
-    JsonParseHelper() {
-        reader = std::unique_ptr<Json::CharReader>(builder.newCharReader());
-    }
-    bool parse(const char* data, int size, Json::Value& json) const {
-        std::string error;
-        if (!reader->parse(data, data + size, &json,
-                           &error)) {
-            LogError("json parse error: " + error);
-            return false;
-        }
-        return true;
-    }
 
-private:
-    Json::CharReaderBuilder builder;
-    std::unique_ptr<Json::CharReader> reader;
-};
 
 }  // namespace
 const static JsonParseHelper kJsonParse;

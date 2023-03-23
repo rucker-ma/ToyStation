@@ -3,11 +3,22 @@
 #include "Base/Global.h"
 #include "Base/Thread.h"
 #include "RenderDocCapture.h"
+#include "RenderObject.h"
 #include "ToyEngine.h"
+#include "ToyEngineSetting.h"
 
 namespace toystation {
 
 RenderGlobalData RenderSystem::kRenderGlobalData = {};
+
+void RenderGlobalData::AddRenderObject(std::shared_ptr<TObject> obj) {
+    int id = obj->GetID();
+    std::shared_ptr<RenderObject> render_object =
+        std::make_shared<RenderObject>(id);
+
+    //TODO:添加实现细节
+    render_resource->render_objects_.insert(std::make_pair(id, render_object));
+}
 
 void RenderSystem::Initialize() {
     LogDebug("RenderSystem Initialize..");
@@ -21,11 +32,12 @@ void RenderSystem::Initialize() {
     kRenderGlobalData.render_resource = std::make_shared<RenderResource>();
     render_pipeline_ = std::make_shared<RenderPipeline>();
     render_pipeline_->Initialize();
-#ifdef TOYSTATION_CUDA //如果有cuda环境就使用cuda
-    frame_convert_ = std::make_shared<FrameConvertNV12Pass>();
-#else
-    frame_convert_ = std::make_shared<FrameConvertYCrCbPass>();
-#endif
+
+    if (ToyEngineSetting::Instance().GetUseHWAccel()) {
+        frame_convert_ = std::make_shared<FrameConvertNV12Pass>();
+    } else {
+        frame_convert_ = std::make_shared<FrameConvertYCrCbPass>();
+    }
     auto init_info = render_pipeline_->GetRenderPassInitInfo();
     frame_convert_->Initialize(init_info);
 
@@ -59,8 +71,17 @@ void RenderSystem::Run() {
                             RenderDocCapture::Instance().StartCapture();
                             Tick();
                             RenderDocCapture::Instance().EndCapture();
+                            break;
                     }
                     calcu.Step();
+                }
+            }
+            if (msg->GetID() == kRenderTaskID) {
+                // 当前来自于level读取object后传递到渲染线程执行将数据拷贝到gpu
+                std::shared_ptr<Task> task =
+                    std::dynamic_pointer_cast<Task>(msg);
+                if (task) {
+                    task->Run();
                 }
             }
         }
@@ -72,8 +93,8 @@ void RenderSystem::ProcessEvent() {
         kMesssageQueue.Post(
             kTransferThread.get_id(),
             std::make_shared<DataMsg<RenderFrame>>(
-                kTransferMessageID,
-                frame_convert_->GetConvertFrame()));
+                kTransferMessageID, frame_convert_->GetConvertFrame()));
     }
 }
+
 }  // namespace toystation

@@ -7,6 +7,7 @@
 #include "RenderResource.h"
 #include "ConvertPass.h"
 #include "Vulkan/VkContext.h"
+#include "Framework/TObject.h"
 
 namespace toystation {
 
@@ -27,9 +28,11 @@ private:
 using RenderMessage = DataMsg<RenderPayload>;
 
 /// @brief 存储渲染相关全局资源，如vkdevice,vkinstance等
-struct RenderGlobalData {
+class RenderGlobalData {
+public:
     std::shared_ptr<RenderContext> render_context;
     std::shared_ptr<RenderResource> render_resource;
+    void AddRenderObject(std::shared_ptr<TObject> obj);
 };
 class TS_CPP_API RenderSystem {
 public:
@@ -37,7 +40,6 @@ public:
     void Tick();
 
     static RenderGlobalData kRenderGlobalData;
-
 private:
     void Run();
     void ProcessEvent();

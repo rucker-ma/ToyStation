@@ -122,6 +122,7 @@ Buffer VkResourceAllocator::CreateBuffer(const VkBufferCreateInfo& info,
     mem_reqs.pNext = &dedicated_reqs;
     buffer_reqs.buffer = result_buffer.buffer;
     vkGetBufferMemoryRequirements2(device_, &buffer_reqs, &mem_reqs);
+    
     MemoryAllocateInfo alloc_info(mem_reqs.memoryRequirements, mem_usage,
                                   false);
     if (info.usage & VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT) {
@@ -180,19 +181,19 @@ Buffer VkResourceAllocator::CreateExternalBuffer(VkDeviceSize size,
         ( 0x80000000L ) | ( 1 );//DXGI_SHARED_RESOURCE_READ|DXGI_SHARED_RESOURCE_WRITE
     export_memory_win32_info.name = (LPCWSTR)NULL;
 #endif /* _WIN64 */
-    VkExportMemoryAllocateInfoKHR export_memory_alloc_info = {};
-    export_memory_alloc_info.sType =
-        VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO_KHR;
-#ifdef _WIN64
-    export_memory_alloc_info.pNext =&export_memory_win32_info;
-    export_memory_alloc_info.handleTypes = external_memory_info.handleTypes;
-#else
-    export_memory_alloc_info.pNext = NULL;
-    export_memory_alloc_info.handleTypes =
-        VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT;
-#endif /* _WIN64 */
+//    VkExportMemoryAllocateInfoKHR export_memory_alloc_info = {};
+//    export_memory_alloc_info.sType =
+//        VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO_KHR;
+//#ifdef _WIN64
+//    export_memory_alloc_info.pNext =&export_memory_win32_info;
+//    export_memory_alloc_info.handleTypes = external_memory_info.handleTypes;
+//#else
+//    export_memory_alloc_info.pNext = NULL;
+//    export_memory_alloc_info.handleTypes =
+//        VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT;
+//#endif /* _WIN64 */
 
-    return CreateBuffer(info, mem_usage,&export_memory_alloc_info);
+    return CreateBuffer(info, mem_usage, &export_memory_win32_info);
 }
 Buffer VkResourceAllocator::CreateBuffer(const VkCommandBuffer& cmd_buf,
                                          const VkDeviceSize& size,
@@ -394,7 +395,10 @@ void VkResourceAllocator::UnMap(const RHIImage& image) {
 }
 void VkResourceAllocator::CreateBufferEx(const VkBufferCreateInfo& info,
                                          VkBuffer* buffer) {
-    vkCreateBuffer(device_, &info, nullptr, buffer);
+    VkResult res = vkCreateBuffer(device_, &info, nullptr, buffer);
+    if (res != VK_SUCCESS) {
+        LogError("vkCreateBuffer get error");
+    }
 }
 void VkResourceAllocator::CreateImageEx(const VkImageCreateInfo& info,
                                         VkImage* image) {

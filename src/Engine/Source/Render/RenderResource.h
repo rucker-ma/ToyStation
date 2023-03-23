@@ -2,6 +2,7 @@
 
 #include "Vulkan/DescriptorSets.h"
 #include "Vulkan/ResourceAllocator.h"
+#include "RenderObject.h"
 
 namespace toystation {
 class RenderResource {
@@ -12,18 +13,8 @@ public:
         RHIImage color_image;
         Texture sampler_tex;
     };
-//    struct ConvertPassResource{
-//        DescriptorSetContainer set_container;
-//        RHIImage comp_y;
-//        Texture tex_y;
-//        RHIImage comp_cb;
-//        Texture tex_cb;
-//        RHIImage comp_cr;
-//        Texture tex_cr;
-//        std::vector<VkFramebuffer> framebuffers;
-//    };
+    std::unordered_map<int,std::shared_ptr<RenderObject>> render_objects_;
     MainCameraPassResource main_pass_resource_;
-//    ConvertPassResource convert_pass_resource_;
     VkRenderPass current_pass_;
 };
 }  // namespace toystation

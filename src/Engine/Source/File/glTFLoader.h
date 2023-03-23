@@ -1,12 +1,16 @@
 #pragma once
 
 #include <tiny_gltf.h>
+#include "Framework/TObject.h"
 
 namespace toystation{
 
-class ModelLoader{
+class GltfModelLoader{
 public:
-    void Test();
+    void Load(std::string path,std::shared_ptr<TObject>obj);
+private:
+    std::vector<unsigned char> GetAccessorData(tinygltf::Model model,int accessor_index);
+    std::vector<unsigned char>& GetTextureData(tinygltf::Model model,int texture_index);
 };
 
 }

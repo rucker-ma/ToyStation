@@ -117,7 +117,6 @@ bool MemoryAllocateUtils::FillBakedAllocateInfo(
        if(info.GetExportable())
        {
          baked.export_info.pNext   = info.GetExportable();
-         baked.mem_alloc_info.pNext = &baked.export_info;
      #ifdef WIN32
          baked.export_info.handleTypes =
          VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT;
@@ -125,6 +124,7 @@ bool MemoryAllocateUtils::FillBakedAllocateInfo(
          baked.export_info.handleTypes =
          VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT;
      #endif
+         baked.mem_alloc_info.pNext = &baked.export_info;
        }
 
     if (info.GetDeviceMask() || info.GetAllocateFlags()) {

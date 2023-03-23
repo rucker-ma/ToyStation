@@ -29,6 +29,7 @@ RenderFrameNV12::RenderFrameNV12(std::shared_ptr<RenderContext> context,
 RenderFrameNV12::~RenderFrameNV12() {
     context_->GetAllocator()->Destroy(buffer_y_);
     context_->GetAllocator()->Destroy(buffer_uv_);
+
 }
 unsigned char* toystation::RenderFrameNV12::DataY() const {
     return static_cast<unsigned char*>(cuda_mem_y_->Data());

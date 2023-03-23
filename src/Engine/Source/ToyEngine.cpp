@@ -1,5 +1,8 @@
 ﻿#include "ToyEngine.h"
 #include "Base/Global.h"
+#include "File/glTFLoader.h"
+
+#include "Framework/TObject.h"
 
 namespace toystation {
 
@@ -12,6 +15,7 @@ void ToyEngine::Init(){
     render_system_.Initialize();
     transfer_system_.Initialize();
     input_system_.Initialize();
+    world_manager_.Initialize();
 }
 void ToyEngine::Run() {
     while (true) {
@@ -22,6 +26,7 @@ void ToyEngine::Run() {
 }
 void ToyEngine::SystemTick() {
     input_system_.Tick();
+    world_manager_.Tick();
 }
 void ToyEngine::RenderTick(){
     RenderAction flag = RenderAction::Render_General;

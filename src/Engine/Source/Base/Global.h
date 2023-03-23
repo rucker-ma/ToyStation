@@ -9,14 +9,14 @@ public:
     static const std::thread& GetRenderThread() {
         return kRenderThreadInternal;
     }
-    static void SetRenderThread(std::thread& thread) {
+    static void SetRenderThread(std::thread&& thread) {
         kRenderThreadInternal.swap(thread);
     }
 
     static const std::thread& GetTransferThread() {
         return kTransferThreadInternal;
     }
-    static void SetTransferThread(std::thread& thread) {
+    static void SetTransferThread(std::thread&& thread) {
         kTransferThreadInternal.swap(thread);
 
     }
@@ -34,6 +34,7 @@ extern MessageQueue kMesssageQueue;
 
 
 constexpr int kRenderMessageID = 0x0100;
+constexpr int kRenderTaskID = 0x0110;
 constexpr int kTransferMessageID = 0x0200;
 
 }  // namespace toystation

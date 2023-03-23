@@ -1,5 +1,6 @@
 set(MODULE_NAME Engine)
-
+#当前使用的webrtc库不支持c++17标准，因此不能开启c++17
+#set(CMAKE_CXX_STANDARD 17)
 find_package(FFmpeg COMPONENTS avcodec avdevice avformat avutil)
 
 include_directories(

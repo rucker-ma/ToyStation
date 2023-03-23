@@ -3,8 +3,6 @@
 
 namespace toystation {
 
-
-
 struct Buffer {
     VkBuffer buffer = nullptr;
     MemHandle handle = nullptr;

@@ -174,16 +174,14 @@ bool VkContext::InitInstance(VkContextCreateInfo& info) {
     }
 
     VkInstanceCreateInfo create_info{};
-    create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+    ZeroVKStruct(create_info, VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO);
+    //create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     create_info.pApplicationInfo = &application_info;
     create_info.enabledExtensionCount = used_extension.size();
     create_info.ppEnabledExtensionNames = used_extension.data();
     create_info.enabledLayerCount = used_layers.size();
     create_info.ppEnabledLayerNames = used_layers.data();
-    create_info.pNext = nullptr;
     vkCreateInstance(&create_info, nullptr, &instance_);
-    // check enable debug
-
     if (std::find_if(
             used_extension.begin(), used_extension.end(), [](const char* data) {
                 return strcmp(data, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0;
@@ -217,8 +215,11 @@ void VkContext::InitDebugUtils() {
             VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
         create_info_ext.pfnUserCallback = VulkanDebugCallback;
         create_info_ext.pUserData = this;
-        create_debug_messenger_ext(instance_, &create_info_ext, nullptr,
+        VkResult res = create_debug_messenger_ext(instance_, &create_info_ext, nullptr,
                                    &debug_messenger_);
+        if (res != VK_SUCCESS) {
+            LogError("vkCreateDebugUtilsMessengerEXT exec error");
+        }
     }
 }
 
@@ -375,7 +376,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL VkContext::VulkanDebugCallback(
             break;
     }
 
-    return 0;
+    return 1;
 }
 bool operator==(const VkExtensionProperties properties,
                 const VkContextCreateInfo::Entry& entry) {

@@ -39,6 +39,11 @@ int32_t NvencEncoder::RegisterEncodeCompleteCallback(
     return WEBRTC_VIDEO_CODEC_OK;
 }
 int32_t NvencEncoder::Release() {
+    assert(0);
+    if(test_ptr) {
+        cudaFree(test_ptr);
+    }
+    //TODO:完善资源的释放
     if(ctx_){
         avcodec_free_context(&ctx_);
         encoder_ = nullptr;
@@ -188,6 +193,8 @@ bool NvencEncoder::WriteToHWFrame(const webrtc::VideoFrame& frame)
         frame.video_frame_buffer()->GetNV12();
 
     size_t yplane_size = nv12_buffer->width()*nv12_buffer->height();
+    //BUG:此处需要使用cuda指针中转数据，直接拷贝会有bug，原因未知
+    //TODO:取消数据中转和二次拷贝
     cudaError res = cudaMemcpy(test_ptr,nv12_buffer->DataY(),yplane_size,
                      cudaMemcpyDeviceToDevice);
     res = cudaMemcpy(hw_frame_->data[0],test_ptr,yplane_size,
@@ -197,11 +204,11 @@ bool NvencEncoder::WriteToHWFrame(const webrtc::VideoFrame& frame)
                      cudaMemcpyDeviceToDevice);
     res = cudaMemcpy(hw_frame_->data[1],test_ptr,yplane_size/2,
                      cudaMemcpyDeviceToDevice);
-
-//    cudaMemcpy(hw_frame_->data[0],nv12_buffer->DataY(),yplane_size/10,
-//               cudaMemcpyDeviceToDevice);
-//    cudaMemcpy(hw_frame_->data[1],nv12_buffer->DataUV(),yplane_size/2,
-//               cudaMemcpyDeviceToDevice);
+    
+    //cudaMemcpy(hw_frame_->data[0],nv12_buffer->DataY(),yplane_size,
+    //           cudaMemcpyDeviceToDevice);
+    //cudaMemcpy(hw_frame_->data[1],nv12_buffer->DataUV(),yplane_size/2,
+    //           cudaMemcpyDeviceToDevice);
     //copy vulkan memory to frame buffer
     return true;
 }

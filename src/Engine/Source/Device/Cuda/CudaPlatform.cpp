@@ -54,8 +54,8 @@ std::shared_ptr<CudaExternalMemory> CudaExternalMemory::FromVulkanExternalMemory
 CudaExternalMemory::CudaExternalMemory():cuda_ptr_(nullptr),cuda_mem_(nullptr){}
 CudaExternalMemory::~CudaExternalMemory(){
     if(cuda_mem_){
-        cudaDestroyExternalMemory(cuda_mem_);
-        cudaFree(cuda_ptr_);
+        int res= cudaDestroyExternalMemory(cuda_mem_);
+        res = cudaFree(cuda_ptr_);
     }
 }
 void CudaExternalMemory::ImportMemory(std::shared_ptr<VkContext>context, Buffer& vkmemory){

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { RtcClient } from "../transfer/rtc";
+import {NButton,NLayout,NCard} from "naive-ui";
+
 const client = new RtcClient();
 const remoteVideo = ref<InstanceType<typeof HTMLVideoElement>>();
 
@@ -42,24 +44,14 @@ document.addEventListener("keyup",(e:KeyboardEvent)=>{
 </script>
 
 <template>
-  <div class="videoBox">
+  <n-layout embedded content-style="padding: 20px;">
     <video id="remote-video" ref="remoteVideo" playsinline autoplay></video>
-  </div>
-  <div>
-    <button @click="connectToServer">Connect</button>
-  </div>
+  </n-layout>
+  <n-button @click="connectToServer" style="margin:20px;align-items: center;">Connect</n-button>
 </template>
 
 <style scoped>
-.videoBox {
-  background-color: rgba(183, 184, 179, 0.637);
-  width: 100%;
-  height: calc(100%-70px);
-  align-items: center;
-  justify-content: center;
-  display: flex;
-  overflow: hidden;
-}
+
 video {
   object-fit: fill;
   width: 100%;

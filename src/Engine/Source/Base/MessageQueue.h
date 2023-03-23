@@ -46,6 +46,40 @@ public:
 private:
     std::unique_ptr<DataType> payload_;
 };
+class Task{
+public:
+    virtual ~Task(){};
+    virtual void Run()=0;
+    virtual void Wait(){}
+};
+
+//添加final,避免后面使用时出现菱形继承问题
+template<typename T>
+class TaskMessage final:public Msg,Task{
+public:
+    TaskMessage(int message_id, const T& job): Msg(message_id), job_(job){}
+    virtual void Run(){
+     job_();
+     Signal();
+    }
+    virtual void Wait(){
+        std::unique_lock<std::mutex> lock(mtx_);
+        cv_.wait(lock,[this]{return signal_;});
+        signal_ = false;
+    };
+    virtual void Reset(){
+        signal_ = false;
+    }
+    virtual void Signal(){
+        signal_ = true;
+        cv_.notify_all();
+    }
+private:
+    bool signal_;
+    std::mutex mtx_;
+    std::condition_variable cv_;
+    T job_;
+};
 
 class ThreadSafeQueue {
 public:

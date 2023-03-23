@@ -1,7 +1,6 @@
 #include "FileUtil.h"
 
 #include <fstream>
-
 #include "Base/Macro.h"
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -46,4 +45,28 @@ unsigned char* FileUtil::ReadImg(std::string name, int& width, int& height,
                                  int& channel) {
     return stbi_load(name.c_str(), &width, &height, &channel, STBI_rgb_alpha);
 }
+std::string FileUtil::Combine(const char* relative_path) {
+    std::string root = "D:/project/ToyStation/";
+    std::string full_path = root+std::string(relative_path);
+    std::ifstream f(full_path);
+    if(!f.good()){
+        assert(0);
+        LogError("path not exits");
+    }
+    return full_path;
+}
+
+JsonParseHelper::JsonParseHelper() {
+    reader = std::unique_ptr<Json::CharReader>(builder.newCharReader());
+}
+bool JsonParseHelper::parse(const char* data, int size, Json::Value& json) const {
+    std::string error;
+    if (!reader->parse(data, data + size, &json,
+                       &error)) {
+        LogError("json parse error: " + error);
+        return false;
+    }
+    return true;
+}
+
 }  // namespace toystation
