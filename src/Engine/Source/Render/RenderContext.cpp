@@ -82,7 +82,7 @@ void RenderContext::SaveToImage(std::string filename, RHIImage& image,
                                 std::shared_ptr<RenderContext> context) {
     VkRect2D* rect = context->GetSwapchain()->GetScissor();
     VkDeviceSize mem_size = rect->extent.width * rect->extent.height * 4;
-    Buffer buf = context->GetAllocator()->CreateBuffer(
+    RHIBuffer buf = context->GetAllocator()->CreateBuffer(
         mem_size,
         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
@@ -177,7 +177,7 @@ RenderFrameYCbCr::RenderFrameYCbCr(std::shared_ptr<RenderContext> context,
                           VkExtent2D{width_ / 2, height_ / 2});
 }
 
-unsigned char* RenderFrameYCbCr::ReadRHIImage(Buffer& buf, const RHIImage& img,
+unsigned char* RenderFrameYCbCr::ReadRHIImage(RHIBuffer& buf, const RHIImage& img,
                                               VkDeviceSize mem_size,
                                               VkExtent2D img_size) {
     buf = context_->GetAllocator()->CreateBuffer(

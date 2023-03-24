@@ -20,7 +20,7 @@ public:
     unsigned int Height() const override;
     RenderFrameType Type() const override;
 private:
-    void ReadRHIImage(Buffer& buf, const RHIImage& img,
+    void ReadRHIImage(RHIBuffer& buf, const RHIImage& img,
                  VkDeviceSize mem_size,
                  VkExtent2D img_size);
 private:
@@ -28,8 +28,8 @@ private:
     unsigned int height_;
     std::shared_ptr<CudaExternalMemory> cuda_mem_y_;
     std::shared_ptr<CudaExternalMemory> cuda_mem_uv_;
-    Buffer buffer_y_;
-    Buffer buffer_uv_;
+    RHIBuffer buffer_y_;
+    RHIBuffer buffer_uv_;
     std::shared_ptr<RenderContext> context_;
 };
 }

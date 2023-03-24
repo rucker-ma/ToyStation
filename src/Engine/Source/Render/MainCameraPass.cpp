@@ -35,9 +35,9 @@ const std::vector<Vertex> kVertices = {
 const std::vector<uint16_t> kIndices = {0, 1, 2, 2, 3, 0, 4, 5, 6, 6, 7, 4};
 
 struct TestBuffer {
-    Buffer vert;
-    Buffer indices;
-    Buffer uniform;
+    RHIBuffer vert;
+    RHIBuffer indices;
+    RHIBuffer uniform;
 };
 
 TestBuffer kShaderBuffer;
@@ -375,10 +375,10 @@ void MainCameraPass::SetupFrameBuffer(RenderPassInitInfo& info) {
     VkImageViewCreateInfo depth_view = MakeImage2DViewCreateInfo(
         depth_image.image, VK_IMAGE_ASPECT_DEPTH_BIT, VK_FORMAT_D32_SFLOAT);
 
-    Texture color_tex = alloc->CreateTexture(
+    RHITexture color_tex = alloc->CreateTexture(
         resource_->main_pass_resource_.color_image, color_view);
     resource_->main_pass_resource_.sampler_tex = color_tex;
-    Texture depth_tex = alloc->CreateTexture(depth_image, depth_view);
+    RHITexture depth_tex = alloc->CreateTexture(depth_image, depth_view);
 
     std::vector<VkImageView> attachments;
     attachments.push_back(color_tex.descriptor.imageView);
@@ -478,7 +478,7 @@ void MainCameraPass::UpdateUniform() {
 void MainCameraPass::SaveImage() {
     VkRect2D* rect = context_->GetSwapchain()->GetScissor();
     VkDeviceSize mem_size = rect->extent.width * rect->extent.height * 4;
-    Buffer buf = context_->GetAllocator()->CreateBuffer(
+    RHIBuffer buf = context_->GetAllocator()->CreateBuffer(
         mem_size,
         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);

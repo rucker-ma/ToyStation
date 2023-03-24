@@ -32,6 +32,10 @@ public:
     void SetDrawMode(MeshDrawMode mode);
     void AddData(MeshDataType type,std::vector<unsigned char>&data);
     void AddTexture(std::vector<unsigned char>&tex_coord,std::weak_ptr<Material>material);
+    std::vector<TextureBound>& Textures(){return tex_refs_;}
+    std::vector<unsigned char>& Position(){return position_buffer_;}
+    std::vector<unsigned char>& Normal(){return position_buffer_;}
+    std::vector<unsigned char>& Tangent(){return position_buffer_;}
     void SetLocalMatrix(Matrix4 mat);
 
 private:
@@ -45,10 +49,11 @@ private:
 
 class MeshComponent:public TComponent{
 public:
+    const static ComponentType Type = ComponentType::Component_Mesh;
     ComponentType GetType()override;
 
     std::shared_ptr<SubMesh> CreateSubMesh();
-
+    std::vector<std::shared_ptr<SubMesh>>& GetSubMesh();
 private:
     std::vector<std::shared_ptr<SubMesh>> meshes_;
 };

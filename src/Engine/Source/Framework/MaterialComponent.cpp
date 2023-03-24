@@ -5,7 +5,7 @@
 
 #include "Render/RenderSystem.h"
 namespace toystation {
-void Material::SetTexture(TextureType type, std::vector<unsigned char> data) {
+void Material::SetTexture(TextureType type, std::shared_ptr<Texture> data) {
     switch (type) {
         case Texture_Normal:
             break;

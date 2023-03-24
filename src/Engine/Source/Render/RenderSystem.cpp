@@ -4,6 +4,7 @@
 #include "Base/Thread.h"
 #include "RenderDocCapture.h"
 #include "RenderObject.h"
+#include "Framework/MeshComponent.h"
 #include "ToyEngine.h"
 #include "ToyEngineSetting.h"
 
@@ -16,7 +17,19 @@ void RenderGlobalData::AddRenderObject(std::shared_ptr<TObject> obj) {
     std::shared_ptr<RenderObject> render_object =
         std::make_shared<RenderObject>(id);
 
+    std::shared_ptr<MeshComponent> meshes = obj->GetComponent<MeshComponent>();
+    std::shared_ptr<MaterialComponent> materials = obj->GetComponent<MaterialComponent>();
+
+    VkCommandBuffer cmd = render_context->GetCommandPool()->CreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY,true);
     //TODO:添加实现细节
+    for(auto& submesh:meshes->GetSubMesh()){
+        render_context->GetAllocator()->CreateBuffer();
+
+        //submesh->Position()
+    }
+
+    render_context->GetCommandPool()->SubmitAndWait(cmd);
+
     render_resource->render_objects_.insert(std::make_pair(id, render_object));
 }
 
@@ -78,8 +91,8 @@ void RenderSystem::Run() {
             }
             if (msg->GetID() == kRenderTaskID) {
                 // 当前来自于level读取object后传递到渲染线程执行将数据拷贝到gpu
-                std::shared_ptr<Task> task =
-                    std::dynamic_pointer_cast<Task>(msg);
+                std::shared_ptr<TaskMsg> task =
+                    std::dynamic_pointer_cast<TaskMsg>(msg);
                 if (task) {
                     task->Run();
                 }

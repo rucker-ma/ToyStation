@@ -5,6 +5,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include "Base/MessageQueue.h"
 #include "File/FileUtil.h"
 #include "TObject.h"
 
@@ -22,7 +23,7 @@ private:
         TObjectInfoReader(Json::Value value);
     };
 
-    void LoadObject(TObjectInfoReader& object_info);
+    std::shared_ptr<TaskFuture> LoadObjectWithTask(TObjectInfoReader& object_info);
 private:
     std::vector<std::shared_ptr<TObject>> objects_;
 };

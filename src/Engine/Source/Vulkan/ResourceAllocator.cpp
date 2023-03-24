@@ -105,10 +105,10 @@ void VkResourceAllocator::Init(VkDevice device,
 
 void VkResourceAllocator::DeInit() { staging_.reset(); }
 
-Buffer VkResourceAllocator::CreateBuffer(const VkBufferCreateInfo& info,
+RHIBuffer VkResourceAllocator::CreateBuffer(const VkBufferCreateInfo& info,
                                          VkMemoryPropertyFlags mem_usage,
                                          void* memory_export) {
-    Buffer result_buffer;
+    RHIBuffer result_buffer;
     CreateBufferEx(info, &result_buffer.buffer);
     VkMemoryRequirements2 mem_reqs;
     ZeroVKStruct(mem_reqs, VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2);
@@ -144,7 +144,7 @@ Buffer VkResourceAllocator::CreateBuffer(const VkBufferCreateInfo& info,
     return result_buffer;
 }
 
-Buffer VkResourceAllocator::CreateBuffer(VkDeviceSize size,
+RHIBuffer VkResourceAllocator::CreateBuffer(VkDeviceSize size,
                                          VkBufferUsageFlags usage,
                                          VkMemoryPropertyFlags mem_usage) {
     VkBufferCreateInfo info;
@@ -154,7 +154,7 @@ Buffer VkResourceAllocator::CreateBuffer(VkDeviceSize size,
 
     return CreateBuffer(info, mem_usage);
 }
-Buffer VkResourceAllocator::CreateExternalBuffer(VkDeviceSize size,
+RHIBuffer VkResourceAllocator::CreateExternalBuffer(VkDeviceSize size,
                                                  VkBufferUsageFlags usage,
                                                  VkMemoryPropertyFlags mem_usage){
     VkBufferCreateInfo info;
@@ -195,7 +195,7 @@ Buffer VkResourceAllocator::CreateExternalBuffer(VkDeviceSize size,
 
     return CreateBuffer(info, mem_usage, &export_memory_win32_info);
 }
-Buffer VkResourceAllocator::CreateBuffer(const VkCommandBuffer& cmd_buf,
+RHIBuffer VkResourceAllocator::CreateBuffer(const VkCommandBuffer& cmd_buf,
                                          const VkDeviceSize& size,
                                          const void* data,
                                          VkBufferUsageFlags usage,
@@ -204,7 +204,7 @@ Buffer VkResourceAllocator::CreateBuffer(const VkCommandBuffer& cmd_buf,
     ZeroVKStruct(info, VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO);
     info.size = size;
     info.usage = usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-    Buffer result_buffer = CreateBuffer(info, mem_props);
+    RHIBuffer result_buffer = CreateBuffer(info, mem_props);
     if (data) {
         // staging command to buffer
         staging_->CmdToBuffer(cmd_buf, result_buffer.buffer, 0, size, data);
@@ -277,9 +277,9 @@ RHIImage VkResourceAllocator::CreateImage(const VkCommandBuffer& cmd_buffer,
     }
     return result_image;
 }
-Texture VkResourceAllocator::CreateTexture(
+RHITexture VkResourceAllocator::CreateTexture(
     const RHIImage& image, const VkImageViewCreateInfo& imageview_create_info) {
-    Texture result_texture;
+    RHITexture result_texture;
     result_texture.image = image.image;
     result_texture.handle = image.handle;
     result_texture.descriptor.imageLayout =
@@ -290,10 +290,10 @@ Texture VkResourceAllocator::CreateTexture(
 
     return result_texture;
 }
-Texture VkResourceAllocator::CreateTexture(
+RHITexture VkResourceAllocator::CreateTexture(
     const RHIImage& image, const VkImageViewCreateInfo& imageview_create_info,
     const VkSamplerCreateInfo& sampler_create_info) {
-    Texture result_texture = CreateTexture(image, imageview_create_info);
+    RHITexture result_texture = CreateTexture(image, imageview_create_info);
     // result_texture.descriptor.sampler =
     // m_samplerPool.acquireSampler(samplerCreateInfo);
     
@@ -320,7 +320,7 @@ Texture VkResourceAllocator::CreateTexture(
     vkCreateSampler(device_, &sampler_info, nullptr, &result_texture.descriptor.sampler);
     return result_texture;
 }
-Texture VkResourceAllocator::CreateTexture(
+RHITexture VkResourceAllocator::CreateTexture(
     const VkCommandBuffer& cmd_buffer, size_t size, const void* data,
     const VkImageCreateInfo& info, VkSamplerCreateInfo& sampler_create_info,
     VkImageLayout layout, bool is_cube) {
@@ -356,12 +356,12 @@ Texture VkResourceAllocator::CreateTexture(
             assert(0);
     }
 
-    Texture result_texture =
+    RHITexture result_texture =
         CreateTexture(image, view_info, sampler_create_info);
     result_texture.descriptor.imageLayout = layout;
     return result_texture;
 }
-void VkResourceAllocator::Destroy(Buffer& buffer) {
+void VkResourceAllocator::Destroy(RHIBuffer& buffer) {
     vkDestroyBuffer(device_, buffer.buffer, nullptr);
     mem_alloc_->FreeMemory(buffer.handle);
 }
@@ -369,7 +369,7 @@ void VkResourceAllocator::Destroy(RHIImage& image) {
     vkDestroyImage(device_, image.image, nullptr);
     mem_alloc_->FreeMemory(image.handle);
 }
-void VkResourceAllocator::Destroy(Texture& texture) {
+void VkResourceAllocator::Destroy(RHITexture& texture) {
     vkDestroyImageView(device_, texture.descriptor.imageView, nullptr);
     vkDestroyImage(device_, texture.image, nullptr);
     mem_alloc_->FreeMemory(texture.handle);
@@ -379,11 +379,11 @@ void VkResourceAllocator::Destroy(Texture& texture) {
         // m_samplerPool.releaseSampler(t_.descriptor.sampler);
     }
 }
-void* VkResourceAllocator::Map(const Buffer& buffer) {
+void* VkResourceAllocator::Map(const RHIBuffer& buffer) {
     void* data = mem_alloc_->Map(buffer.handle);
     return data;
 }
-void VkResourceAllocator::UnMap(const Buffer& buffer) {
+void VkResourceAllocator::UnMap(const RHIBuffer& buffer) {
     mem_alloc_->UnMap(buffer.handle);
 }
 void* VkResourceAllocator::Map(const RHIImage& image) {

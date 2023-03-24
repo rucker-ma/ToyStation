@@ -37,12 +37,12 @@ private:
 class CudaExternalMemory {
 public:
     static std::shared_ptr<CudaExternalMemory> FromVulkanExternalMemory(
-        std::shared_ptr<VkContext> context, Buffer& buffer);
+        std::shared_ptr<VkContext> context, RHIBuffer& buffer);
     void* Data()const;
 private:
     CudaExternalMemory();
     ~CudaExternalMemory();
-    void ImportMemory(std::shared_ptr<VkContext> context, Buffer& vkmemory);
+    void ImportMemory(std::shared_ptr<VkContext> context, RHIBuffer& vkmemory);
 
     class deleter;
     friend class deleter;

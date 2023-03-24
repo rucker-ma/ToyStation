@@ -21,7 +21,7 @@ set(RENDERDOC "${CMAKE_CURRENT_SOURCE_DIR}/src/ThirdParty/renderdoc")
 
 find_library(ASTYLE_LIB NAMES AStyleLibd PATHS ${ASTYLE}/lib)
 find_library(LIBCLANG_LIB NAMES libclang PATHS ${LLVM}/lib)
-find_library(VULKAN_LIB NAMES vulkan-1 PATHS ${VULKAN}/Lib)
+find_library(VULKAN_LIB NAMES vulkan-1 shaderc_combined PATHS ${VULKAN}/Lib)
 find_library(GTEST_LIB NAMES gtestd PATHS ${GTEST}/lib)
 find_library(WebRTC_LIB NAMES webrtc PATHS ${WebRTC}/lib)
 find_library(JSONCPP_LIB NAMES jsoncpp PATHS ${WebRTC}/lib)

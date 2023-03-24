@@ -29,11 +29,11 @@ private:
     struct ConvertYCrCbResource{
         DescriptorSetContainer set_container;
         RHIImage comp_y;
-        Texture tex_y;
+        RHITexture tex_y;
         RHIImage comp_cb;
-        Texture tex_cb;
+        RHITexture tex_cb;
         RHIImage comp_cr;
-        Texture tex_cr;
+        RHITexture tex_cr;
         std::vector<VkFramebuffer> framebuffers;
     };
     ConvertYCrCbResource convert_resource_;
@@ -58,9 +58,9 @@ private:
     struct ConvertNV12Resource{
         DescriptorSetContainer set_container;
         RHIImage comp_y;
-        Texture tex_y;
+        RHITexture tex_y;
         RHIImage comp_uv;
-        Texture tex_uv;
+        RHITexture tex_uv;
         std::vector<VkFramebuffer> framebuffers;
     };
     ConvertNV12Resource convert_resource_;

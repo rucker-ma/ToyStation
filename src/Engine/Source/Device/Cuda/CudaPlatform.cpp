@@ -46,7 +46,7 @@ void CudaPlatform::Init() {
 
 #if TOYSTATION_CUDA
 std::shared_ptr<CudaExternalMemory> CudaExternalMemory::FromVulkanExternalMemory(std::shared_ptr<VkContext>context,
-                                                             Buffer& buffer){
+                                                             RHIBuffer& buffer){
     std::shared_ptr<CudaExternalMemory> mem(new CudaExternalMemory(),CudaExternalMemory::deleter());
     mem->ImportMemory(context,buffer);
     return mem;
@@ -58,7 +58,7 @@ CudaExternalMemory::~CudaExternalMemory(){
         res = cudaFree(cuda_ptr_);
     }
 }
-void CudaExternalMemory::ImportMemory(std::shared_ptr<VkContext>context, Buffer& vkmemory){
+void CudaExternalMemory::ImportMemory(std::shared_ptr<VkContext>context, RHIBuffer& vkmemory){
     cudaExternalMemoryHandleDesc external_handle_desc = {};
     external_handle_desc.type = cudaExternalMemoryHandleTypeOpaqueWin32;
     external_handle_desc.size = MemHandleUtils::GetSize(vkmemory.handle);

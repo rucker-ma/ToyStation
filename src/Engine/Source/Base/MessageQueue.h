@@ -46,38 +46,58 @@ public:
 private:
     std::unique_ptr<DataType> payload_;
 };
-class Task{
+class TaskMsg:public Msg{
 public:
-    virtual ~Task(){};
+    TaskMsg(int message_id): Msg(message_id){}
+    virtual ~TaskMsg(){};
     virtual void Run()=0;
-    virtual void Wait(){}
+    //virtual void Wait(){}
 };
 
-//添加final,避免后面使用时出现菱形继承问题
-template<typename T>
-class TaskMessage final:public Msg,Task{
+class TaskFuture
+{
 public:
-    TaskMessage(int message_id, const T& job): Msg(message_id), job_(job){}
-    virtual void Run(){
-     job_();
-     Signal();
-    }
-    virtual void Wait(){
+    void Wait(){
         std::unique_lock<std::mutex> lock(mtx_);
         cv_.wait(lock,[this]{return signal_;});
         signal_ = false;
     };
-    virtual void Reset(){
-        signal_ = false;
-    }
-    virtual void Signal(){
+    void Signal(){
         signal_ = true;
         cv_.notify_all();
+    }
+    void Reset(){
+        signal_ = false;
     }
 private:
     bool signal_;
     std::mutex mtx_;
     std::condition_variable cv_;
+};
+
+template<typename T>
+class TaskMessage final:public TaskMsg{
+public:
+    TaskMessage(int message_id, const T& job): TaskMsg(message_id), job_(job){
+        future_ = std::make_shared<TaskFuture>();
+    }
+    virtual void Run(){
+     job_();
+    future_->Signal();
+    }
+//    通过future获得执行结果，避免taskmessage 模板的干扰
+    std::shared_ptr<TaskFuture> GetFuture(){return future_;}
+//    virtual void Wait(){
+//        future_->Wait();
+//    };
+//    virtual void Reset(){
+//        future_->Reset();
+//    }
+//    virtual void Signal(){
+//        future_->Signal();
+//    }
+private:
+    std::shared_ptr<TaskFuture> future_;
     T job_;
 };
 

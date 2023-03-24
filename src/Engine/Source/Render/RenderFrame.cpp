@@ -42,7 +42,7 @@ unsigned int RenderFrameNV12::Height() const { return height_; }
 RenderFrameType RenderFrameNV12::Type() const {
     return RenderFrameType::FRAME_NV12;
 }
-void RenderFrameNV12::ReadRHIImage(Buffer& buf, const RHIImage& img,
+void RenderFrameNV12::ReadRHIImage(RHIBuffer& buf, const RHIImage& img,
                                    VkDeviceSize mem_size, VkExtent2D img_size) {
     buf = context_->GetAllocator()->CreateExternalBuffer(
         mem_size,

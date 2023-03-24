@@ -40,6 +40,8 @@ std::shared_ptr<SubMesh> MeshComponent::CreateSubMesh() {
     meshes_.push_back(mesh);
     return mesh;
 }
-
+std::vector<std::shared_ptr<SubMesh>>& MeshComponent::GetSubMesh() {
+    return meshes_;
+}
 
 }

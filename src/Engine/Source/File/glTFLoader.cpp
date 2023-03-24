@@ -25,43 +25,46 @@ void GltfModelLoader::Load(std::string path, std::shared_ptr<TObject> obj) {
     }
     // scene场景节点中包含node节点，node节点有不同的层级关系，包含指向不同mesh的局部变换
     //
-
     std::vector<std::weak_ptr<Material>> material_cache;
-    if(!model.materials.empty()){
+    if (!model.materials.empty()) {
         std::shared_ptr<MaterialComponent> material_comp =
             obj->CreateComponent<MaterialComponent>();
-        for(auto& gltf_material:model.materials){
-
-             std::shared_ptr<Material> material = material_comp->CreateMaterial();
-             // normal texture
-             if(gltf_material.normalTexture.index >=0) {
-                 auto data =
-                     GetTextureData(model, gltf_material.normalTexture.index);
-                 material->SetTexture(Texture_Normal, data);
-             }
-             //basecolor texture, basecolor factor?
-             if(gltf_material.pbrMetallicRoughness.baseColorTexture.index>=0){
-                 auto data =
-                     GetTextureData(model, gltf_material.pbrMetallicRoughness.baseColorTexture.index);
-                 material->SetTexture(Texture_Basecolor, data);
-             }
-             // metallic roughness texture, factor?
-            if(gltf_material.pbrMetallicRoughness.metallicRoughnessTexture.index>=0){
-                 auto data =
-                     GetTextureData(model, gltf_material.pbrMetallicRoughness.metallicRoughnessTexture.index);
-                 material->SetTexture(Texture_Metallic_Roughness, data);
+        for (auto& gltf_material : model.materials) {
+            std::shared_ptr<Material> material =
+                material_comp->CreateMaterial();
+            // normal texture
+            if (gltf_material.normalTexture.index >= 0) {
+                auto data =
+                    GetTexture(model, gltf_material.normalTexture.index);
+                material->SetTexture(Texture_Normal, data);
+            }
+            // basecolor texture, basecolor factor?
+            if (gltf_material.pbrMetallicRoughness.baseColorTexture.index >=
+                0) {
+                auto data = GetTexture(
+                    model,
+                    gltf_material.pbrMetallicRoughness.baseColorTexture.index);
+                material->SetTexture(Texture_Basecolor, data);
+            }
+            // metallic roughness texture, factor?
+            if (gltf_material.pbrMetallicRoughness.metallicRoughnessTexture
+                    .index >= 0) {
+                auto data =
+                    GetTexture(model, gltf_material.pbrMetallicRoughness
+                                          .metallicRoughnessTexture.index);
+                material->SetTexture(Texture_Metallic_Roughness, data);
             }
             // occlusion texture
-            if(gltf_material.occlusionTexture.index>=0){
-                 auto data =
-                     GetTextureData(model, gltf_material.occlusionTexture.index);
-                 material->SetTexture(Texture_Occlusion, data);
+            if (gltf_material.occlusionTexture.index >= 0) {
+                auto data =
+                    GetTexture(model, gltf_material.occlusionTexture.index);
+                material->SetTexture(Texture_Occlusion, data);
             }
             // emissive texture,but emissive factor ?
-            if(gltf_material.emissiveTexture.index>=0){
-                 auto data =
-                     GetTextureData(model, gltf_material.emissiveTexture.index);
-                 material->SetTexture(Texture_Emissive, data);
+            if (gltf_material.emissiveTexture.index >= 0) {
+                auto data =
+                    GetTexture(model, gltf_material.emissiveTexture.index);
+                material->SetTexture(Texture_Emissive, data);
             }
             material_cache.push_back(material);
         }
@@ -73,7 +76,7 @@ void GltfModelLoader::Load(std::string path, std::shared_ptr<TObject> obj) {
 
         for (auto& mesh : model.meshes) {
             std::shared_ptr<SubMesh> sub_mesh = mesh_comp->CreateSubMesh();
-            //TODO:一个mesh多个primitive怎么额解决？
+            // TODO:一个mesh多个primitive怎么额解决？
             for (auto& primitive : mesh.primitives) {
                 // primitive.mode 渲染模式，TINYGLTF_MODE_*
                 // primitive.attributes
@@ -94,7 +97,8 @@ void GltfModelLoader::Load(std::string path, std::shared_ptr<TObject> obj) {
                     } else if (attr_name.find("TEXCOORD") !=
                                std::string::npos) {
                         // 添加纹理
-                        sub_mesh->AddTexture(attr_data,material_cache[primitive.material]);
+                        sub_mesh->AddTexture(
+                            attr_data, material_cache[primitive.material]);
                     } else {
                         LogError("MeshComponent unsupported Data");
                     }
@@ -109,13 +113,21 @@ std::vector<unsigned char> GltfModelLoader::GetAccessorData(
         model.accessors[accessor_index];  // 获取顶点indices数据
     tinygltf::BufferView& view = model.bufferViews[accessor.bufferView];
     tinygltf::Buffer& buffer = model.buffers[view.buffer];
-    auto begin =
-        buffer.data.begin() + view.byteOffset + accessor.byteOffset;
-    auto end = begin + view.byteLength;
-    return std::vector<unsigned char>(begin, end);
+    // begin -end : bufferview range
+    auto view_buffer_begin = buffer.data.begin() + view.byteOffset;
+    auto view_buffer_end = view_buffer_begin + view.byteLength;
+
+    int length = accessor.count *
+                 tinygltf::GetComponentSizeInBytes(accessor.componentType) *
+                 tinygltf::GetNumComponentsInType(accessor.type);
+    // add accessor offset for accessor
+    auto accessor_data_begin = view_buffer_begin + accessor.byteOffset;
+    auto accessor_data_end = accessor_data_begin + length;
+    assert(accessor_data_end<=view_buffer_end);
+    return std::vector<unsigned char>(accessor_data_begin, accessor_data_end);
 }
-std::vector<unsigned char>& GltfModelLoader::GetTextureData(
-    tinygltf::Model model, int texture_index) {
+std::shared_ptr<Texture> GltfModelLoader::GetTexture(tinygltf::Model model,
+                                                     int texture_index) {
     tinygltf::Texture& tex = model.textures[texture_index];
     tinygltf::Image& image = model.images[tex.source];
 
@@ -126,7 +138,23 @@ std::vector<unsigned char>& GltfModelLoader::GetTextureData(
     // sampler.magFilter
     // sampler.wrapS
     // sampler.wrapT
-    return image.image;
+
+    auto texture = std::make_shared<Texture>();
+    texture->width = image.width;
+    texture->height = image.height;
+    switch (image.component) {
+        case 1:
+            break;
+        case 2:
+            break;
+        case 3:
+            texture->type = FRAME_RGB;
+            break;
+        case 4:
+            texture->type = FRAME_RGBA;
+            break;
+    }
+    return texture;
 }
 
 }  // namespace toystation

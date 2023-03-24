@@ -3,7 +3,7 @@
 
 namespace toystation {
 
-struct Buffer {
+struct RHIBuffer {
     VkBuffer buffer = nullptr;
     MemHandle handle = nullptr;
 };
@@ -11,7 +11,7 @@ struct RHIImage {
     VkImage image = nullptr;
     MemHandle handle = nullptr;
 };
-struct Texture {
+struct RHITexture {
     VkImage image = nullptr;
     MemHandle handle = nullptr;
     VkDescriptorImageInfo descriptor{};
@@ -38,22 +38,22 @@ public:
     void DeInit();
     virtual VkMemoryAllocator* GetMemoryAllocator() { return mem_alloc_; }
 
-    virtual Buffer CreateBuffer(
+    virtual RHIBuffer CreateBuffer(
         const VkBufferCreateInfo& info,
         VkMemoryPropertyFlags mem_usage = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
         void* memory_export = nullptr);
-    Buffer CreateBuffer(
+    RHIBuffer CreateBuffer(
         VkDeviceSize size = 0, VkBufferUsageFlags usage = VkBufferUsageFlags(),
         VkMemoryPropertyFlags mem_usage = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-    Buffer CreateExternalBuffer(VkDeviceSize size, VkBufferUsageFlags usage = VkBufferUsageFlags(),
+    RHIBuffer CreateExternalBuffer(VkDeviceSize size, VkBufferUsageFlags usage = VkBufferUsageFlags(),
                                 VkMemoryPropertyFlags mem_usage = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-    Buffer CreateBuffer(
+    RHIBuffer CreateBuffer(
         const VkCommandBuffer& cmd_buf, const VkDeviceSize& size,
         const void* data, VkBufferUsageFlags usage,
         VkMemoryPropertyFlags mem_props = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
     template <typename T>
-    Buffer CreateBuffer(const VkCommandBuffer& cmd_buf,
+    RHIBuffer CreateBuffer(const VkCommandBuffer& cmd_buf,
                         VkBufferUsageFlags usage, const std::vector<T>& data,
                         VkMemoryPropertyFlags mem_property =
                             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) {
@@ -69,31 +69,31 @@ public:
         const VkImageCreateInfo& info,
         VkImageLayout layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-    Texture CreateTexture(const RHIImage& image,
+    RHITexture CreateTexture(const RHIImage& image,
                           const VkImageViewCreateInfo& imageview_create_info);
-    Texture CreateTexture(const RHIImage& image,
+    RHITexture CreateTexture(const RHIImage& image,
                           const VkImageViewCreateInfo& imageview_create_info,
                           const VkSamplerCreateInfo& sampler_create_info);
 
-    Texture CreateTexture(
+    RHITexture CreateTexture(
         const VkCommandBuffer& cmd_buffer, size_t size, const void* data,
         const VkImageCreateInfo& info, VkSamplerCreateInfo& sampler_create_info,
         VkImageLayout layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
         bool is_cube = false);
 
-    void Destroy(Buffer& buffer);
+    void Destroy(RHIBuffer& RHIBuffer);
     void Destroy(RHIImage& image);
-    void Destroy(Texture& texture);
+    void Destroy(RHITexture& RHITexture);
 
-    void* Map(const Buffer& buffer);
-    void UnMap(const Buffer& buffer);
+    void* Map(const RHIBuffer& RHIBuffer);
+    void UnMap(const RHIBuffer& RHIBuffer);
 
     void* Map(const RHIImage& image);
     void UnMap(const RHIImage& image);
 
 protected:
     virtual void CreateBufferEx(const VkBufferCreateInfo& info,
-                                VkBuffer* buffer);
+                                VkBuffer* RHIBuffer);
     virtual void CreateImageEx(const VkImageCreateInfo& info, VkImage* image);
 
 private:

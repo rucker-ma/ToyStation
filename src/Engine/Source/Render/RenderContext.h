@@ -72,7 +72,7 @@ public:
     virtual RenderFrameType Type() const;
 
 private:
-    Buffer buf_;
+    RHIBuffer buf_;
     std::shared_ptr<RenderContext> context_;
     unsigned int width_;
     unsigned int height_;
@@ -98,16 +98,16 @@ public:
     virtual RenderFrameType Type() const;
 
 private:
-    unsigned char* ReadRHIImage(Buffer& buf, const RHIImage& img,
+    unsigned char* ReadRHIImage(RHIBuffer& buf, const RHIImage& img,
                                 VkDeviceSize mem_size, VkExtent2D img_size);
 
 private:
     std::shared_ptr<RenderContext> context_;
     unsigned int width_;
     unsigned int height_;
-    Buffer bufy_;
-    Buffer bufu_;
-    Buffer bufv_;
+    RHIBuffer bufy_;
+    RHIBuffer bufu_;
+    RHIBuffer bufv_;
     unsigned char* datay_;
     unsigned char* datau_;
     unsigned char* datav_;

@@ -11,7 +11,7 @@ public:
         DescriptorSetContainer set_container;
         std::vector<VkFramebuffer> framebuffers;
         RHIImage color_image;
-        Texture sampler_tex;
+        RHITexture sampler_tex;
     };
     std::unordered_map<int,std::shared_ptr<RenderObject>> render_objects_;
     MainCameraPassResource main_pass_resource_;

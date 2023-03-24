@@ -40,6 +40,6 @@ private:
     std::shared_ptr<RenderContext> context_;
     std::shared_ptr<RenderResource> resource_;
 
-    Texture image_tex_;
+    RHITexture image_tex_;
 };
 }  // namespace toystation

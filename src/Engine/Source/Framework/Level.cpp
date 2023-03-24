@@ -29,12 +29,19 @@ void Level::Load(std::string path) {
     }
     assert(value["objects"].isArray());
     Json::Value ojects_ref = value["objects"];
+    std::vector<std::shared_ptr<TaskFuture>> results;
     for (int i = 0; i < ojects_ref.size(); ++i) {
         TObjectInfoReader reader(ojects_ref[i]);
-        LoadObject(reader);
+        std::shared_ptr<TaskFuture> task_future = LoadObjectWithTask(reader);
+        if(task_future) {
+            results.push_back(task_future);
+        }
+    }
+    for(auto& future:results){
+        future->Wait();
     }
 }
-void Level::LoadObject(Level::TObjectInfoReader& object_info) {
+std::shared_ptr<TaskFuture> Level::LoadObjectWithTask(Level::TObjectInfoReader& object_info) {
     std::shared_ptr<TObject> obj = std::make_shared<TObject>(object_info.name);
     if (!object_info.asset_path.empty()) {
         GltfModelLoader loader;
@@ -48,7 +55,9 @@ void Level::LoadObject(Level::TObjectInfoReader& object_info) {
             }
             );
         kMesssageQueue.Post(kRendThread.get_id(),task);
+        return task->GetFuture();
     }
+    return nullptr;
 }
 void Level::Tick() {}
 
