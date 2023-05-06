@@ -59,6 +59,7 @@ public:
     VkPhysicalDevice GetPhysicalDevice() const { return physical_device_; }
     void CreateRenderPass(VkRenderPassCreateInfo& create_info,
                           VkRenderPass& render_pass);
+
     void CreateDescriptorSetLayout(VkDescriptorSetLayoutCreateInfo& create_info,
                                    VkDescriptorSetLayout& layout);
     void CreatePipelineLayout(VkPipelineLayoutCreateInfo& create_info,
@@ -67,7 +68,7 @@ public:
     void CreateGraphicsPipeline(uint32_t create_info_count,
                                 const VkGraphicsPipelineCreateInfo* create_info,
                                 VkPipeline& pipeline);
-    
+    void DestroyPipeline(VkPipeline& pipeline);
     void CreateComputePipeline(uint32_t create_info_count,
                                 const VkComputePipelineCreateInfo* create_info,
                                 VkPipeline& pipeline);
@@ -78,7 +79,7 @@ public:
     void CreateFramebuffer(const VkFramebufferCreateInfo& info,
                            VkFramebuffer& buffer);
     VkShaderModule CreateShader(const char* data, size_t size);
-
+    VkShaderModule CreateShader(const std::vector<char>& data);
     VkQueue GetQueue(VkQueueFlags flags);
     uint32_t GetQueueFamilyIndex(VkQueueFlags flags);
 

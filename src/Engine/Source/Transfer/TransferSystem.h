@@ -15,7 +15,7 @@ public:
         websocketpp::connection_hdl hdl,
         websocketpp::server<websocketpp::config::asio>::message_ptr msg);
     void OnUserClose(websocketpp::connection_hdl hdl);
-
+    bool AnyConnected();
 private:
     void Run();
 

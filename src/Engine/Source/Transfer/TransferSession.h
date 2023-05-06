@@ -66,7 +66,7 @@ public:
     rtc::RefCountReleaseStatus Release() const override {
         return rtc::RefCountReleaseStatus::kDroppedLastRef;
     };
-
+    bool IsConnected();
 protected:
     rtc::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection_;
     rtc::scoped_refptr<webrtc::DataChannelInterface> datachl_interface_;

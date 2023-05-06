@@ -6,6 +6,7 @@
 #include "Render/RenderSystem.h"
 #include "Transfer/TransferSystem.h"
 #include "Input/InputSystem.h"
+#include "Compiler/ShaderCompilerSystem.h"
 #include "Framework/WorldManager.h"
 
 namespace toystation {
@@ -13,12 +14,16 @@ CLASS()
 class TS_CPP_API ToyEngine {
 public:
     ToyEngine(){};
-    FUNCTION(CSHARP)
+    //device environment init
+    void PreInit();
+    //system init
     void Init();
-    FUNCTION(CSHARP)
     void Run();
     void PushRenderFlag(RenderAction flag);
     InputSystem& GetInputSystem();
+    TransferSystem& GetTransferSystem();
+    WorldManager& GetWorldManager();
+    ShaderCompilerSystem& GetShaderSystem();
 private:
     void SystemTick();
     void RenderTick();
@@ -27,6 +32,7 @@ private:
     RenderSystem render_system_;
     InputSystem input_system_;
     WorldManager world_manager_;
+    ShaderCompilerSystem shader_system_;
     std::deque<RenderAction> render_flags_;
     std::mutex mtx_;
 };

@@ -40,8 +40,7 @@ public:
 
     virtual RHIBuffer CreateBuffer(
         const VkBufferCreateInfo& info,
-        VkMemoryPropertyFlags mem_usage = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        void* memory_export = nullptr);
+        VkMemoryPropertyFlags mem_usage = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
     RHIBuffer CreateBuffer(
         VkDeviceSize size = 0, VkBufferUsageFlags usage = VkBufferUsageFlags(),
         VkMemoryPropertyFlags mem_usage = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
@@ -93,7 +92,7 @@ public:
 
 protected:
     virtual void CreateBufferEx(const VkBufferCreateInfo& info,
-                                VkBuffer* RHIBuffer);
+                                VkBuffer* RHIBuffer,bool with_external=false);
     virtual void CreateImageEx(const VkImageCreateInfo& info, VkImage* image);
 
 private:

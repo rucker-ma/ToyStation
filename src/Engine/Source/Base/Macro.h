@@ -2,11 +2,11 @@
 
 #define TS_API __declspec(dllexport)
 
-#ifdef TS_CPP_EXPORT
-#define TS_CPP_API __declspec(dllexport)
-#else
+//#ifdef TS_CPP_EXPORT
+//#define TS_CPP_API __declspec(dllexport)
+//#else
 #define TS_CPP_API
-#endif
+//#endif
 
 #ifdef __cplusplus
 #define BEGIN_EXPORT extern "C" {

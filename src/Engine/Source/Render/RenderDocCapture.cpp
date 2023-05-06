@@ -8,7 +8,9 @@
 #include <Windows.h>
 #endif
 #include <cassert>
+
 #include "RenderSystem.h"
+#include "ToyEngineSetting.h"
 
 namespace toystation {
 
@@ -17,10 +19,13 @@ RenderDocCapture& RenderDocCapture::Instance() {
     return capture;
 }
 bool RenderDocCapture::Init() {
+    if(!ToyEngineSetting::Instance().EnableRenderdoc()){
+        return false;
+    }
     HMODULE mod = GetModuleHandleA("renderdoc.dll");
-    if(mod == NULL) {
-        LoadLibraryA(
-            "D:\\project\\ToyStation\\src\\Editor\\Editor\\bin\\Debug\\net6.0\\renderdoc.dll");
+    if (mod == NULL) {
+        // TODO:通过查询注册表获取renderdoc的安装路径
+        LoadLibraryA("D:\\software\\RenderDoc\\renderdoc.dll");
         mod = GetModuleHandleA("renderdoc.dll");
     }
     if (mod) {
@@ -31,6 +36,11 @@ bool RenderDocCapture::Init() {
         assert(ret == 1);
         auto rdoc_api = static_cast<RENDERDOC_API_1_5_0*>(rdoc_api_);
         rdoc_api->SetCaptureFilePathTemplate("RenderDocCapture");
+        // 防止renderdoc抑制vulkan validation layer输出
+        // 这个地方有个问题，如果开启此选项，vkexternalmemory会报错，实际不加载renderdoc
+        // 直接使用validation layer并不会报错
+        //ret = rdoc_api->SetCaptureOptionU32(eRENDERDOC_Option_DebugOutputMute, 0);
+        assert(ret == 1);
         return true;
     }
     return false;
@@ -38,20 +48,29 @@ bool RenderDocCapture::Init() {
 void RenderDocCapture::StartCapture() {
     auto rdoc_api = static_cast<RENDERDOC_API_1_5_0*>(rdoc_api_);
     if (rdoc_api) {
-        VkInstance instance = RenderSystem::kRenderGlobalData.render_context->GetContext()->GetInstance();
-        rdoc_api->StartFrameCapture(RENDERDOC_DEVICEPOINTER_FROM_VKINSTANCE(instance), NULL);
+        VkInstance instance =
+            RenderSystem::kRenderGlobalData.render_context->GetContext()
+                ->GetInstance();
+        rdoc_api->StartFrameCapture(
+            RENDERDOC_DEVICEPOINTER_FROM_VKINSTANCE(instance), NULL);
     }
 }
 void RenderDocCapture::EndCapture() {
     auto rdoc_api = static_cast<RENDERDOC_API_1_5_0*>(rdoc_api_);
     if (rdoc_api) {
-        VkInstance instance = RenderSystem::kRenderGlobalData.render_context->GetContext()->GetInstance();
-        int res = rdoc_api->EndFrameCapture(RENDERDOC_DEVICEPOINTER_FROM_VKINSTANCE(instance), NULL);
-        if(res !=1) {
+        VkInstance instance =
+            RenderSystem::kRenderGlobalData.render_context->GetContext()
+                ->GetInstance();
+        int res = rdoc_api->EndFrameCapture(
+            RENDERDOC_DEVICEPOINTER_FROM_VKINSTANCE(instance), NULL);
+        if (res != 1) {
             LogError("RenderDoc Capture Current Frame Error");
-        }else{
+        } else {
             LogInfo("RenderDoc Capture Frame Success");
-//            rdoc_pid_ = rdoc_api->LaunchReplayUI(1,NULL);
+            if (rdoc_api->IsTargetControlConnected() == 0) {
+                rdoc_api->LaunchReplayUI(1, NULL);
+            }
+            rdoc_api->ShowReplayUI();
         }
     }
 }

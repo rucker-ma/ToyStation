@@ -48,7 +48,7 @@ public:
     void RemoveComponent(std::shared_ptr<T>component){
         components_.erase(component->GetType());
     }
-
+    virtual void Tick(){}
 private:
     static std::atomic<int> kIDAllocator;
 

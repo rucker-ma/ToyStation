@@ -18,6 +18,8 @@ public:                          \
 
 namespace toystation {
 
+constexpr int kFrameRate = 60;
+constexpr int kTickIntervalMS = 1000/kFrameRate;
 class ToyEngineSetting {
 
 public:
@@ -27,6 +29,8 @@ public:
 
     void SetUseHWAccel(bool value);
     bool GetUseHWAccel();
+    bool SaveVideo();
+    bool EnableRenderdoc(){return false;}
 private:
     ToyEngineSetting() = default;
 

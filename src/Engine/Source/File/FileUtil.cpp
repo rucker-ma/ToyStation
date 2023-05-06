@@ -1,12 +1,14 @@
 #include "FileUtil.h"
 
 #include <fstream>
+#include <io.h>
 #include "Base/Macro.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image.h"
 #include "stb_image_write.h"
+
 
 namespace toystation {
 
@@ -55,7 +57,40 @@ std::string FileUtil::Combine(const char* relative_path) {
     }
     return full_path;
 }
+std::vector<FileUtil::FilterPath> FileUtil::FolderFilter(
+    const char* relative_path, std::vector<std::string> suffixs){
+    std::string folder = FileUtil::Combine(relative_path);
+    std::vector<FileUtil::FilterPath> result;
+#ifdef _WIN64
+    struct _finddata64i32_t fileinfo;
+    intptr_t hfile = _findfirst(folder.append("\\*").c_str(),&fileinfo);
 
+    if(hfile !=-1){
+        do {
+            if (fileinfo.attrib & _A_SUBDIR) {
+                LogInfo("read from folder: ..");
+            }else{
+                std::string current_path = folder + "\\"+fileinfo.name;
+                std::string path_suffix = GetSuffix(current_path);
+                if(!path_suffix.empty()){
+                    if(std::find(suffixs.begin(), suffixs.end(), path_suffix)!=suffixs.end()){
+                        result.push_back({current_path,path_suffix});
+                    }
+                }
+            }
+        } while (_findnext(hfile,&fileinfo) == 0);
+        _findclose(hfile);
+    }
+#endif
+    return result;
+}
+std::string FileUtil::GetSuffix(std::string path) {
+    int dot_pos = path.find_last_of('.');
+    if(dot_pos == std::string::npos){
+        return "";
+    }
+    return std::string(path.begin()+dot_pos,path.end());
+}
 JsonParseHelper::JsonParseHelper() {
     reader = std::unique_ptr<Json::CharReader>(builder.newCharReader());
 }
@@ -68,5 +103,6 @@ bool JsonParseHelper::parse(const char* data, int size, Json::Value& json) const
     }
     return true;
 }
+
 
 }  // namespace toystation

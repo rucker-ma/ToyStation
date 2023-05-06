@@ -114,18 +114,26 @@ bool MemoryAllocateUtils::FillBakedAllocateInfo(
         baked.dedicated_info.image = info.GetImage();
     }
 
-       if(info.GetExportable())
-       {
+    if(info.GetExportable())
+    {
+         baked.export_info.sType = VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO;
          baked.export_info.pNext   = info.GetExportable();
      #ifdef WIN32
+         // VUID-vkBindBufferMemory-memory-02726
+         // If the value of VkExportMemoryAllocateInfo::handleTypes used to allocate memory is not 0,
+         // it must include at least one of the handles set in VkExternalMemoryBufferCreateInfo::handleTypes when buffer was created
          baked.export_info.handleTypes =
          VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT;
      #else
          baked.export_info.handleTypes =
          VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT;
+
      #endif
+         //for win32
+         //VkMemoryAllocateInfo.pNext (mem_alloc_info.pNext) -> VkExportMemoryAllocateInfo(baked.export_info)
+         //VkExportMemoryAllocateInfo.pNext -> VkExportMemoryWin32HandleInfoKHR
          baked.mem_alloc_info.pNext = &baked.export_info;
-       }
+    }
 
     if (info.GetDeviceMask() || info.GetAllocateFlags()) {
         baked.flags_info.pNext = baked.mem_alloc_info.pNext;

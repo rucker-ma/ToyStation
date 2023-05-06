@@ -13,10 +13,9 @@ public:
     void Clear();
     VkDescriptorSetLayout CreateLayout(
         VkContext* ctx, VkDescriptorSetLayoutCreateFlags flags = 0) const;
-    void AddRequiredPoolSizes(std::vector<VkDescriptorPoolSize>& pool_size,
-                              uint32_t num_sets);
-    VkDescriptorPool CreatePool(VkContext* ctx, uint32_t max_sets = 1,
-                                VkDescriptorPoolCreateFlags flags = 0);
+    void AddRequiredPoolSizes(std::vector<VkDescriptorPoolSize>& pool_size);
+//    VkDescriptorPool CreatePool(VkContext* ctx, uint32_t max_sets = 1,
+//                                VkDescriptorPoolCreateFlags flags = 0);
 
     VkWriteDescriptorSet MakeWrite(VkDescriptorSet dst_set, uint32_t binding,
                                    uint32_t array_element = 0) const;
@@ -43,9 +42,9 @@ public:
     void DeInit();
     void AddBinding(uint32_t binding, VkDescriptorType type, uint32_t count,
                     VkShaderStageFlags stage_flags,
-                    const VkSampler* sampler = nullptr);
-    void AddBinding(VkDescriptorSetLayoutBinding layout_binding);
-    VkDescriptorSetLayout InitLayout(
+                    int set_idx=0,const VkSampler* sampler = nullptr);
+    void AddBinding(VkDescriptorSetLayoutBinding layout_binding,int set_idx =0);
+    std::vector<VkDescriptorSetLayout> InitLayout(
         VkDescriptorSetLayoutCreateFlags flags = 0);
     VkDescriptorPool InitPool(uint32_t max_sets);
     VkPipelineLayout InitPipelineLayout(
@@ -71,8 +70,8 @@ private:
 
 private:
     VkContext* ctx_;
-    DescriptorSetBindings bindings_;
-    VkDescriptorSetLayout layout_;
+    std::vector<DescriptorSetBindings> bindings_;
+    std::vector<VkDescriptorSetLayout> layouts_;
     VkDescriptorPool pool_;
     VkPipelineLayout pipeline_layout_;
     std::vector<VkDescriptorSet> descriptor_sets_;

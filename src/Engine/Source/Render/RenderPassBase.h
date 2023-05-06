@@ -8,7 +8,7 @@ class RenderAttachRef {
 public:
     static constexpr uint32_t kRenderAttachRefColor = 0;
     static constexpr uint32_t kRenderAttachRefDepth = 1;
-    static constexpr uint32_t kRenderAttachRefYuv420 = 2;
+    static constexpr uint32_t kGbuffer0 = 2;
 };
 
 struct RenderPassInitInfo {
@@ -23,7 +23,7 @@ public:
         VkPipelineLayout layout;
     };
     struct Descriptor {
-        VkDescriptorSetLayout layout;
+        std::vector<VkDescriptorSetLayout> layout;
         VkDescriptorSet descriptor_set;
     };
 

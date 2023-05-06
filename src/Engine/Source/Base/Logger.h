@@ -18,7 +18,7 @@ constexpr const char *FilenameWithoutPath(const char *path) {
 }
 
 #define LOG_WRITE(log_level, ...)                                             \
-    Logger::GetInstance()->write(                                             \
+    toystation::Logger::GetInstance()->write(                                             \
         log_level, "[" + std::string(FilenameWithoutPath(__FILE__)) + ":" + \
                        std::to_string(__LINE__) + "] " + __VA_ARGS__)
 
@@ -47,12 +47,12 @@ public:
 
 private:
     Logger() {
-#ifdef _DEBUG
+//#ifdef _DEBUG
         auto console_sink =
             std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
         console_sink->set_level(spdlog::level::debug);
         sink_list.push_back(console_sink);
-#endif
+//#endif
         auto basic_sink =
             std::make_shared<spdlog::sinks::basic_file_sink_mt>("logs/log.txt");
         basic_sink->set_level(spdlog::level::debug);

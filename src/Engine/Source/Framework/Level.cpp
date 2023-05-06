@@ -40,6 +40,7 @@ void Level::Load(std::string path) {
     for(auto& future:results){
         future->Wait();
     }
+    camera_ =std::make_shared<Camera>();
 }
 std::shared_ptr<TaskFuture> Level::LoadObjectWithTask(Level::TObjectInfoReader& object_info) {
     std::shared_ptr<TObject> obj = std::make_shared<TObject>(object_info.name);
@@ -59,8 +60,13 @@ std::shared_ptr<TaskFuture> Level::LoadObjectWithTask(Level::TObjectInfoReader& 
     }
     return nullptr;
 }
-void Level::Tick() {}
-
+void Level::Tick() {
+    camera_->Tick();
+}
+std::shared_ptr<Camera> Level::GetCamera(){
+    assert(camera_);
+    return camera_;
+}
 Level::TObjectInfoReader::TObjectInfoReader(Json::Value value) {
     name = value["name"].asString();
     asset_path = value["asset"].asString();

@@ -1,7 +1,7 @@
 #include "InputDataChannelObserver.h"
 
 #include "Base/Logger.h"
-#include "File/FileUtil.h"
+
 #include "ToyEngine.h"
 
 
@@ -25,7 +25,6 @@ const char* ToString(DataChannelInterface::DataState state) {
 
 
 }  // namespace
-const static JsonParseHelper kJsonParse;
 InpuDataChannelObserver::~InpuDataChannelObserver() {
     if (channel_.get()) {
         channel_->UnregisterObserver();
@@ -42,17 +41,7 @@ void InpuDataChannelObserver::OnStateChange() {
 }
 void InpuDataChannelObserver::OnMessage(const webrtc::DataBuffer& buffer) {
     LogDebug("Input channel data:"+buffer.data.data<char>());
-    Json::Value msg;
-    if (kJsonParse.parse(buffer.data.data<char>(), buffer.size(), msg)) {
-        if(msg["type"].asString() == std::string("keydown")){
-            kEngine.GetInputSystem().OnKey(PRESS,msg["value"].asInt());
-            kEngine.PushRenderFlag(RenderAction::Render_RenderDocCapture);
-        }
-        if(msg["type"].asString() == std::string("keyup")){
-            kEngine.GetInputSystem().OnKey(RELEASE,msg["value"].asInt());
-
-        }
-    }
+    kEngine.GetInputSystem().OnInputMessage(std::string(buffer.data.data<char>(),buffer.size()));
 }
 void InpuDataChannelObserver::OnBufferedAmountChange(uint64_t sent_data_size) {}
 }  // namespace toystation

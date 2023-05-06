@@ -5,6 +5,8 @@
 
 #include "VideoEncoder.h"
 #include "NvencEncoder.h"
+#include "CudaEncoder.h"
+
 #include "ToyEngineSetting.h"
 
 namespace toystation {
@@ -77,7 +79,7 @@ ToyVideoEncoderFactory::CreateVideoEncoder(
     const webrtc::SdpVideoFormat& format) {
 
     if(ToyEngineSetting::Instance().GetUseHWAccel()){
-        return std::make_unique<NvencEncoder>();
+        return std::make_unique<CudaEncoder>();
     }else{
         return std::make_unique<ToyVideoEncoder>();
     }

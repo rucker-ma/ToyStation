@@ -8,7 +8,7 @@ class RtcClient {
     this.pc = new RTCPeerConnection();
   }
   connect(): void {
-    this.ws = new WebSocket("ws://127.0.0.1:9002");
+    this.ws = new WebSocket("ws://localhost:9002");
     this.ws.onmessage = this.wsMessage.bind(this);
 
     this.pc.ondatachannel = this.getDatachannel.bind(this)
@@ -43,7 +43,6 @@ class RtcClient {
     }
     if (payload.type == "candidate") {
       const recvCandidate = JSON.parse(payload.payload);
-
       let candidate = new RTCIceCandidate({
         candidate: recvCandidate.candidate,
         sdpMid: recvCandidate.sdpMid,

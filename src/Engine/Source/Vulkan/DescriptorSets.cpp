@@ -49,13 +49,13 @@ VkDescriptorSetLayout toystation::DescriptorSetBindings::CreateLayout(
 }
 
 void toystation::DescriptorSetBindings::AddRequiredPoolSizes(
-    std::vector<VkDescriptorPoolSize>& pool_size, uint32_t num_sets) {
+    std::vector<VkDescriptorPoolSize>& pool_size) {
     for (auto iter = bindings_.cbegin(); iter != bindings_.cend(); ++iter) {
         bool found = false;
         for (auto itpool = pool_size.begin(); itpool != pool_size.end();
              ++itpool) {
             if (itpool->type == iter->descriptorType) {
-                itpool->descriptorCount += iter->descriptorCount * num_sets;
+                itpool->descriptorCount += iter->descriptorCount;
                 found = true;
                 break;
             }
@@ -63,31 +63,33 @@ void toystation::DescriptorSetBindings::AddRequiredPoolSizes(
         if (!found) {
             VkDescriptorPoolSize pool;
             pool.type = iter->descriptorType;
-            pool.descriptorCount = iter->descriptorCount * num_sets;
+            pool.descriptorCount = iter->descriptorCount;
             pool_size.push_back(pool);
         }
     }
 }
 
-VkDescriptorPool toystation::DescriptorSetBindings::CreatePool(
-    VkContext* ctx, uint32_t max_sets, VkDescriptorPoolCreateFlags flags) {
-    std::vector<VkDescriptorPoolSize> pool_sizes;
-    AddRequiredPoolSizes(pool_sizes, max_sets);
-
-    VkDescriptorPool descr_pool = nullptr;
-    VkDescriptorPoolCreateInfo descr_pool_info = {};
-    descr_pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    descr_pool_info.pNext = nullptr;
-    descr_pool_info.maxSets = max_sets;
-    descr_pool_info.poolSizeCount = uint32_t(pool_sizes.size());
-    descr_pool_info.pPoolSizes = pool_sizes.data();
-    descr_pool_info.flags = flags;
-
-    // scene pool
-    vkCreateDescriptorPool(ctx->GetDevice(), &descr_pool_info, nullptr,
-                           &descr_pool);
-    return descr_pool;
-}
+//VkDescriptorPool toystation::DescriptorSetBindings::CreatePool(
+//    VkContext* ctx, uint32_t max_sets, VkDescriptorPoolCreateFlags flags) {
+//    std::vector<VkDescriptorPoolSize> pool_sizes;
+//    AddRequiredPoolSizes(pool_sizes, max_sets);
+//    assert(0&&"this function is died");
+//    VkDescriptorPool descr_pool = nullptr;
+//    VkDescriptorPoolCreateInfo descr_pool_info = {};
+//    descr_pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+//    descr_pool_info.pNext = nullptr;
+//    descr_pool_info.maxSets = max_sets;
+//    descr_pool_info.poolSizeCount = uint32_t(pool_sizes.size());
+//    descr_pool_info.pPoolSizes = pool_sizes.data();
+//    descr_pool_info.flags = flags;
+//
+//    // scene pool
+//    vkCreateDescriptorPool(ctx->GetDevice(), &descr_pool_info, nullptr,
+//                           &descr_pool);
+//    //return descr_pool;
+//
+//    return nullptr;
+//}
 
 VkWriteDescriptorSet toystation::DescriptorSetBindings::MakeWrite(
     VkDescriptorSet dst_set, uint32_t binding, uint32_t array_element) const {
@@ -145,16 +147,22 @@ VkWriteDescriptorSet toystation::DescriptorSetBindings::MakeWrite(
     return write_set;
 }
 
-toystation::DescriptorSetContainer::DescriptorSetContainer() : ctx_(nullptr) {}
+toystation::DescriptorSetContainer::DescriptorSetContainer() : ctx_(nullptr) {
+    bindings_.push_back(DescriptorSetBindings());
+}
 
 void toystation::DescriptorSetContainer::Init(VkContext* ctx) { ctx_ = ctx; }
 
 void toystation::DescriptorSetContainer::DeInit() {
+    bindings_.clear();
     if (pipeline_layout_) {
         vkDestroyPipelineLayout(ctx_->GetDevice(), pipeline_layout_, nullptr);
     }
-    if (layout_) {
-        vkDestroyDescriptorSetLayout(ctx_->GetDevice(), layout_, nullptr);
+    if (!layouts_.empty()) {
+        for(auto& layout:layouts_) {
+            vkDestroyDescriptorSetLayout(ctx_->GetDevice(), layout, nullptr);
+        }
+        layouts_.clear();
     }
     descriptor_sets_.clear();
     if (pool_) {
@@ -164,28 +172,57 @@ void toystation::DescriptorSetContainer::DeInit() {
 
 void toystation::DescriptorSetContainer::AddBinding(
     uint32_t binding, VkDescriptorType type, uint32_t count,
-    VkShaderStageFlags stage_flags, const VkSampler* sampler) {
-    bindings_.AddBinding(binding, type, count, stage_flags, sampler);
+    VkShaderStageFlags stage_flags, int set_idx,const VkSampler* sampler) {
+    if(bindings_.size()<=set_idx){
+        int last = set_idx - bindings_.size()+1;
+        for (int i = 0; i < last; ++i) {
+            bindings_.push_back(DescriptorSetBindings());
+        }
+    }
+    bindings_[set_idx].AddBinding(binding, type, count, stage_flags, sampler);
 }
 
 void toystation::DescriptorSetContainer::AddBinding(
-    VkDescriptorSetLayoutBinding layout_binding) {
-    bindings_.AddBinding(layout_binding.binding, layout_binding.descriptorType,
+    VkDescriptorSetLayoutBinding layout_binding,int set_idx) {
+    bindings_[set_idx].AddBinding(layout_binding.binding, layout_binding.descriptorType,
                          layout_binding.descriptorCount,
                          layout_binding.stageFlags,
                          layout_binding.pImmutableSamplers);
 }
 
-VkDescriptorSetLayout toystation::DescriptorSetContainer::InitLayout(
+std::vector<VkDescriptorSetLayout> toystation::DescriptorSetContainer::InitLayout(
     VkDescriptorSetLayoutCreateFlags flags) {
     assert(ctx_ && "ctx is nullptr,call init first");
-    layout_ = bindings_.CreateLayout(ctx_, flags);
-    return layout_;
+    for(auto& binding:bindings_){
+        layouts_.push_back( binding.CreateLayout(ctx_,flags));
+    }
+//    layout_ = bindings_.CreateLayout(ctx_, flags);
+    return layouts_;
 }
 
 VkDescriptorPool toystation::DescriptorSetContainer::InitPool(
     uint32_t max_sets) {
-    pool_ = bindings_.CreatePool(ctx_, max_sets);
+    std::vector<VkDescriptorPoolSize> pool_sizes;
+    for (auto&binding:bindings_) {
+        binding.AddRequiredPoolSizes(pool_sizes);
+    }
+
+    //VkDescriptorPool descr_pool = nullptr;
+    VkDescriptorPoolCreateInfo descr_pool_info = {};
+    descr_pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    descr_pool_info.pNext = nullptr;
+    descr_pool_info.maxSets = max_sets;
+    descr_pool_info.poolSizeCount = uint32_t(pool_sizes.size());
+    descr_pool_info.pPoolSizes = pool_sizes.data();
+    descr_pool_info.flags = 0;
+
+    // scene pool
+    vkCreateDescriptorPool(ctx_->GetDevice(), &descr_pool_info, nullptr,
+                           &pool_);
+    //return descr_pool;
+
+    //pool_ = bindings_.CreatePool(ctx_, max_sets);
+
     AllocDescriptorSets(max_sets, descriptor_sets_);
     return pool_;
 }
@@ -196,8 +233,8 @@ VkPipelineLayout toystation::DescriptorSetContainer::InitPipelineLayout(
     VkPipelineLayoutCreateInfo layout_create_info;
     layout_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 
-    layout_create_info.setLayoutCount = 1;
-    layout_create_info.pSetLayouts = &layout_;
+    layout_create_info.setLayoutCount = layouts_.size();
+    layout_create_info.pSetLayouts = layouts_.data();
     layout_create_info.pushConstantRangeCount = num_ranges;
     layout_create_info.pPushConstantRanges = ranges;
     layout_create_info.flags = flags;
@@ -214,41 +251,41 @@ VkDescriptorSet& toystation::DescriptorSetContainer::GetSet(uint32_t set_idx) {
 VkWriteDescriptorSet toystation::DescriptorSetContainer::MakeWrite(
     uint32_t set_idx, uint32_t binding, const VkDescriptorImageInfo* image_info,
     uint32_t array_element) {
-    return bindings_.MakeWrite(GetSet(set_idx), binding, image_info,
+    return bindings_[set_idx].MakeWrite(GetSet(set_idx), binding, image_info,
                                array_element);
 }
 
 VkWriteDescriptorSet toystation::DescriptorSetContainer::MakeWrite(
     uint32_t set_idx, uint32_t binding,
     const VkDescriptorBufferInfo* buffer_info, uint32_t array_element) {
-    return bindings_.MakeWrite(GetSet(set_idx), binding, buffer_info,
+    return bindings_[set_idx].MakeWrite(GetSet(set_idx), binding, buffer_info,
                                array_element);
 }
 
 VkWriteDescriptorSet toystation::DescriptorSetContainer::MakeWrite(
     uint32_t set_idx, uint32_t binding, const VkBufferView* buffer_view,
     uint32_t array_element) {
-    return bindings_.MakeWrite(GetSet(set_idx), binding, buffer_view,
+    return bindings_[set_idx].MakeWrite(GetSet(set_idx), binding, buffer_view,
                                array_element);
 }
 
 void toystation::DescriptorSetContainer::UpdateSets(
     std::vector<VkWriteDescriptorSet>& sets) {
-        
     vkUpdateDescriptorSets(ctx_->GetDevice(), sets.size(), sets.data(), 0,
                            nullptr);
 }
 
 void toystation::DescriptorSetContainer::AllocDescriptorSets(
     uint32_t num_allocated, std::vector<VkDescriptorSet>& sets) {
+    assert((num_allocated== layouts_.size())&&"allocated sets should equal to layouts");
     sets.resize(num_allocated);
 
-    std::vector<VkDescriptorSetLayout> layouts(num_allocated, layout_);
+//    std::vector<VkDescriptorSetLayout> layouts(num_allocated, layout_);
     VkDescriptorSetAllocateInfo alloc_info = {
         VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
     alloc_info.descriptorPool = pool_;
-    alloc_info.descriptorSetCount = num_allocated;
-    alloc_info.pSetLayouts = layouts.data();
+    alloc_info.descriptorSetCount = layouts_.size();
+    alloc_info.pSetLayouts = layouts_.data();
 
     vkAllocateDescriptorSets(ctx_->GetDevice(), &alloc_info, sets.data());
 }

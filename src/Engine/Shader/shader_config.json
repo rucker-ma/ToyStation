@@ -1,0 +1,28 @@
+{
+  "shaders": [
+    {
+      "type": "mainpass_vert",
+      "file": "src/Engine/Shader/pbr_vertex.vert",
+      "hash": "",
+      "define":[]
+    },
+    {
+      "type": "mainpass_frag",
+      "file": "src/Engine/Shader/pbr_frag.frag",
+      "hash": "",
+      "define":[]
+    },
+    {
+      "type": "convert_nv12_comp",
+      "file": "src/Engine/Shader/convert_nv12.comp",
+      "hash": "",
+      "define":[]
+    },
+    {
+      "type": "convert_yuv_comp",
+      "file": "src/Engine/Shader/convert_yuv.comp",
+      "hash": "",
+      "define":[]
+    }
+  ]
+}

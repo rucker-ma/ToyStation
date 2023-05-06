@@ -3,7 +3,6 @@
 #include <map>
 #include <memory>
 
-#include "Render/RenderCamera.h"
 #include "Vulkan/CommandPool.h"
 #include "Vulkan/ResourceAllocator.h"
 #include "Vulkan/SwapChain.h"
@@ -34,7 +33,7 @@ public:
     std::shared_ptr<SwapChainBase> GetSwapchain() const;
     std::shared_ptr<VkResourceAllocator> GetAllocator() const;
     std::shared_ptr<CommandPool> GetCommandPool() const;
-    std::shared_ptr<RenderCamera> GetCamera() const;
+
     static void SaveToImage(std::string filename, RHIImage& image,
                             VkImageLayout layout, VkFormat format,
                             std::shared_ptr<RenderContext> context);
@@ -44,9 +43,10 @@ private:
     std::shared_ptr<SwapChainBase> swapchain_;
     std::shared_ptr<DedicatedResourceAllocator> allocator_;
     std::shared_ptr<CommandPool> cmd_pool_;
-    std::shared_ptr<RenderCamera> camera_;
 };
-enum RenderFrameType { FRAME_RGB, FRAME_RGBA, FRAME_YCbCr,FRAME_NV12};
+enum RenderFrameType {
+    FRAME_RED,FRAME_RG,
+    FRAME_RGB, FRAME_RGBA, FRAME_YCbCr,FRAME_NV12};
 
 class RenderFrame {
 public:

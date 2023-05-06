@@ -18,12 +18,12 @@ void AddExtension(std::vector<VkContextCreateInfo::Entry>& container,
 }
 
 VkContextCreateInfo::VkContextCreateInfo(bool use_validation) {
-#ifdef _DEBUG
+//#ifdef _DEBUG
     AddExtension(instance_extensions, VK_EXT_DEBUG_UTILS_EXTENSION_NAME, true);
     if (use_validation) {
         AddExtension(instance_layers, "VK_LAYER_KHRONOS_validation", true);
     }
-#endif
+//#endif
     if (default_queue_gct) {
         requested_queues.push_back(default_queue_gct);
     }
@@ -86,10 +86,13 @@ void VkContext::CreatePipelineLayout(VkPipelineLayoutCreateInfo& create_info,
 void VkContext::CreateGraphicsPipeline(
     uint32_t create_info_count, const VkGraphicsPipelineCreateInfo* create_info,
     VkPipeline& pipeline) {
-    vkCreateGraphicsPipelines(device_, nullptr, create_info_count, create_info,
+    VkResult res =  vkCreateGraphicsPipelines(device_, nullptr, create_info_count, create_info,
                               nullptr, &pipeline);
+    assert(res == VK_SUCCESS&&"create graphics pipeline error");
 }
-
+void VkContext::DestroyPipeline(VkPipeline& pipeline){
+    vkDestroyPipeline(device_,pipeline, nullptr);
+}
 void VkContext::CreateComputePipeline(
     uint32_t create_info_count, const VkComputePipelineCreateInfo* create_info,
     VkPipeline& pipeline) {
@@ -124,7 +127,9 @@ VkShaderModule VkContext::CreateShader(const char* data, size_t size) {
     vkCreateShaderModule(device_, &create_info, nullptr, &shader_module);
     return shader_module;
 }
-
+VkShaderModule VkContext::CreateShader(const std::vector<char>& data) {
+    return CreateShader(data.data(),data.size());
+}
 VkQueue VkContext::GetQueue(VkQueueFlags flags) { return graphics_queue_; }
 
 uint32_t VkContext::GetQueueFamilyIndex(VkQueueFlags flags) {
@@ -378,6 +383,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL VkContext::VulkanDebugCallback(
 
     return 1;
 }
+
 bool operator==(const VkExtensionProperties properties,
                 const VkContextCreateInfo::Entry& entry) {
     return std::string(static_cast<const char*>(properties.extensionName)) ==

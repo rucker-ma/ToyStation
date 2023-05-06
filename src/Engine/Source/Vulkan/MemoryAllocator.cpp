@@ -58,6 +58,18 @@ MemHandle VkMemoryAllocator::AllocMemory(const MemoryAllocateInfo& info) {
         memory, baked_info.mem_alloc_info.allocationSize);
     return dedicated_mem_handle;
 }
+MemHandle VkMemoryAllocator::AllocMemory(const VkMemoryAllocateInfo & info)
+{
+    VkDeviceMemory memory = nullptr;
+    VkResult result = vkAllocateMemory(device_, &info, nullptr, &memory);
+    if (result != VK_SUCCESS) {
+        LogError("Allocate Memory Error");
+        return nullptr;
+    }
+    auto* dedicated_mem_handle = new DedicatedMemoryHandle(
+        memory, info.allocationSize);
+    return dedicated_mem_handle;
+}
 void VkMemoryAllocator::FreeMemory(MemHandle mem_handle) {
     if (!mem_handle) {
         return;
@@ -110,7 +122,7 @@ void* MemHandleUtils::GetExternalWin32Handle(VkDevice device,MemHandle mem_handl
     VkMemoryGetWin32HandleInfoKHR win32_handle_info;
     ZeroVKStruct(win32_handle_info,VK_STRUCTURE_TYPE_MEMORY_GET_WIN32_HANDLE_INFO_KHR);
     win32_handle_info.memory = dedicated_handle->GetMemory();
-    win32_handle_info.handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT;
+    win32_handle_info.handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT;
 
     PFN_vkGetMemoryWin32HandleKHR fpGetMemoryWin32HandleKHR = (PFN_vkGetMemoryWin32HandleKHR)vkGetDeviceProcAddr(
         device,"vkGetMemoryWin32HandleKHR"

@@ -20,6 +20,7 @@ include_directories(
     ${FREETYPE}/include
     ${TINY_GLTF}
     ${RENDERDOC}
+    ${NVCodec}/Interface
     ${CMAKE_CURRENT_SOURCE_DIR}/Source
 )
 #查找cuda库
@@ -39,7 +40,8 @@ if(MSVC)
     # disable warning for chinese
     set_target_properties(${MODULE_NAME} PROPERTIES COMPILE_FLAGS "/wd4819")
     set_target_properties(${MODULE_NAME} PROPERTIES LINK_FLAGS "/ignore:4099")
-    set_property(TARGET ${MODULE_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreadedDebug")
+#    set_property(TARGET ${MODULE_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreadedDebugDLL")
+    set_property(TARGET ${MODULE_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
     add_definitions(-DWEBRTC_WIN -DNOMINMAX -D_HAS_ITERATOR_DEBUGGING=0 -DWEBRTC_USE_H264)
 endif()
 
@@ -50,8 +52,8 @@ add_definitions(-DTS_CPP_EXPORT)
 # LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/Output
 # RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/Output)
 
-
-target_link_libraries(${MODULE_NAME} ${VULKAN_LIB} VK_EXTENSION)
+#message("Debug:find vulkan lib: ${VULKAN_LIB}")
+target_link_libraries(${MODULE_NAME} ${VULKAN_LIB} ${SHADERC_LIB} VK_EXTENSION)
 target_link_libraries(${MODULE_NAME} ${WebRTC_LIB})
 target_link_libraries(${MODULE_NAME} ${FFMPEG_LIB})
 target_link_libraries(${MODULE_NAME} ${JSONCPP_LIB})
@@ -60,6 +62,8 @@ target_link_libraries(${MODULE_NAME} ${FREETYPE_LIB})
 
 IF(${CUDAToolkit_FOUND})
     target_link_libraries(${MODULE_NAME} CUDA::cudart)
+    target_link_libraries(${MODULE_NAME} CUDA::cuda_driver)
+    target_link_libraries(${MODULE_NAME} ${NVCodec_LIB})
 ENDIF(${CUDAToolkit_FOUND})
 # get_property(DIRS DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
 

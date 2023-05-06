@@ -47,9 +47,15 @@ void RenderContext::Initialize(RenderContextCreateInfo& info) {
         // for local render, we also need `VK_KHR_surface` and
         // `VK_KHR_win32_surface` or other platform surface,now not test
     }
+//    context_create_info.AddInstanceExtension(VK_KHR_SURFACE_EXTENSION_NAME);
+//    context_create_info.AddInstanceExtension(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
 #ifdef _WIN64
+    context_create_info.AddInstanceExtension(VK_KHR_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME);
+//    context_create_info.AddInstanceExtension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
     context_create_info.AddDeviceExtension(VK_KHR_EXTERNAL_MEMORY_EXTENSION_NAME);
     context_create_info.AddDeviceExtension(VK_KHR_EXTERNAL_MEMORY_WIN32_EXTENSION_NAME);
+//    context_create_info.AddDeviceExtension(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+//    VK_NV_EXTERNAL_MEMORY_EXTENSION_NAME
 #endif
     vkctx_->Init(context_create_info);
     allocator_ = std::make_shared<DedicatedResourceAllocator>();
@@ -57,8 +63,6 @@ void RenderContext::Initialize(RenderContextCreateInfo& info) {
     cmd_pool_ = std::make_shared<CommandPool>();
     cmd_pool_->Init(vkctx_->GetDevice(),
                     vkctx_->GetQueueFamilyIndex(VK_QUEUE_GRAPHICS_BIT));
-    
-    camera_ = std::make_shared<RenderCamera>();
 }
 
 std::shared_ptr<VkContext> RenderContext::GetContext() const { return vkctx_; }
@@ -71,10 +75,6 @@ std::shared_ptr<VkResourceAllocator> RenderContext::GetAllocator() const {
 }
 std::shared_ptr<CommandPool> RenderContext::GetCommandPool() const {
     return cmd_pool_;
-}
-
-std::shared_ptr<RenderCamera> RenderContext::GetCamera() const {
-    return camera_;
 }
 
 void RenderContext::SaveToImage(std::string filename, RHIImage& image,

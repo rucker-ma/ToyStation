@@ -15,7 +15,8 @@ enum class MeshDataType{
     Mesh_Normal,
     Mesh_Tangent,
     Mesh_Position,
-    Mesh_Indices
+    Mesh_Indices,
+    Mesh_Coord
 };
 
 enum class MeshDrawMode{
@@ -23,26 +24,30 @@ enum class MeshDrawMode{
     Draw_Line,
     Draw_Point
 };
+
+
 class SubMesh{
-    struct TextureBound{
-        std::vector<unsigned char> texcoord;
-        std::weak_ptr<Material> material;
-    };
 public:
     void SetDrawMode(MeshDrawMode mode);
     void AddData(MeshDataType type,std::vector<unsigned char>&data);
-    void AddTexture(std::vector<unsigned char>&tex_coord,std::weak_ptr<Material>material);
-    std::vector<TextureBound>& Textures(){return tex_refs_;}
-    std::vector<unsigned char>& Position(){return position_buffer_;}
-    std::vector<unsigned char>& Normal(){return position_buffer_;}
-    std::vector<unsigned char>& Tangent(){return position_buffer_;}
+    void AddData(MeshDataType type,VertexDataInfo& data);
+    void SetMaterialIndex(int index){ material_index_ = index;}
+    int MaterialIndex(){return material_index_;}
+    std::vector<unsigned char>& Position(){return position_buffer_.buffer;}
+    std::vector<unsigned char>& Normal(){return normal_buffer_.buffer;}
+    std::vector<unsigned char>& Tangent(){return tangent_buffer_.buffer;}
+    std::vector<unsigned char>& Indices(){return indices_buffer_.buffer;}
+    VertexDataInfo& IndicesInfo(){return indices_buffer_;}
+    std::vector<unsigned char>& TexCoord(){return texcoord_.buffer;}
     void SetLocalMatrix(Matrix4 mat);
 
 private:
-    std::vector<unsigned char> position_buffer_;
-    std::vector<unsigned char> normal_buffer_;
-    std::vector<unsigned char> tangent_buffer_;
-    std::vector<TextureBound> tex_refs_;
+    VertexDataInfo position_buffer_;
+    VertexDataInfo normal_buffer_;
+    VertexDataInfo tangent_buffer_;
+    VertexDataInfo indices_buffer_;
+    VertexDataInfo texcoord_;
+    int material_index_;
     Matrix4 local_mat_;
     MeshDrawMode draw_mode_;
 };
@@ -51,10 +56,11 @@ class MeshComponent:public TComponent{
 public:
     const static ComponentType Type = ComponentType::Component_Mesh;
     ComponentType GetType()override;
-
+    void SetLocalMatrix(Matrix4 mat);
     std::shared_ptr<SubMesh> CreateSubMesh();
     std::vector<std::shared_ptr<SubMesh>>& GetSubMesh();
 private:
     std::vector<std::shared_ptr<SubMesh>> meshes_;
+
 };
 }

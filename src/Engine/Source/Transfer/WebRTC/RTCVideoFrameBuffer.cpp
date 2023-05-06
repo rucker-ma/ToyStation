@@ -5,7 +5,8 @@
 namespace toystation {
 rtc::scoped_refptr<RTCI420Buffer> RTCI420Buffer::Create(
     std::shared_ptr<RenderFrameYCbCr> frame) {
-    return new rtc::RefCountedObject<RTCI420Buffer>(frame);
+    return rtc::scoped_refptr<RTCI420Buffer>(
+        new rtc::RefCountedObject<RTCI420Buffer>(frame));
 }
 int RTCI420Buffer::width() const { return frame_->Width(); }
 int RTCI420Buffer::height() const { return frame_->Height(); }
@@ -21,7 +22,8 @@ RTCI420Buffer::RTCI420Buffer(std::shared_ptr<RenderFrameYCbCr> frame)
 // ------------------------ RTCNV12Buffer --------------------------//
 rtc::scoped_refptr<RTCNV12Buffer> RTCNV12Buffer::Create(
     std::shared_ptr<RenderFrameNV12> frame) {
-    return new rtc::RefCountedObject<RTCNV12Buffer>(frame);
+    return rtc::scoped_refptr<RTCNV12Buffer>(
+        new rtc::RefCountedObject<RTCNV12Buffer>(frame));
 }
 rtc::scoped_refptr<webrtc::I420BufferInterface> RTCNV12Buffer::ToI420(){
     assert(0);

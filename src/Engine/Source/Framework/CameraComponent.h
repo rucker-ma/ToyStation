@@ -2,7 +2,47 @@
 // Created by ma on 2023/3/18.
 //
 
-#ifndef TOYSTATION_CAMERACOMPONENT_H
-#define TOYSTATION_CAMERACOMPONENT_H
+#pragma once
+#include "Base/Vector.h"
+#include "TComponent.h"
 
-#endif  // TOYSTATION_CAMERACOMPONENT_H
+namespace toystation{
+//          world space
+//           z
+//           |
+//           |
+//           |
+//           |
+//           ----------------> y
+//          /
+//         /
+//        /
+//       /
+//      x
+
+class CameraComponent:public TComponent{
+public:
+    const static ComponentType Type = ComponentType::Component_Camera;
+    CameraComponent();
+    virtual ComponentType GetType();
+    Matrix4 GetView();
+    Matrix4 GetProjection();
+    Vector3& GetPosition();
+    void SetAspect(float aspect);
+    void Rotate(int x,int y);
+private:
+    void Update();
+private:
+    Vector3 position_;
+    Vector3 up_;
+    Vector3 forward_;
+
+    Vector3 view_up_;
+    Vector3 view_right_;
+
+    float aspect_{1.77};
+    float yaw_;
+    float pitch_;
+    float fovy_{60};
+};
+}

@@ -4,6 +4,7 @@
 #include <modules/video_coding/include/video_error_codes.h>
 
 #include "Base/Macro.h"
+#include "Base/Time.h"
 
 namespace toystation {
 ToyVideoEncoder::ToyVideoEncoder()
@@ -57,7 +58,7 @@ int32_t ToyVideoEncoder::Encode(
         return WEBRTC_VIDEO_CODEC_NO_OUTPUT;
     }
     // copy buffer;
-
+    debug::TimePiling::Instance().Mark("receive encode frame,begin encode",40);
     encode_frame_->flags = 0;
     encode_frame_->pts = frame.timestamp();
     const webrtc::I420BufferInterface* i420_buffer =
@@ -74,21 +75,23 @@ int32_t ToyVideoEncoder::Encode(
 
     AVPacket* packet = av_packet_alloc();
     int ret = avcodec_send_frame(ctx_, encode_frame_);
+
     if (ret < 0) {
         LogWarn("Send frame encoding error");
         av_packet_free(&packet);
         return WEBRTC_VIDEO_CODEC_ERROR;
     }
+    int ret_flag = WEBRTC_VIDEO_CODEC_OK;
     while (ret >= 0) {
         ret = avcodec_receive_packet(ctx_, packet);
         if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
-            av_packet_free(&packet);
-            return WEBRTC_VIDEO_CODEC_NO_OUTPUT;
+            ret_flag = WEBRTC_VIDEO_CODEC_NO_OUTPUT;
+            break ;
         }
         if (ret < 0) {
             LogError("frame encoding failed,encodeframe return");
-            av_packet_free(&packet);
-            return WEBRTC_VIDEO_CODEC_ERROR;
+            ret_flag = WEBRTC_VIDEO_CODEC_ERROR;
+            break ;
         }
         webrtc::CodecSpecificInfo codec_spec;
         codec_spec.codecType = webrtc::kVideoCodecH264;
@@ -106,18 +109,25 @@ int32_t ToyVideoEncoder::Encode(
                                ? webrtc::VideoFrameType::kVideoFrameKey
                                : webrtc::VideoFrameType::kVideoFrameDelta;
 
+        debug::TimePiling::Instance().Mark("encode end",50);
         auto buffer = webrtc::EncodedImageBuffer::Create(packet->size);
         image.SetEncodedData(buffer);
         image.set_size(0);
         memcpy(buffer->data(), packet->data, packet->size);
         image.set_size(image.size() + packet->size);
         image.SetTimestamp((uint32_t)packet->pts);
+        debug::TimePiling::Instance().Mark("send to remote",60);
         encoded_done_->OnEncodedImage(image, &codec_spec);
 
         av_packet_unref(packet);
+
+        std::string marks_info = debug::TimePiling::Instance().GetMarksInfo();
+        if(!marks_info.empty()){
+            LogInfo("one frame life cycle: \n" +  marks_info);
+        }
     }
     av_packet_free(&packet);
-    return WEBRTC_VIDEO_CODEC_OK;
+    return ret_flag;
 }
 void ToyVideoEncoder::SetRates(const RateControlParameters& parameters) {
     ctx_->bit_rate = parameters.target_bitrate.get_sum_bps();
@@ -161,19 +171,30 @@ int ToyVideoEncoder::InitX264Encoder(const webrtc::VideoCodec* codec_settings,
     ctx_->width = codec_settings->width;
     ctx_->height = codec_settings->height;
     ctx_->bit_rate = codec_settings->maxBitrate * 1000;
-    ctx_->time_base = {1, 90000};
-//    ctx_->gop_size = (codec_settings->H264().keyFrameInterval) *
-//                     codec_settings->maxFramerate / 1000;
+
     ctx_->gop_size = codec_settings->H264().keyFrameInterval;
+
     ctx_->codec_type = AVMediaType::AVMEDIA_TYPE_VIDEO;
     ctx_->pix_fmt = AV_PIX_FMT_YUV420P;
+    ctx_->refs = 1;
+    ctx_->profile = FF_PROFILE_H264_BASELINE;
+    ctx_->level = 30;//3.0
+    ctx_->keyint_min = 1000;//最小自动插入I帧间隔
+    ctx_->max_b_frames = 0;
+    ctx_->has_b_frames =0;
+    ctx_->framerate = {60,1};
+//    ctx_->time_base = {1, 90000};
+    ctx_->time_base = {1, 60};
 
     AVDictionary* dictionary = nullptr;
     // X264_WEIGHTP_NONE =0
     // fix ` Streams with pred_weight_table unsupported` error
     int ret = av_dict_set_int(&dictionary, "weightb", 0, 0);
     ret = av_dict_set_int(&dictionary, "weightp", 0, 0);
-
+//    ret = av_dict_set(&dictionary,"profile","baseline",0);
+//    ret = av_dict_set(&dictionary,"level","3.0",0);
+    //添加 zerolatency会使得编码间隔变短，但是会导致video source传入编码器时编码器busy 丢帧
+//    ret = av_dict_set(&dictionary,"tune","zerolatency",0);
     ret = avcodec_open2(ctx_, encoder_, &dictionary);
     if (ret < 0) {
         LogError("open encoder error");

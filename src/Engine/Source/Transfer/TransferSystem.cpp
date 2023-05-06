@@ -6,6 +6,7 @@
 #include "Base/Thread.h"
 #include "SessionCreator.h"
 #include "SignalingMessage.h"
+#include "system_wrappers/include/clock.h"
 
 #ifdef _WIN32
 #pragma comment(lib, "secur32.lib")
@@ -20,7 +21,6 @@ namespace toystation {
 void TransferSystem::Initialize() {
     session_creator_ = std::make_shared<SessionCreator>();
     session_creator_->Initialize();
-
     session_server_ = std::make_shared<SocketServer>();
     session_server_->OnOpenEvent =
         std::bind(&TransferSystem::OnUserConnect, this, std::placeholders::_1);
@@ -74,7 +74,13 @@ void TransferSystem::OnUserClose(websocketpp::connection_hdl hdl) {
         session_container_.erase(hdl);
     }
 }
-
+bool TransferSystem::AnyConnected(){
+    bool res = false;
+    for(auto& instance:session_container_){
+        res = res | instance.second->IsConnected();
+    }
+    return res;
+}
 void TransferSystem::Run() {
     ThreadUtil::SetCurrentThreadName("transfer_thread");
     std::shared_ptr<Msg> msg;

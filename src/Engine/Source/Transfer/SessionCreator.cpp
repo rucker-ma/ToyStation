@@ -21,7 +21,6 @@ void WebRtcLogSink::OnLogMessage(const std::string& message,
             break;
         case rtc::LS_INFO:
             LogInfo(message);
-            /* code */
             break;
         case rtc::LS_WARNING:
             LogWarn(message);
@@ -55,7 +54,7 @@ std::shared_ptr<TransferSession> SessionCreator::CreateSession(
     return session;
 }
 void SessionCreator::InitWebRtc() {
-    rtc::LogMessage::AddLogToStream(&rtc_log_, rtc::LS_WARNING);
+    rtc::LogMessage::AddLogToStream(&rtc_log_, rtc::LS_INFO);
     rtc::InitializeSSL();
     rtc::WinsockInitializer winsock_init;
 
@@ -101,15 +100,14 @@ void SessionCreator::SetupFactory() {
     }
 }
 void SessionCreator::SetupTracks() {
-    audio_track_ = peer_connection_factory_->CreateAudioTrack(
-        "audio",
-        peer_connection_factory_->CreateAudioSource(cricket::AudioOptions()));
+//    audio_track_ = peer_connection_factory_->CreateAudioTrack(
+//        "audio",
+//        peer_connection_factory_->CreateAudioSource(cricket::AudioOptions()));
     // TODO:imple video source
 
     auto source = new rtc::RefCountedObject<RenderVideoSource>();
     source->Initialize();
     video_source_ = source;
-    video_track_ =
-        peer_connection_factory_->CreateVideoTrack("video", video_source_);
+    video_track_ = peer_connection_factory_->CreateVideoTrack("video", video_source_);
 }
 }  // namespace toystation

@@ -11,9 +11,11 @@ void WorldManager::Initialize() {
     LoadLevel();
 }
 void WorldManager::Tick(){
-
+    current_level_->Tick();
 }
-
+std::shared_ptr<Level> WorldManager::ActiveLevel(){
+    return current_level_;
+}
 void WorldManager::LoadLevel() {
     current_level_ = std::make_shared<Level>();
     current_level_->Load(FileUtil::Combine("resource/level.json"));

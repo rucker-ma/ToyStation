@@ -11,7 +11,7 @@ namespace toystation {
 
 //---------------------Helper set SECURITY_ATTRIBUTES --------------------//
 #ifdef _WIN64
-//from Nvidia Cuda Examples 5_simpleVulkan
+// from Nvidia Cuda Examples 5_simpleVulkan
 class WindowsSecurityAttributes {
 protected:
     SECURITY_ATTRIBUTES m_winSecurityAttributes;
@@ -19,29 +19,29 @@ protected:
 
 public:
     WindowsSecurityAttributes();
-    SECURITY_ATTRIBUTES *operator&();
+    SECURITY_ATTRIBUTES* operator&();
     ~WindowsSecurityAttributes();
 };
 
 WindowsSecurityAttributes::WindowsSecurityAttributes() {
     m_winPSecurityDescriptor = (PSECURITY_DESCRIPTOR)calloc(
-        1, SECURITY_DESCRIPTOR_MIN_LENGTH + 2 * sizeof(void **));
+        1, SECURITY_DESCRIPTOR_MIN_LENGTH + 2 * sizeof(void**));
     if (!m_winPSecurityDescriptor) {
         throw std::runtime_error(
             "Failed to allocate memory for security descriptor");
     }
 
-    PSID *ppSID = (PSID *)((PBYTE)m_winPSecurityDescriptor +
+    PSID* ppSID = (PSID*)((PBYTE)m_winPSecurityDescriptor +
                           SECURITY_DESCRIPTOR_MIN_LENGTH);
-    PACL *ppACL = (PACL *)((PBYTE)ppSID + sizeof(PSID *));
+    PACL* ppACL = (PACL*)((PBYTE)ppSID + sizeof(PSID*));
 
     InitializeSecurityDescriptor(m_winPSecurityDescriptor,
                                  SECURITY_DESCRIPTOR_REVISION);
 
     SID_IDENTIFIER_AUTHORITY sidIdentifierAuthority =
         SECURITY_WORLD_SID_AUTHORITY;
-    AllocateAndInitializeSid(&sidIdentifierAuthority, 1, SECURITY_WORLD_RID, 0, 0,
-                             0, 0, 0, 0, 0, ppSID);
+    AllocateAndInitializeSid(&sidIdentifierAuthority, 1, SECURITY_WORLD_RID, 0,
+                             0, 0, 0, 0, 0, 0, ppSID);
 
     EXPLICIT_ACCESS explicitAccess;
     ZeroMemory(&explicitAccess, sizeof(EXPLICIT_ACCESS));
@@ -62,14 +62,14 @@ WindowsSecurityAttributes::WindowsSecurityAttributes() {
     m_winSecurityAttributes.bInheritHandle = TRUE;
 }
 
-SECURITY_ATTRIBUTES *WindowsSecurityAttributes::operator&() {
+SECURITY_ATTRIBUTES* WindowsSecurityAttributes::operator&() {
     return &m_winSecurityAttributes;
 }
 
 WindowsSecurityAttributes::~WindowsSecurityAttributes() {
-    PSID *ppSID = (PSID *)((PBYTE)m_winPSecurityDescriptor +
+    PSID* ppSID = (PSID*)((PBYTE)m_winPSecurityDescriptor +
                           SECURITY_DESCRIPTOR_MIN_LENGTH);
-    PACL *ppACL = (PACL *)((PBYTE)ppSID + sizeof(PSID *));
+    PACL* ppACL = (PACL*)((PBYTE)ppSID + sizeof(PSID*));
 
     if (*ppSID) {
         FreeSid(*ppSID);
@@ -106,10 +106,10 @@ void VkResourceAllocator::Init(VkDevice device,
 void VkResourceAllocator::DeInit() { staging_.reset(); }
 
 RHIBuffer VkResourceAllocator::CreateBuffer(const VkBufferCreateInfo& info,
-                                         VkMemoryPropertyFlags mem_usage,
-                                         void* memory_export) {
+                                            VkMemoryPropertyFlags mem_usage) {
     RHIBuffer result_buffer;
     CreateBufferEx(info, &result_buffer.buffer);
+
     VkMemoryRequirements2 mem_reqs;
     ZeroVKStruct(mem_reqs, VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2);
     VkMemoryDedicatedRequirements dedicated_reqs;
@@ -122,7 +122,7 @@ RHIBuffer VkResourceAllocator::CreateBuffer(const VkBufferCreateInfo& info,
     mem_reqs.pNext = &dedicated_reqs;
     buffer_reqs.buffer = result_buffer.buffer;
     vkGetBufferMemoryRequirements2(device_, &buffer_reqs, &mem_reqs);
-    
+
     MemoryAllocateInfo alloc_info(mem_reqs.memoryRequirements, mem_usage,
                                   false);
     if (info.usage & VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT) {
@@ -131,13 +131,12 @@ RHIBuffer VkResourceAllocator::CreateBuffer(const VkBufferCreateInfo& info,
     if (dedicated_reqs.requiresDedicatedAllocation) {
         alloc_info.SetBuffer(result_buffer.buffer);
     }
-    alloc_info.SetExportable(memory_export);
-
     result_buffer.handle = mem_alloc_->AllocMemory(alloc_info);
     if (result_buffer.handle) {
         const auto mem_info = mem_alloc_->GetMemoryInfo(result_buffer.handle);
-        vkBindBufferMemory(device_, result_buffer.buffer, mem_info.memory,
-                           mem_info.offset);
+        VkResult res = vkBindBufferMemory(device_, result_buffer.buffer,
+                                          mem_info.memory, mem_info.offset);
+        assert(res == VK_SUCCESS);
     } else {
         Destroy(result_buffer);
     }
@@ -145,8 +144,8 @@ RHIBuffer VkResourceAllocator::CreateBuffer(const VkBufferCreateInfo& info,
 }
 
 RHIBuffer VkResourceAllocator::CreateBuffer(VkDeviceSize size,
-                                         VkBufferUsageFlags usage,
-                                         VkMemoryPropertyFlags mem_usage) {
+                                            VkBufferUsageFlags usage,
+                                            VkMemoryPropertyFlags mem_usage) {
     VkBufferCreateInfo info;
     ZeroVKStruct(info, VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO);
     info.size = size;
@@ -154,22 +153,33 @@ RHIBuffer VkResourceAllocator::CreateBuffer(VkDeviceSize size,
 
     return CreateBuffer(info, mem_usage);
 }
-RHIBuffer VkResourceAllocator::CreateExternalBuffer(VkDeviceSize size,
-                                                 VkBufferUsageFlags usage,
-                                                 VkMemoryPropertyFlags mem_usage){
+RHIBuffer VkResourceAllocator::CreateExternalBuffer(
+    VkDeviceSize size, VkBufferUsageFlags usage,
+    VkMemoryPropertyFlags mem_usage) {
     VkBufferCreateInfo info;
     ZeroVKStruct(info, VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO);
     info.size = size;
     info.usage = usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 
+    RHIBuffer result_buffer;
+
     VkExternalMemoryBufferCreateInfo external_memory_info;
-    ZeroVKStruct(external_memory_info,VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_BUFFER_CREATE_INFO);
-#ifdef _WIN64
-    external_memory_info.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT;
-#else//linux
-    external_memory_info.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT;
-#endif
+    ZeroVKStruct(external_memory_info,
+                 VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_BUFFER_CREATE_INFO);
     info.pNext = &external_memory_info;
+#ifdef _WIN64
+    external_memory_info.handleTypes =
+        VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT;
+#else  // linux
+    external_memory_info.handleTypes =
+        VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT;
+#endif
+
+    VkResult res =
+        vkCreateBuffer(device_, &info, nullptr, &result_buffer.buffer);
+    if (res != VK_SUCCESS) {
+        LogError("vkCreateBuffer get error");
+    }
 #ifdef _WIN64
     WindowsSecurityAttributes security_attributes;
     VkExportMemoryWin32HandleInfoKHR export_memory_win32_info = {};
@@ -178,28 +188,53 @@ RHIBuffer VkResourceAllocator::CreateExternalBuffer(VkDeviceSize size,
     export_memory_win32_info.pNext = NULL;
     export_memory_win32_info.pAttributes = &security_attributes;
     export_memory_win32_info.dwAccess =
-        ( 0x80000000L ) | ( 1 );//DXGI_SHARED_RESOURCE_READ|DXGI_SHARED_RESOURCE_WRITE
+        (0x80000000L) |
+        (1);  // DXGI_SHARED_RESOURCE_READ|DXGI_SHARED_RESOURCE_WRITE
     export_memory_win32_info.name = (LPCWSTR)NULL;
 #endif /* _WIN64 */
-//    VkExportMemoryAllocateInfoKHR export_memory_alloc_info = {};
-//    export_memory_alloc_info.sType =
-//        VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO_KHR;
-//#ifdef _WIN64
-//    export_memory_alloc_info.pNext =&export_memory_win32_info;
-//    export_memory_alloc_info.handleTypes = external_memory_info.handleTypes;
-//#else
-//    export_memory_alloc_info.pNext = NULL;
-//    export_memory_alloc_info.handleTypes =
-//        VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT;
-//#endif /* _WIN64 */
+    VkExportMemoryAllocateInfoKHR export_memory_alloc_info;
+    export_memory_alloc_info.sType =
+        VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO_KHR;
+#ifdef _WIN64
+//    export_memory_alloc_info.pNext = nullptr;
+    export_memory_alloc_info.pNext = &export_memory_win32_info;
+    export_memory_alloc_info.handleTypes =
+        VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT;
+#else
+    export_memory_alloc_info.pNext = NULL;
+    export_memory_alloc_info.handleTypes =
+        VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT;
+#endif /* _WIN64 */
+    VkMemoryRequirements mem_reqs;
+    vkGetBufferMemoryRequirements(device_, result_buffer.buffer, &mem_reqs);
 
-    return CreateBuffer(info, mem_usage, &export_memory_win32_info);
+    VkMemoryAllocateInfo alloc_info;
+    ZeroVKStruct(alloc_info, VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO);
+    alloc_info.pNext = &export_memory_alloc_info;
+    alloc_info.allocationSize = mem_reqs.size;
+    VkPhysicalDeviceMemoryProperties physical_memory_properties;
+    vkGetPhysicalDeviceMemoryProperties(physical_device_,
+                                        &physical_memory_properties);
+
+    alloc_info.memoryTypeIndex = MemoryAllocateUtils::GetMemoryType(
+        physical_memory_properties, mem_reqs.memoryTypeBits, mem_usage);
+
+    result_buffer.handle = mem_alloc_->AllocMemory(alloc_info);
+    if (result_buffer.handle) {
+        const auto mem_info = mem_alloc_->GetMemoryInfo(result_buffer.handle);
+        res = vkBindBufferMemory(device_, result_buffer.buffer,
+                                          mem_info.memory, mem_info.offset);
+        assert(res == VK_SUCCESS);
+    } else {
+        Destroy(result_buffer);
+    }
+    return result_buffer;
 }
 RHIBuffer VkResourceAllocator::CreateBuffer(const VkCommandBuffer& cmd_buf,
-                                         const VkDeviceSize& size,
-                                         const void* data,
-                                         VkBufferUsageFlags usage,
-                                         VkMemoryPropertyFlags mem_props) {
+                                            const VkDeviceSize& size,
+                                            const void* data,
+                                            VkBufferUsageFlags usage,
+                                            VkMemoryPropertyFlags mem_props) {
     VkBufferCreateInfo info;
     ZeroVKStruct(info, VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO);
     info.size = size;
@@ -282,8 +317,7 @@ RHITexture VkResourceAllocator::CreateTexture(
     RHITexture result_texture;
     result_texture.image = image.image;
     result_texture.handle = image.handle;
-    result_texture.descriptor.imageLayout =
-        VK_IMAGE_LAYOUT_GENERAL;
+    result_texture.descriptor.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
     assert(imageview_create_info.image == image.image);
     vkCreateImageView(device_, &imageview_create_info, nullptr,
                       &result_texture.descriptor.imageView);
@@ -296,7 +330,7 @@ RHITexture VkResourceAllocator::CreateTexture(
     RHITexture result_texture = CreateTexture(image, imageview_create_info);
     // result_texture.descriptor.sampler =
     // m_samplerPool.acquireSampler(samplerCreateInfo);
-    
+
     VkSamplerCreateInfo sampler_info{};
     sampler_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
     sampler_info.magFilter = VK_FILTER_LINEAR;
@@ -317,7 +351,8 @@ RHITexture VkResourceAllocator::CreateTexture(
     sampler_info.minLod = 0;
     sampler_info.maxLod = 0;
 
-    vkCreateSampler(device_, &sampler_info, nullptr, &result_texture.descriptor.sampler);
+    vkCreateSampler(device_, &sampler_info, nullptr,
+                    &result_texture.descriptor.sampler);
     return result_texture;
 }
 RHITexture VkResourceAllocator::CreateTexture(
@@ -394,8 +429,22 @@ void VkResourceAllocator::UnMap(const RHIImage& image) {
     mem_alloc_->UnMap(image.handle);
 }
 void VkResourceAllocator::CreateBufferEx(const VkBufferCreateInfo& info,
-                                         VkBuffer* buffer) {
-    VkResult res = vkCreateBuffer(device_, &info, nullptr, buffer);
+                                         VkBuffer* buffer, bool with_external) {
+    VkBufferCreateInfo local_create_info = info;
+    VkExternalMemoryBufferCreateInfo external_memory_info;
+    ZeroVKStruct(external_memory_info,
+                 VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_BUFFER_CREATE_INFO);
+    if (with_external) {
+#ifdef _WIN64
+        external_memory_info.handleTypes =
+            VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT;
+#else  // linux
+        external_memory_info.handleTypes =
+            VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT;
+#endif
+        local_create_info.pNext = &external_memory_info;
+    }
+    VkResult res = vkCreateBuffer(device_, &local_create_info, nullptr, buffer);
     if (res != VK_SUCCESS) {
         LogError("vkCreateBuffer get error");
     }
@@ -431,6 +480,5 @@ void DedicatedResourceAllocator::Init(VkInstance instance, VkDevice device,
     Init(device, physical_device, staging_block_size);
 }
 void DedicatedResourceAllocator::DeInit() {}
-
 
 }  // namespace toystation

@@ -1,6 +1,8 @@
 #pragma once
 #include <api/video_codecs/video_encoder_factory.h>
 #include <api/video_codecs/h264_profile_level_id.h>
+#include <api/video/video_stream_encoder_interface.h>
+#include <api/video/video_stream_encoder_observer.h>
 #include "VideoEncoder.h"
 
 namespace toystation {

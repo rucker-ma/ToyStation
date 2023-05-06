@@ -10,6 +10,7 @@ class WorldManager{
 public:
     void Initialize();
     void Tick();
+    std::shared_ptr<Level> ActiveLevel();
 private:
     void LoadLevel();
 private:

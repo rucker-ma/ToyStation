@@ -5,7 +5,7 @@
 #include <api/peer_connection_interface.h>
 #include <api/task_queue/default_task_queue_factory.h>
 #include <rtc_base/logging.h>
-#include <rtc_base/win32_socket_server.h>
+//#include <rtc_base/win32_socket_server.h>
 #include "RenderVideoSource.h"
 #include "TransferSession.h"
 
@@ -49,7 +49,7 @@ private:
     std::unique_ptr<rtc::Thread> worker_thread_;
     std::unique_ptr<rtc::Thread> signaling_thread_;
     std::unique_ptr<rtc::Thread> network_thread_;
-    rtc::Win32SocketServer win32_server_;
+    //rtc::Win32SocketServer win32_server_;
     
     webrtc::PeerConnectionInterface::RTCConfiguration config;
 };

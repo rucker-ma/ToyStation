@@ -5,7 +5,7 @@
 #include "Vulkan/Images.h"
 #include "Vulkan/Pipeline.h"
 #include "Vulkan/VkImageUtil.h"
-
+#include "Compiler/ShaderCompilerSystem.h"
 namespace toystation {
 void FrameConvertYCrCbPass::Initialize(RenderPassInitInfo& info) {
     context_ = info.context;
@@ -59,7 +59,7 @@ void FrameConvertYCrCbPass::SetupDescriptorSetLayout(RenderPassInitInfo& info) {
         3, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, VK_SHADER_STAGE_COMPUTE_BIT);
 
     descriptor_.layout = convert_resource_.set_container.InitLayout();
-    convert_resource_.set_container.InitPool(4);
+    convert_resource_.set_container.InitPool(1);
 
     std::vector<VkWriteDescriptorSet> sets;
     // index 0: render渲染的rgba图像
@@ -79,15 +79,16 @@ void FrameConvertYCrCbPass::SetupPipeline(RenderPassInitInfo& info) {
     ZeroVKStruct(compute_stage_info,
                  VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO);
     compute_stage_info.stage = VK_SHADER_STAGE_COMPUTE_BIT;
-    compute_stage_info.module =
-        GetShader("D:/project/ToyStation/src/Engine/Shader/comp.spv",
-                  info.context->GetContext());
+    compute_stage_info.module =context_->GetContext()->CreateShader(
+        ShaderCompilerSystem::kCompileResult.at(kConvertYUVPassComp));
+//        GetShader("D:/project/ToyStation/src/Engine/Shader/Spv/comp.spv",
+//                  info.context->GetContext());
     compute_stage_info.pName = "main";
 
     VkPipelineLayoutCreateInfo pipeline_layout_info{};
     pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipeline_layout_info.setLayoutCount = 1;
-    pipeline_layout_info.pSetLayouts = &descriptor_.layout;
+    pipeline_layout_info.setLayoutCount = descriptor_.layout.size();
+    pipeline_layout_info.pSetLayouts = descriptor_.layout.data();
     info.context->GetContext()->CreatePipelineLayout(pipeline_layout_info,
                                                      pipeline_.layout);
 
@@ -214,7 +215,7 @@ void FrameConvertNV12Pass::SetupDescriptorSetLayout(RenderPassInitInfo& info) {
         2, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, VK_SHADER_STAGE_COMPUTE_BIT);
 
     descriptor_.layout = convert_resource_.set_container.InitLayout();
-    convert_resource_.set_container.InitPool(3);
+    convert_resource_.set_container.InitPool(1);
 
     std::vector<VkWriteDescriptorSet> sets;
     // index 0: render渲染的rgba图像
@@ -233,15 +234,17 @@ void FrameConvertNV12Pass::SetupPipeline(RenderPassInitInfo& info) {
     ZeroVKStruct(compute_stage_info,
                  VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO);
     compute_stage_info.stage = VK_SHADER_STAGE_COMPUTE_BIT;
-    compute_stage_info.module =
-        GetShader("D:/project/ToyStation/src/Engine/Shader/convert_nv12.spv",
-                  info.context->GetContext());
+    compute_stage_info.module = context_->GetContext()->CreateShader(
+            ShaderCompilerSystem::kCompileResult.at(kConvertNV12PassComp));
+
+//        GetShader("D:/project/ToyStation/src/Engine/Shader/Spv/convert_nv12.spv",
+//                  info.context->GetContext());
     compute_stage_info.pName = "main";
 
     VkPipelineLayoutCreateInfo pipeline_layout_info{};
     pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipeline_layout_info.setLayoutCount = 1;
-    pipeline_layout_info.pSetLayouts = &descriptor_.layout;
+    pipeline_layout_info.setLayoutCount = descriptor_.layout.size();
+    pipeline_layout_info.pSetLayouts = descriptor_.layout.data();
     info.context->GetContext()->CreatePipelineLayout(pipeline_layout_info,
                                                      pipeline_.layout);
 
@@ -257,14 +260,16 @@ void FrameConvertNV12Pass::SetupPipeline(RenderPassInitInfo& info) {
 
 void FrameConvertNV12Pass::SetupTexture(RenderPassInitInfo& info) {
     auto alloc = info.context->GetAllocator();
-    VkRect2D* scissor = context_->GetSwapchain()->GetScissor();
+    VkExtent2D extent = context_->GetSwapchain()->GetScissor()->extent;
+    //default width = 1920 ,but nvenc encoder pitch = 2048
+    //extent.width = 2048;
     VkImageCreateInfo y_create_info = MakeImage2DCreateInfo(
-        scissor->extent, VK_FORMAT_R8_UNORM,
+        extent, VK_FORMAT_R8_UNORM,
         VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT);
     convert_resource_.comp_y = alloc->CreateImage(y_create_info);
 
     VkExtent2D uv_extent =
-        VkExtent2D{scissor->extent.width, scissor->extent.height / 2};
+        VkExtent2D{extent.width, extent.height / 2};
     VkImageCreateInfo uv_create_info = MakeImage2DCreateInfo(
         uv_extent, VK_FORMAT_R8_UNORM,
         VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT);

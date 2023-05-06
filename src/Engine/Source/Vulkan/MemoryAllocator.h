@@ -16,6 +16,8 @@ public:
     void Init(VkDevice device, VkPhysicalDevice physical_device);
     void DeInit();
     MemHandle AllocMemory(const MemoryAllocateInfo& info);
+
+    MemHandle AllocMemory(const VkMemoryAllocateInfo & info);
     void FreeMemory(MemHandle mem_handle);
     MemoryInfo GetMemoryInfo(MemHandle mem_handle) const;
     void* Map(MemHandle mem_handle, VkDeviceSize offset = 0,

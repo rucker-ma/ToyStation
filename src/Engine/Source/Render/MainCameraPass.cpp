@@ -1,56 +1,23 @@
 #include "MainCameraPass.h"
 
 #include "Base/Global.h"
+#include "Base/Time.h"
+#include "Compiler/ShaderCompilerSystem.h"
 #include "File/FileUtil.h"
+
 #include "Vulkan/Images.h"
 #include "Vulkan/Pipeline.h"
 #include "Vulkan/VkImageUtil.h"
-
 #include "ToyEngine.h"
+
 
 namespace toystation {
 
-struct UniformBuffer {
-    Matrix4 model;
-    Matrix4 view;
-    Matrix4 proj;
-};
-
-struct Vertex {
-    Vector3 pos;
-    Vector3 color;
-    Vector2 tex_coord;
-};
-
-const std::vector<Vertex> kVertices = {
-    {{-0.5, -0.5, 0.0}, {1.0, 0.0, 0.0}, {0.0, 0.0}},
-    {{0.5, -0.5, 0.0}, {0.0, 1.0, 0.0}, {1.0, 0.0}},
-    {{0.5, 0.5, 0.0}, {0.0, 0.0, 1.0}, {1.0, 1.0}},
-    {{-0.5, 0.5, 0.0}, {1.0, 1.0, 1.0}, {0.0, 1.0}},
-    {{-0.5, -0.5, -0.5}, {1.0, 0.0, 0.0}, {0.0, 0.0}},
-    {{0.5, -0.5, -0.5}, {0.0, 1.0, 0.0}, {1.0, 0.0}},
-    {{0.5, 0.5, -0.5}, {0.0, 0.0, 1.0}, {1.0, 1.0}},
-    {{-0.5, 0.5, -0.5}, {1.0, 1.0, 1.0}, {0.0, 1.0}}};
-
-const std::vector<uint16_t> kIndices = {0, 1, 2, 2, 3, 0, 4, 5, 6, 6, 7, 4};
-
-struct TestBuffer {
-    RHIBuffer vert;
-    RHIBuffer indices;
-    RHIBuffer uniform;
-};
-
-TestBuffer kShaderBuffer;
-
-VkShaderModule GetShader(std::string path, std::shared_ptr<VkContext> ctx) {
-    std::vector<char> data;
-    FileUtil::ReadBinary(path, data);
-    return ctx->CreateShader(data.data(), data.size());
-}
-
+UniformBuffer ubo;
 void MainCameraPass::Initialize(RenderPassInitInfo& info) {
     context_ = info.context;
     resource_ = info.resource;
+    gbuffers_.resize(GBUFFER_COUNT);
     SetupRenderPass(info);
     SetupDescriptorSetLayout(info);
     SetupPipeline(info);
@@ -67,46 +34,77 @@ void MainCameraPass::Draw() {
     VkViewport* viewport = context_->GetSwapchain()->GetViewport();
     VkRect2D* scissor = context_->GetSwapchain()->GetScissor();
 
-    UpdateUniform();
     render_begin_info.renderPass = render_pass_;
     render_begin_info.framebuffer =
         resource_->main_pass_resource_.framebuffers.front();
     render_begin_info.renderArea = *scissor;
 
-    std::array<VkClearValue, 2> clear_values{};
-    clear_values[0].color = {{0.0F, 0.0F, 0.0F, 1.0F}};
-    clear_values[1].depthStencil = {1.0F, 0};
+    VkClearValue clear_color{};
+    clear_color.color = {{0.0F, 0.0F, 0.0F, 1.0F}};
+    VkClearValue clear_depth{};
+    clear_depth.depthStencil = {1.0F, 0};
+    std::vector<VkClearValue> clear_values(1, clear_color);
+    clear_values.push_back(clear_depth);
+    for(int i =0;i<gbuffers_.size();i++) {
+        clear_values.push_back(clear_color);
+    }
+
     render_begin_info.clearValueCount = clear_values.size();
     render_begin_info.pClearValues = clear_values.data();
-    vkCmdBeginRenderPass(cmd, &render_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
+    vkCmdBeginRenderPass(cmd, &render_begin_info, VK_SUBPASS_CONTENTS_INLINE);
     vkCmdSetViewport(cmd, 0, 1, viewport);
     vkCmdSetScissor(cmd, 0, 1, scissor);
 
     vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_.pipeline);
+
     VkDeviceSize offset = {};
-    vkCmdBindVertexBuffers(cmd, 0, 1, &kShaderBuffer.vert.buffer, &offset);
-    vkCmdBindDescriptorSets(
-        cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_.layout, 0, 1,
-        &resource_->main_pass_resource_.set_container.GetSet(0), 0, nullptr);
+    UpdateUniform();
+    //一个对象中每一份顶点或材质对应一个descriptor set,在使用时进行绑定，常规最大绑定数为4个
+    
+    //获取渲染对象，绑定资源绘制
+    for(auto& pair:RenderSystem::kRenderGlobalData.render_resource->render_objects_){
+        std::shared_ptr<RenderMaterial> material;
 
-    vkCmdBindIndexBuffer(cmd, kShaderBuffer.indices.buffer, 0,
-                         VK_INDEX_TYPE_UINT16);
-    vkCmdDrawIndexed(cmd, kIndices.size(), 1, 0, 0, 0);
+        for(auto& mesh:pair.second->Meshes()){
+            mesh->UpdateUniform(ubo);
+            //TODO:bind vertex data,confirm binding correct
+            vkCmdBindVertexBuffers(cmd,0,1,&mesh->position_buffer.buffer,&offset);
+            vkCmdBindVertexBuffers(cmd,1,1,&mesh->normal_buffer.buffer,&offset);
+            vkCmdBindVertexBuffers(cmd,2,1,&mesh->texcoord_buffer.buffer,&offset);
+            vkCmdBindVertexBuffers(cmd,3,1,&mesh->tangent_buffer.buffer,&offset);
 
+            vkCmdBindDescriptorSets(cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,pipeline_.layout,0,1,
+                                    &mesh->set_container.GetSet(0),0,nullptr);
+            if (material != pair.second->Material(mesh->material_index)) {
+                material = pair.second->Material(mesh->material_index);
+                if(material->IsValid()) {
+                    vkCmdBindDescriptorSets(
+                        cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_.layout,
+                        1, 2, &material->set_container.GetSet(0), 0, nullptr);
+                }
+            }
+            vkCmdBindIndexBuffer(cmd,mesh->indices_buffer.buffer,0,mesh->indices_type);
+            vkCmdDrawIndexed(cmd,mesh->indices_size,1,0,0,0);
+        }
+    }
     vkCmdEndRenderPass(cmd);
-    //submit ,wait and destroy commandbuffer
-
-
+//     submit ,wait and destroy commandbuffer
     context_->GetCommandPool()->SubmitAndWait(cmd);
-    //SaveImage(); //for debug
+    // SaveImage(); //for debug
 }
-
-void MainCameraPass::SetAttachmentResource() {}
+void MainCameraPass::RebuildShaderAndPipeline(){
+    context_->GetContext()->DestroyPipeline(pipeline_.pipeline);
+    RenderPassInitInfo info = {context_,resource_};
+    SetupPipeline(info);
+}
 void MainCameraPass::SetupRenderPass(RenderPassInitInfo& info) {
-    // 主相机使用的颜色缓冲
+    std::vector<VkAttachmentDescription> attachments;
+    std::vector<VkSubpassDependency> dependencies;
+    std::vector<VkSubpassDescription> subpasses;
+    // GBuffer
     VkAttachmentDescription color_attachment{};
-    color_attachment.format = info.context->GetSwapchain()->GetFormat();
+    color_attachment.format = context_->GetSwapchain()->GetFormat();
     color_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
     color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     color_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -134,16 +132,22 @@ void MainCameraPass::SetupRenderPass(RenderPassInitInfo& info) {
     VkAttachmentReference color_attachment_ref{};
     color_attachment_ref.attachment = RenderAttachRef::kRenderAttachRefColor;
     color_attachment_ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    std::vector<VkAttachmentReference> color_attachment_refs;
+    color_attachment_refs.push_back(color_attachment_ref);
+    for(int i =0;i<gbuffers_.size();i++){
+        color_attachment_ref.attachment = RenderAttachRef::kGbuffer0 +i;
+        color_attachment_refs.push_back(color_attachment_ref);
+    }
 
     VkAttachmentReference depth_attachment_ref{};
-    depth_attachment_ref.attachment = RenderAttachRef::kRenderAttachRefDepth;
+    depth_attachment_ref.attachment =RenderAttachRef::kRenderAttachRefDepth;
     depth_attachment_ref.layout =
         VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
     VkSubpassDescription base_pass{};
     base_pass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    base_pass.colorAttachmentCount = 1;
-    base_pass.pColorAttachments = &color_attachment_ref;
+    base_pass.colorAttachmentCount = color_attachment_refs.size();
+    base_pass.pColorAttachments = color_attachment_refs.data();
     base_pass.pDepthStencilAttachment = &depth_attachment_ref;
 
     VkSubpassDependency dependency{};
@@ -158,12 +162,12 @@ void MainCameraPass::SetupRenderPass(RenderPassInitInfo& info) {
     dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT |
                                VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
-    std::vector<VkAttachmentDescription> attachments;
-    std::vector<VkSubpassDependency> dependencies;
-    std::vector<VkSubpassDescription> subpasses;
-
     attachments.push_back(color_attachment);
     attachments.push_back(depth_attachment);
+    for (int i = 0; i <gbuffers_.size() ; ++i) {
+        attachments.push_back(color_attachment);
+    }
+
     dependencies.push_back(dependency);
     subpasses.push_back(base_pass);
 
@@ -183,60 +187,38 @@ void MainCameraPass::SetupRenderPass(RenderPassInitInfo& info) {
 void MainCameraPass::SetupDescriptorSetLayout(RenderPassInitInfo& info) {
     resource_->main_pass_resource_.set_container.Init(
         info.context->GetContext().get());
+    // set =0,binding=0
     resource_->main_pass_resource_.set_container.AddBinding(
-        0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
+        0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1,
+        VK_SHADER_STAGE_VERTEX_BIT|VK_SHADER_STAGE_FRAGMENT_BIT, 0);
+    // set=1,binding=0
+    resource_->main_pass_resource_.set_container.AddBinding(
+        0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1,
+        VK_SHADER_STAGE_FRAGMENT_BIT, 1);
     resource_->main_pass_resource_.set_container.AddBinding(
         1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1,
-        VK_SHADER_STAGE_FRAGMENT_BIT);
+        VK_SHADER_STAGE_FRAGMENT_BIT, 1);
+    resource_->main_pass_resource_.set_container.AddBinding(
+        2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1,
+        VK_SHADER_STAGE_FRAGMENT_BIT, 1);
+    resource_->main_pass_resource_.set_container.AddBinding(
+        3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1,
+        VK_SHADER_STAGE_FRAGMENT_BIT, 1);
+    //set=2 ,binding=0
+    resource_->main_pass_resource_.set_container.AddBinding(
+        0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1,
+        VK_SHADER_STAGE_FRAGMENT_BIT, 2);
     descriptor_.layout =
         resource_->main_pass_resource_.set_container.InitLayout();
     // how to set default set? now use default 2
-    resource_->main_pass_resource_.set_container.InitPool(2);
+    resource_->main_pass_resource_.set_container.InitPool(3);
 
-    std::vector<VkWriteDescriptorSet> sets;
-    kShaderBuffer.uniform = info.context->GetAllocator()->CreateBuffer(
-        sizeof(toystation::UniformBuffer), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-            VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-
-    VkDescriptorBufferInfo buffer_info;
-    buffer_info.buffer = kShaderBuffer.uniform.buffer;
-    buffer_info.offset = 0;
-    buffer_info.range = sizeof(toystation::UniformBuffer);
-
-    LoadTexture();
-
-    sets.push_back(resource_->main_pass_resource_.set_container.MakeWrite(
-        0, 0, &buffer_info /* uniform buffer*/));
-
-    sets.push_back(resource_->main_pass_resource_.set_container.MakeWrite(
-        0, 1, &image_tex_.descriptor));
-    resource_->main_pass_resource_.set_container.UpdateSets(sets);
-
-    // 加载顶点数据到显存
-    kShaderBuffer.vert = info.context->GetAllocator()->CreateBuffer(
-        sizeof(Vertex) * kVertices.size(),
-        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT |
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
-    void* data = info.context->GetAllocator()->Map(kShaderBuffer.vert);
-    memcpy(data, kVertices.data(), sizeof(Vertex) * kVertices.size());
-    info.context->GetAllocator()->UnMap(kShaderBuffer.vert);
-    // 加载索引数据到显存
-    kShaderBuffer.indices = info.context->GetAllocator()->CreateBuffer(
-        sizeof(uint16_t) * kIndices.size(),
-        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT |
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
-    data = info.context->GetAllocator()->Map(kShaderBuffer.indices);
-    memcpy(data, kIndices.data(), sizeof(uint16_t) * kIndices.size());
-    info.context->GetAllocator()->UnMap(kShaderBuffer.indices);
 }
 void MainCameraPass::SetupPipeline(RenderPassInitInfo& info) {
     VkPipelineLayoutCreateInfo pipeline_layout_info{};
     pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipeline_layout_info.setLayoutCount = 1;
-    pipeline_layout_info.pSetLayouts = &descriptor_.layout;
+    pipeline_layout_info.setLayoutCount = descriptor_.layout.size();
+    pipeline_layout_info.pSetLayouts = descriptor_.layout.data();
     info.context->GetContext()->CreatePipelineLayout(pipeline_layout_info,
                                                      pipeline_.layout);
 
@@ -244,9 +226,9 @@ void MainCameraPass::SetupPipeline(RenderPassInitInfo& info) {
     vert_shaderstage_info.sType =
         VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     vert_shaderstage_info.stage = VK_SHADER_STAGE_VERTEX_BIT;
-    vert_shaderstage_info.module =
-        GetShader("D:/project/ToyStation/src/Engine/Shader/vert.spv",
-                  info.context->GetContext());
+
+    vert_shaderstage_info.module = context_->GetContext()->CreateShader(
+        ShaderCompilerSystem::kCompileResult.at(kMainCameraPassVert));
 
     vert_shaderstage_info.pName = "main";
 
@@ -254,23 +236,31 @@ void MainCameraPass::SetupPipeline(RenderPassInitInfo& info) {
     frag_shaderstage_info.sType =
         VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     frag_shaderstage_info.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-    frag_shaderstage_info.module =
-        GetShader("D:/project/ToyStation/src/Engine/Shader/frag.spv",
-                  info.context->GetContext());
+
+    frag_shaderstage_info.module = context_->GetContext()->CreateShader(
+        ShaderCompilerSystem::kCompileResult.at(kMainCameraPassFrag));
     frag_shaderstage_info.pName = "main";
 
     VkPipelineShaderStageCreateInfo shader_stages[] = {vert_shaderstage_info,
                                                        frag_shaderstage_info};
 
     PipelineVertexState vertex_state;
-    vertex_state.AddBindingDescription(0, sizeof(Vertex),
+
+    vertex_state.AddBindingDescription(0, sizeof(Vector3),
                                        VK_VERTEX_INPUT_RATE_VERTEX);
-    vertex_state.AddAtributeDescription(0, 0, VK_FORMAT_R32G32_SFLOAT,
-                                        offsetof(Vertex, pos));
-    vertex_state.AddAtributeDescription(0, 1, VK_FORMAT_R32G32_SFLOAT,
-                                        offsetof(Vertex, color));
-    vertex_state.AddAtributeDescription(0, 2, VK_FORMAT_R32G32_SFLOAT,
-                                        offsetof(Vertex, tex_coord));
+    vertex_state.AddBindingDescription(1, sizeof(Vector3),
+                                       VK_VERTEX_INPUT_RATE_VERTEX);
+    vertex_state.AddBindingDescription(2, sizeof(Vector2),
+                                       VK_VERTEX_INPUT_RATE_VERTEX);
+    vertex_state.AddBindingDescription(3,sizeof(Vector3),VK_VERTEX_INPUT_RATE_VERTEX);
+    //inPosition
+    vertex_state.AddAtributeDescription(0, 0, VK_FORMAT_R32G32B32_SFLOAT,0);
+    //inNormal
+    vertex_state.AddAtributeDescription(1, 1, VK_FORMAT_R32G32B32_SFLOAT,0);
+    //inTexCoord
+    vertex_state.AddAtributeDescription(2, 2, VK_FORMAT_R32G32_SFLOAT,0);
+    //inTangent
+    vertex_state.AddAtributeDescription(3, 3, VK_FORMAT_R32G32B32_SFLOAT,0);
 
     VkPipelineInputAssemblyStateCreateInfo input_assembly{};
     input_assembly.sType =
@@ -318,12 +308,15 @@ void MainCameraPass::SetupPipeline(RenderPassInitInfo& info) {
         VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
     color_blend_attachment.blendEnable = VK_FALSE;
 
+    std::vector<VkPipelineColorBlendAttachmentState> color_blend_attachments(
+        gbuffers_.size()+1, color_blend_attachment);
+
     VkPipelineColorBlendStateCreateInfo color_blending{};
     color_blending.sType =
         VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
     color_blending.logicOpEnable = VK_FALSE;
-    color_blending.attachmentCount = 1;
-    color_blending.pAttachments = &color_blend_attachment;
+    color_blending.attachmentCount = color_blend_attachments.size();
+    color_blending.pAttachments = color_blend_attachments.data();
 
     VkPipelineDepthStencilStateCreateInfo depth_stencil{};
     depth_stencil.sType =
@@ -384,6 +377,16 @@ void MainCameraPass::SetupFrameBuffer(RenderPassInitInfo& info) {
     attachments.push_back(color_tex.descriptor.imageView);
     attachments.push_back(depth_tex.descriptor.imageView);
 
+    for(auto& gbuffer:gbuffers_){
+        gbuffer.image =  alloc->CreateImage(image_create_info);
+        VkImageViewCreateInfo gbuffer_view = MakeImage2DViewCreateInfo(
+            gbuffer.image.image,
+            VK_IMAGE_ASPECT_COLOR_BIT, VK_FORMAT_R8G8B8A8_UNORM);
+        gbuffer.texture = alloc->CreateTexture(
+            gbuffer.image, gbuffer_view);
+        attachments.push_back(gbuffer.texture.descriptor.imageView);
+    }
+
     VkFramebufferCreateInfo create_info;
     ZeroVKStruct(create_info, VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO);
     create_info.renderPass = render_pass_;
@@ -397,82 +400,23 @@ void MainCameraPass::SetupFrameBuffer(RenderPassInitInfo& info) {
     info.context->GetContext()->CreateFramebuffer(create_info, framebuffer);
     resource_->main_pass_resource_.framebuffers.push_back(framebuffer);
 }
-void MainCameraPass::LoadTexture() {
-    int tex_w = 0;
-    int tex_h = 0;
-    int tex_ch = 0;
-    std::string image_file =
-        "D:/project/cpp/graphics/vk-demo/image/texture.jpg";
-
-    unsigned char* pixels = FileUtil::ReadImg(image_file, tex_w, tex_h, tex_ch);
-
-    VkDeviceSize image_size = static_cast<long long>(tex_w * tex_h * 4);
-    if (tex_w < 0 || tex_h < 0) {
-        LogFatal("Read texture image error");
-    }
-    VkExtent2D extent = {static_cast<uint32_t>(tex_w),
-                         static_cast<uint32_t>(tex_h)};
-    VkImageCreateInfo create_info = MakeImage2DCreateInfo(extent);
-    VkCommandBuffer cmd = context_->GetCommandPool()->CreateCommandBuffer(
-        VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
-
-    RHIImage img = context_->GetAllocator()->CreateImage(
-        cmd, image_size, pixels, create_info,
-        /* VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL*/ VK_IMAGE_LAYOUT_GENERAL);
-
-    VkImageViewCreateInfo view_create_info = MakeImage2DViewCreateInfo(
-        img.image, VK_IMAGE_ASPECT_COLOR_BIT, VK_FORMAT_R8G8B8A8_UNORM);
-    VkSamplerCreateInfo sampler_create_info{};
-    image_tex_ = context_->GetAllocator()->CreateTexture(img, view_create_info,
-                                                         sampler_create_info);
-
-    context_->GetCommandPool()->SubmitAndWait(cmd);
-}
 void MainCameraPass::UpdateUniform() {
-
-    static auto start_time = std::chrono::high_resolution_clock::now();
-    auto current_time = std::chrono::high_resolution_clock::now();
+    static auto startTime = std::chrono::high_resolution_clock::now();
+    auto currentTime = std::chrono::high_resolution_clock::now();
     float time = std::chrono::duration<float, std::chrono::seconds::period>(
-                     current_time - start_time)
-                     .count();
-
-    //TODO:check input to update camera position
-    Vector3& position = context_->GetCamera()->GetPosition();
-    switch (kEngine.GetInputSystem().PressedKey()) {
-        case KEY_W:
-            position+=Vector3(-0.1,0,0);
-            break ;
-        case KEY_S:
-            position+=Vector3(0.1,0,0);
-            break ;
-        case KEY_A:
-            position+=Vector3(0.0,-0.1,0);
-            break ;
-        case KEY_D:
-            position+=Vector3(0.0,0.1,0);
-            break ;
-    }
-    UniformBuffer ubo{};
-//    ubo.model = glm::rotate(glm::mat4(1.0F), time * glm::radians(90.0F),
-//                            glm::vec3(0.0F, 0.0F, 1.0F));
-    ubo.model = glm::mat4(1.0F);
+                     currentTime - startTime).count();
+    ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f),
+                            glm::vec3(0.0f, 0.0f, 1.0f));
+//    ubo.model = glm::mat4(1.0F);
     ubo.model[3][0] = 2.0;
     ubo.model[3][1] = 0.0;
-    ubo.model[3][2]= -0.3;
-    // ubo.view =
-    //     glm::lookAt(glm::vec3(2.0F, 2.0F, 2.0F), glm::vec3(0.0F, 0.0F, 0.0F),
-    //                 glm::vec3(0.0F, 0.0F, 1.0F));
+    ubo.model[3][2] = -0.3;
 
-    ubo.view = context_->GetCamera()->GetView();
-    ubo.proj = context_->GetCamera()->GetProjection();
-    // ubo.proj =
-    //     glm::perspective(glm::radians(45.0F), 1920 / (float)1080, 0.1F, 10.0F);
-    // ubo.proj[1][1] *= -1;
-
-    void* data = context_->GetAllocator()->Map(kShaderBuffer.uniform);
-
-    memcpy(data, &ubo, sizeof(ubo));
-    context_->GetAllocator()->UnMap(kShaderBuffer.uniform);
+    auto camera = kEngine.GetWorldManager().ActiveLevel()->GetCamera();
+    auto camera_component = camera->GetComponent<CameraComponent>();
+    assert(camera_component);
+    ubo.view = camera_component->GetView();
+    ubo.proj = camera_component->GetProjection();
 }
 // SaveImage for test and debug
 void MainCameraPass::SaveImage() {
@@ -484,7 +428,6 @@ void MainCameraPass::SaveImage() {
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
     VkCommandBuffer cmd = context_->GetCommandPool()->CreateCommandBuffer();
-
     VkImageSubresourceRange sub_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
 
     VkImageUtil::CmdBarrierImageLayout(

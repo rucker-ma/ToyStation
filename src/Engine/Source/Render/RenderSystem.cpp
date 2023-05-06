@@ -2,36 +2,16 @@
 
 #include "Base/Global.h"
 #include "Base/Thread.h"
+#include "Base/Time.h"
 #include "RenderDocCapture.h"
 #include "RenderObject.h"
-#include "Framework/MeshComponent.h"
 #include "ToyEngine.h"
 #include "ToyEngineSetting.h"
+
 
 namespace toystation {
 
 RenderGlobalData RenderSystem::kRenderGlobalData = {};
-
-void RenderGlobalData::AddRenderObject(std::shared_ptr<TObject> obj) {
-    int id = obj->GetID();
-    std::shared_ptr<RenderObject> render_object =
-        std::make_shared<RenderObject>(id);
-
-    std::shared_ptr<MeshComponent> meshes = obj->GetComponent<MeshComponent>();
-    std::shared_ptr<MaterialComponent> materials = obj->GetComponent<MaterialComponent>();
-
-    VkCommandBuffer cmd = render_context->GetCommandPool()->CreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY,true);
-    //TODO:添加实现细节
-    for(auto& submesh:meshes->GetSubMesh()){
-        render_context->GetAllocator()->CreateBuffer();
-
-        //submesh->Position()
-    }
-
-    render_context->GetCommandPool()->SubmitAndWait(cmd);
-
-    render_resource->render_objects_.insert(std::make_pair(id, render_object));
-}
 
 void RenderSystem::Initialize() {
     LogDebug("RenderSystem Initialize..");
@@ -53,13 +33,39 @@ void RenderSystem::Initialize() {
     }
     auto init_info = render_pipeline_->GetRenderPassInitInfo();
     frame_convert_->Initialize(init_info);
-
+    connected_ = false;
     Global::SetRenderThread(std::thread([this] { Run(); }));
 }
 
 void RenderSystem::Tick() {
+    if(kEngine.GetTransferSystem().AnyConnected()){
+        if(!connected_){
+            connected_ = true;
+            debug::TimePiling::Instance().ClearCount();
+        }
+    }else{
+        if(connected_){
+            connected_ =false;
+            debug::TimePiling::Instance().ClearCount();
+        }
+    }
+    debug::TimePiling::Instance().Mark("render start",0);
     render_pipeline_->Tick();
-    ProcessEvent();
+    if (RenderEvent::OnRenderDone&& connected_) {
+        frame_convert_->Draw();
+        debug::TimePiling::Instance().Mark("render end",10);
+
+        kMesssageQueue.Post(
+            kTransferThread.get_id(),
+            std::make_shared<DataMsg<RenderFrame>>(
+                kTransferMessageID, frame_convert_->GetConvertFrame()));
+    }else{
+        debug::TimePiling::Instance().Mark("render end",10);
+        std::string render_info = debug::TimePiling::Instance().GetMarksInfo();
+        if(!render_info.empty()){
+            LogInfo("frame life cycle: \n" + render_info);
+        }
+    }
 }
 void RenderSystem::Run() {
     ThreadUtil::SetCurrentThreadName("render_thread");
@@ -85,6 +91,10 @@ void RenderSystem::Run() {
                             Tick();
                             RenderDocCapture::Instance().EndCapture();
                             break;
+                        case RenderAction::Render_UpdatePipeline:
+                            render_pipeline_->MarkUpdateShader();
+                            Tick();
+                            break ;
                     }
                     calcu.Step();
                 }

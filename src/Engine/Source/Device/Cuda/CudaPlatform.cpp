@@ -40,6 +40,15 @@ void CudaPlatform::Init() {
             std::to_string(driver_version / 1000) + "." +
             std::to_string((driver_version % 100) / 10));
     }
+    CUcontext context = nullptr;
+    cuCtxGetCurrent(&context);
+    CUdevice device;
+    cuCtxGetDevice(&device);
+    cuDevicePrimaryCtxRetain(&primary_context_,device);
+    unsigned int flags;
+    int active;
+    CUresult  res = cuDevicePrimaryCtxGetState(device,&flags,&active);
+    assert(res == CUDA_SUCCESS);
 #endif
 }
 
@@ -55,12 +64,14 @@ CudaExternalMemory::CudaExternalMemory():cuda_ptr_(nullptr),cuda_mem_(nullptr){}
 CudaExternalMemory::~CudaExternalMemory(){
     if(cuda_mem_){
         int res= cudaDestroyExternalMemory(cuda_mem_);
+        assert(res == CUDA_SUCCESS);
         res = cudaFree(cuda_ptr_);
+        assert(res == CUDA_SUCCESS);
     }
 }
 void CudaExternalMemory::ImportMemory(std::shared_ptr<VkContext>context, RHIBuffer& vkmemory){
     cudaExternalMemoryHandleDesc external_handle_desc = {};
-    external_handle_desc.type = cudaExternalMemoryHandleTypeOpaqueWin32;
+    external_handle_desc.type = cudaExternalMemoryHandleTypeOpaqueWin32Kmt;
     external_handle_desc.size = MemHandleUtils::GetSize(vkmemory.handle);
     external_handle_desc.handle.win32.handle = MemHandleUtils::GetExternalWin32Handle(context->GetDevice(),vkmemory.handle);
     cudaError res = cudaImportExternalMemory(&cuda_mem_,&external_handle_desc);

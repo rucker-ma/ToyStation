@@ -12,8 +12,9 @@ RenderFrameNV12::RenderFrameNV12(std::shared_ptr<RenderContext> context,
                                  const RHIImage& compy, const RHIImage& compuv)
     : context_(context) {
     VkRect2D* rect = context->GetSwapchain()->GetScissor();
-    VkDeviceSize mem_size = rect->extent.width * rect->extent.height * 4;
+
     width_ = rect->extent.width;
+    //width_=2048;
     height_ = rect->extent.height;
 
     ReadRHIImage(buffer_y_, compy, width_ * height_,
@@ -46,8 +47,7 @@ void RenderFrameNV12::ReadRHIImage(RHIBuffer& buf, const RHIImage& img,
                                    VkDeviceSize mem_size, VkExtent2D img_size) {
     buf = context_->GetAllocator()->CreateExternalBuffer(
         mem_size,
-        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT );
     VkCommandBuffer cmd = context_->GetCommandPool()->CreateCommandBuffer();
     VkImageSubresourceRange sub_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
     VkImageUtil::CmdBarrierImageLayout(cmd, img.image, VK_IMAGE_LAYOUT_GENERAL,

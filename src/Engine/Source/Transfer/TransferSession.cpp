@@ -29,10 +29,8 @@ SessionClient::SessionClient(websocketpp::connection_hdl hdl,
                              std::shared_ptr<SocketInterface> server)
     : hdl_(hdl), socket_(server) {}
 
-TransferSession::TransferSession(
-    std::unique_ptr<SessionClient> client)
-    : client_(std::move(client)){
-}
+TransferSession::TransferSession(std::unique_ptr<SessionClient> client)
+    : client_(std::move(client)) {}
 
 TransferSession::~TransferSession() {
     if (input_observer_) {
@@ -46,19 +44,20 @@ TransferSession::~TransferSession() {
 
 void TransferSession::SetPeerConnection(
     rtc::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection) {
-        peer_connection_ = peer_connection;
-            webrtc::DataChannelInit init;
+    peer_connection_ = peer_connection;
+    webrtc::DataChannelInit init;
     auto dc_err = peer_connection_->CreateDataChannelOrError(
         std::string("user_input"), &init);
 
     if (dc_err.ok()) {
         input_observer_ = std::make_unique<InpuDataChannelObserver>();
-        //RegisterObserver at SetDataChannel and UnregisterObserver at destructor
+        // RegisterObserver at SetDataChannel and UnregisterObserver at
+        // destructor
         input_observer_->SetDataChannel(dc_err.value());
     } else {
         LogError("PeerConnect Create Datachannel Error");
     }
-    }
+}
 
 void TransferSession::CreateOffer() {
     webrtc::PeerConnectionInterface::RTCOfferAnswerOptions options;
@@ -151,16 +150,16 @@ void TransferSession::OnSuccess(webrtc::SessionDescriptionInterface* desc) {
     peer_connection_->SetLocalDescription(
         DummySetSessionDescriptionObserver::Create(), desc);
 
-    // auto rtp_senders = peer_connection_->GetSenders();
-    // for (auto& sender : rtp_senders) {
-    //     webrtc::RtpParameters parameters = sender->GetParameters();
-    //     for (auto& encoding_par : parameters.encodings) {
-    //         // about 10MB for video
-    //         encoding_par.max_bitrate_bps = 80000000;
-    //     }
-    //     sender->SetParameters(parameters);
-    //     LogDebug("Hit");
-    // }
+    auto rtp_senders = peer_connection_->GetSenders();
+    for (auto& sender : rtp_senders) {
+        webrtc::RtpParameters parameters = sender->GetParameters();
+        for (auto& encoding_par : parameters.encodings) {
+            // about 10MB for video
+            encoding_par.max_bitrate_bps = 80000000;
+            encoding_par.min_bitrate_bps = 20000000;
+        }
+        sender->SetParameters(parameters);
+    }
 
     Json::Value send_remote;
     if (desc->GetType() == webrtc::SdpType::kOffer) {
@@ -174,5 +173,8 @@ void TransferSession::OnSuccess(webrtc::SessionDescriptionInterface* desc) {
     client_->socket_->Send(client_->hdl_, send_remote.toStyledString());
 }
 void TransferSession::OnFailure(webrtc::RTCError error) {}
-
+bool TransferSession::IsConnected() {
+    return peer_connection_->peer_connection_state() ==
+           webrtc::PeerConnectionInterface::PeerConnectionState::kConnected;
+}
 }  // namespace toystation

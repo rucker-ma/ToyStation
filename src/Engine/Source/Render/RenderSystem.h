@@ -1,19 +1,20 @@
 #pragma once
 #include "Base/MessageQueue.h"
 #include "Base/Calculagraph.h"
+#include "Vulkan/VkContext.h"
 
 #include "RenderContext.h"
 #include "RenderPipeline.h"
-#include "RenderResource.h"
 #include "ConvertPass.h"
-#include "Vulkan/VkContext.h"
-#include "Framework/TObject.h"
+#include "RenderGlobalData.h"
+
 
 namespace toystation {
 
 enum class RenderAction{
     Render_General,
-    Render_RenderDocCapture
+    Render_RenderDocCapture,
+    Render_UpdatePipeline
 };
 
 class RenderPayload {
@@ -26,14 +27,6 @@ private:
 };
 
 using RenderMessage = DataMsg<RenderPayload>;
-
-/// @brief 存储渲染相关全局资源，如vkdevice,vkinstance等
-class RenderGlobalData {
-public:
-    std::shared_ptr<RenderContext> render_context;
-    std::shared_ptr<RenderResource> render_resource;
-    void AddRenderObject(std::shared_ptr<TObject> obj);
-};
 class TS_CPP_API RenderSystem {
 public:
     void Initialize();
@@ -46,6 +39,7 @@ private:
 private:
     std::shared_ptr<RenderPipeline> render_pipeline_;
     std::shared_ptr<FrameConvertPass> frame_convert_;
+    bool connected_; //anyone connect to server
 };
 
 }  // namespace toystation

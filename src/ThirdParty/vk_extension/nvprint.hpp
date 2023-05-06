@@ -21,9 +21,7 @@
 #ifndef __NVPRINT_H__
 #define __NVPRINT_H__
 
-
 #include "platform.h"
-
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>

@@ -8,6 +8,7 @@
 #include <vector>
 
 #ifdef TOYSTATION_CUDA
+#include <cuda.h>
 #include <cuda_runtime.h>
 #endif
 #include "Vulkan/ResourceAllocator.h"
@@ -18,7 +19,7 @@ class CudaPlatform {
 public:
     static CudaPlatform& Instance();
     bool IsSupported();
-
+    CUcontext GetContext(){return primary_context_;}
 private:
     CudaPlatform();
     void Init();
@@ -31,6 +32,7 @@ private:
         std::vector<std::string> capability;
     };
     CudaDeviceInfo device_info_;
+    CUcontext primary_context_;
 };
 
 #ifdef TOYSTATION_CUDA  // implement cuda method
