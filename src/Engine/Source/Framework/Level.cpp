@@ -37,6 +37,22 @@ void Level::Load(std::string path) {
             results.push_back(task_future);
         }
     }
+    Json::Value environment = value["environment"];
+    if(!environment.empty())
+    {
+        Json::Value skybox = environment["skybox"];
+        std::string skybox_path =FileUtil::Combine(skybox.asString());
+
+        auto task = std::make_shared<TaskMessage<std::function<void()>>>(
+            kRenderTaskID,[skybox_path]{
+                //此处的执行会在渲染线程中执行
+                RenderSystem::kRenderGlobalData.LoadSkybox(skybox_path);
+            }
+        );
+        kMesssageQueue.Post(kRendThread.get_id(),task);
+        results.push_back(task->GetFuture());
+    }
+
     for(auto& future:results){
         future->Wait();
     }

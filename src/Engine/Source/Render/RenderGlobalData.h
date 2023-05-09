@@ -16,6 +16,7 @@ public:
     std::shared_ptr<RenderContext> render_context;
     std::shared_ptr<RenderResource> render_resource;
     void AddRenderObject(std::shared_ptr<TObject> obj);
+    void LoadSkybox(std::string path);
 private:
     void CreateRenderTexture(VkCommandBuffer& cmd,std::shared_ptr<Texture> texture_data,RHITexture& texture);
 };

@@ -7,6 +7,7 @@
 #include <vulkan/vulkan_win32.h>
 #endif
 
+
 namespace toystation {
 
 //---------------------Helper set SECURITY_ATTRIBUTES --------------------//
@@ -330,29 +331,35 @@ RHITexture VkResourceAllocator::CreateTexture(
     RHITexture result_texture = CreateTexture(image, imageview_create_info);
     // result_texture.descriptor.sampler =
     // m_samplerPool.acquireSampler(samplerCreateInfo);
+    if(sampler_create_info.sType ==
+        VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO){
 
-    VkSamplerCreateInfo sampler_info{};
-    sampler_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-    sampler_info.magFilter = VK_FILTER_LINEAR;
-    sampler_info.minFilter = VK_FILTER_LINEAR;
-    sampler_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    sampler_info.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    sampler_info.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    sampler_info.anisotropyEnable = VK_FALSE;
-    VkPhysicalDeviceProperties properties{};
-    vkGetPhysicalDeviceProperties(physical_device_, &properties);
-    sampler_info.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
-    sampler_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-    sampler_info.unnormalizedCoordinates = VK_FALSE;
-    sampler_info.compareEnable = VK_FALSE;
-    sampler_info.compareOp = VK_COMPARE_OP_ALWAYS;
-    sampler_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-    sampler_info.mipLodBias = 0;
-    sampler_info.minLod = 0;
-    sampler_info.maxLod = 0;
+        vkCreateSampler(device_, &sampler_create_info, nullptr,
+                        &result_texture.descriptor.sampler);
+    }else {
+        VkSamplerCreateInfo sampler_info{};
+        sampler_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+        sampler_info.magFilter = VK_FILTER_LINEAR;
+        sampler_info.minFilter = VK_FILTER_LINEAR;
+        sampler_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        sampler_info.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        sampler_info.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        sampler_info.anisotropyEnable = VK_FALSE;
+        VkPhysicalDeviceProperties properties{};
+        vkGetPhysicalDeviceProperties(physical_device_, &properties);
+        sampler_info.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
+        sampler_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+        sampler_info.unnormalizedCoordinates = VK_FALSE;
+        sampler_info.compareEnable = VK_FALSE;
+        sampler_info.compareOp = VK_COMPARE_OP_ALWAYS;
+        sampler_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+        sampler_info.mipLodBias = 0;
+        sampler_info.minLod = 0;
+        sampler_info.maxLod = 0;
 
-    vkCreateSampler(device_, &sampler_info, nullptr,
-                    &result_texture.descriptor.sampler);
+        vkCreateSampler(device_, &sampler_info, nullptr,
+                        &result_texture.descriptor.sampler);
+    }
     return result_texture;
 }
 RHITexture VkResourceAllocator::CreateTexture(
@@ -453,7 +460,151 @@ void VkResourceAllocator::CreateImageEx(const VkImageCreateInfo& info,
                                         VkImage* image) {
     vkCreateImage(device_, &info, nullptr, image);
 }
+RHITexture VkResourceAllocator::LoadKTXFileAsTexture(std::string path,
+                                                     VkQueue queue,
+                                                     std::shared_ptr<CommandPool> pool){
+    ktxVulkanDeviceInfo kvdi;
+    auto ret = ktxVulkanDeviceInfo_Construct(&kvdi,physical_device_,device_,queue,pool->GetCommandPool(), nullptr);
+    assert(ret == KTX_SUCCESS);
+    ktxTexture* ktxtexture = nullptr;
+    ret = ktxTexture_CreateFromNamedFile(path.c_str(),KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT,&ktxtexture);
+    if(ret !=KTX_SUCCESS){
+        LogError("Read KTX  "+path + ktxErrorString(ret));
+    }
+    if(ktxtexture->isCubemap){
+        RHITexture tex = CreateCubemap(ktxtexture,pool);
+        ktxTexture_Destroy(ktxtexture);
+        ktxVulkanDeviceInfo_Destruct(&kvdi);
+        return tex;
+    }else{
+        ktxVulkanTexture texture;
+        ret = ktxTexture_VkUploadEx(ktxtexture,&kvdi,&texture,
+                                    VK_IMAGE_TILING_OPTIMAL,
+                                    VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+                                    VK_IMAGE_LAYOUT_UNDEFINED);
+        if(ret!=KTX_SUCCESS){
+            LogError("Read texture error: " + ktxErrorString(ret));
+            ktxTexture_Destroy(ktxtexture);
+            ktxVulkanDeviceInfo_Destruct(&kvdi);
+            return RHITexture();
+        }
+        char* value = nullptr;
+        uint32_t  len = 0;
+        ret = ktxHashList_FindValue(&ktxtexture->kvDataHead,KTX_ORIENTATION_KEY, &len,(void**)&value);
+        if(ret == KTX_SUCCESS){
+            //KTX_ORIENTATION2_FMT
+        }
+        ktxTexture_Destroy(ktxtexture);
+        ktxVulkanDeviceInfo_Destruct(&kvdi);
 
+        RHIImage image = {texture.image,mem_alloc_->WrapperMemory(texture.deviceMemory)};
+
+        VkImageViewCreateInfo view_create_info;
+        ZeroVKStruct(view_create_info,VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO);
+        view_create_info.image = image.image;
+        view_create_info.format = texture.imageFormat;
+        view_create_info.viewType = texture.viewType;
+        view_create_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        view_create_info.subresourceRange.layerCount = texture.layerCount;
+        view_create_info.subresourceRange.levelCount = texture.levelCount;
+
+        return CreateTexture(image,view_create_info);
+    }
+}
+
+
+RHITexture VkResourceAllocator::CreateCubemap(ktxTexture* ktxtexture,std::shared_ptr<CommandPool> pool){
+    ktx_uint8_t * texture_data = ktxTexture_GetData(ktxtexture);
+    ktx_size_t texture_size = ktxTexture_GetDataSize(ktxtexture);
+    VkFormat format =  ktxTexture_GetVkFormat(ktxtexture);
+    RHIBuffer buffer =  CreateBuffer(texture_size,VK_BUFFER_USAGE_TRANSFER_SRC_BIT,VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+    uint8_t *data= (uint8_t*)Map(buffer);
+    memcpy(data,texture_data,texture_size);
+    UnMap(buffer);
+
+    VkImageCreateInfo image_create_info;
+    ZeroVKStruct(image_create_info,VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO);
+    image_create_info.imageType = VK_IMAGE_TYPE_2D;
+    image_create_info.format = VK_FORMAT_R8G8B8A8_UNORM;
+    image_create_info.mipLevels = ktxtexture->numLevels;
+    image_create_info.samples = VK_SAMPLE_COUNT_1_BIT;
+    image_create_info.tiling = VK_IMAGE_TILING_OPTIMAL;
+    image_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    image_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    image_create_info.extent = { ktxtexture->baseWidth, ktxtexture->baseHeight, 1 };
+    image_create_info.usage = VK_IMAGE_USAGE_SAMPLED_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+    // Cube faces count as array layers in Vulkan
+    image_create_info.arrayLayers = 6;
+    // This flag is required for cube map images
+    image_create_info.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+
+    RHIImage cuabemap = CreateImage(image_create_info);
+    std::vector<VkBufferImageCopy> buffer_copy_regions;
+
+    for (int face = 0; face < 6; ++face) {
+        for (int level = 0; level <ktxtexture->numLevels ; ++level) {
+            ktx_size_t  offset;
+            auto ret = ktxTexture_GetImageOffset(ktxtexture,level,0,face,&offset);
+            assert(ret == KTX_SUCCESS);
+            VkBufferImageCopy buffer_copy_region = {};
+            buffer_copy_region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+            buffer_copy_region.imageSubresource.mipLevel = level;
+            buffer_copy_region.imageSubresource.baseArrayLayer = face;
+            buffer_copy_region.imageSubresource.layerCount = 1;
+            buffer_copy_region.imageExtent.width = ktxtexture->baseWidth>>level;
+            buffer_copy_region.imageExtent.height = ktxtexture->baseHeight>>level;
+            buffer_copy_region.imageExtent.depth = 1;
+            buffer_copy_region.bufferOffset = offset;
+            buffer_copy_regions.push_back(buffer_copy_region);
+        }
+    }
+    VkImageSubresourceRange subresource_range{};
+    subresource_range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    subresource_range.baseMipLevel = 0;
+    subresource_range.levelCount = ktxtexture->numLevels;
+    subresource_range.layerCount = 6;
+
+    VkCommandBuffer cmd = pool->CreateCommandBuffer();
+    VkImageUtil::CmdBarrierImageLayout(cmd,cuabemap.image,
+                                       VK_IMAGE_LAYOUT_UNDEFINED,VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,subresource_range);
+    vkCmdCopyBufferToImage(cmd,buffer.buffer,cuabemap.image,
+                           VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,buffer_copy_regions.size(),
+                           buffer_copy_regions.data());
+    VkImageUtil::CmdBarrierImageLayout(cmd,cuabemap.image,
+                                       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                                       VK_IMAGE_LAYOUT_GENERAL,subresource_range);
+    //submit cmd
+    pool->SubmitAndWait(cmd);
+
+    VkPhysicalDeviceProperties properties{};
+    vkGetPhysicalDeviceProperties(physical_device_, &properties);
+
+    VkSamplerCreateInfo sampler;
+    ZeroVKStruct(sampler,VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO);
+    sampler.magFilter = VK_FILTER_LINEAR;
+    sampler.minFilter = VK_FILTER_LINEAR;
+    sampler.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    sampler.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    sampler.addressModeV = sampler.addressModeU;
+    sampler.addressModeW = sampler.addressModeU;
+    sampler.mipLodBias = 0.0f;
+    sampler.compareOp = VK_COMPARE_OP_NEVER;
+    sampler.minLod = 0.0f;
+    sampler.maxLod = ktxtexture->numLevels;
+    sampler.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+    sampler.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
+
+
+    VkImageViewCreateInfo view_create_info;
+    ZeroVKStruct(view_create_info,VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO);
+    view_create_info.image = cuabemap.image;
+    view_create_info.format = image_create_info.format;
+    view_create_info.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
+    view_create_info.subresourceRange=  { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+    view_create_info.subresourceRange.layerCount =6;
+    view_create_info.subresourceRange.levelCount = ktxtexture->numLevels;
+    return CreateTexture(cuabemap,view_create_info,sampler);
+}
 //---------------------DedicatedResourceAllocator--------------------//
 
 DedicatedResourceAllocator::DedicatedResourceAllocator(

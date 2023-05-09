@@ -4,87 +4,75 @@ layout(set=2, binding =0) uniform MaterialFactor{
     vec4 basecolor_factor;
     float metallic_factor;
     float roughness_factor;
-    bool has_normal_map;
+    int has_normal_map;
 }material;
 
 #include "meshdata.glsl"
 //对于gltf 2.0模型使用的metallic-roughness工作流
 //需要查看gltf 文档进行核对https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#appendix-b-brdf-implementation
-float get_metallic(){
-    return texture(metallic_roughness_map, fragTexCoord).b*material.metallic_factor;
-}
-float get_roughness(){
-    return texture(metallic_roughness_map, fragTexCoord).g*material.roughness_factor;
-}
-vec4 get_color_value1(){
-    //投影空间中的位置
-    vec4 position = ubo.proj*ubo.view*ubo.model*vec4(fragPosition, 1.0);
-    //对象空间转换世界空间
-    vec3 normal = normalize(mat3(transpose(inverse(ubo.model)))*fragNormal);
-    //转置：glsl中矩阵是按列主序存储，需要转置？
-    //vec3 tangent = normalize(mat3(transpose(ubo.model))* fragTangent);
-    vec3 tangent = normalize(mat3(ubo.model)* fragTangent);
-    vec3 bitangent = normalize(cross(normal, tangent));
 
+vec4 get_render_color(){
     // 材质属性
     vec4 albedo = texture(albedo_map, fragTexCoord)*material.basecolor_factor;
     float metallic = get_metallic();
     float roughness = get_roughness();
-    //？？TODO:此处不正确，需要修改确认
-    vec3 normal_map_value =vec3(1.0);
-    if(material.has_normal_map){
+    //TODO:此处不正确，需要修改确认
+    vec3 world_normal =vec3(1.0);
+    if(material.has_normal_map == 1){
         //如果存在法线贴图，此片段的法线向量可以从法线贴图上获取
-        normal_map_value = texture(normal_map, fragTexCoord).rgb;
+        //对于从法线贴出上获取的法线，方向是相对于切线空间的，需要将其转换到世界空间的入射光线保持一致
+        vec3 local_normal = texture(normal_map, fragTexCoord).rgb;
         //将值从[0,1]映射到[-1,1]
-        normal_map_value = normal_map_value*2.0-1.0;
+        local_normal = local_normal*2.0-1.0;
+
+        vec3 q1 = dFdx(fragPosition);
+        vec3 q2 = dFdy(fragPosition);
+        vec2 st1 = dFdx(fragTexCoord);
+        vec2 st2 = dFdy(fragTexCoord);
+        vec3 t = normalize(q1*st2.t - q2*st1.t);
+        vec3 b = -normalize(cross(world_normal,t));
+        mat3 tbn = mat3(t,b,fragNormal);
+
+        world_normal = normalize(tbn*local_normal);
     }else{
         //如果没有法线贴图，此着色点的法线需要通过顶点法线自动插值获得
-        normal_map_value = normal;
-
+        world_normal = fragNormal;
     }
-    //法线向量
-//    vec3 tangent_world[3];
-//    tangent_world[0] = normalize(mat3(ubo.model)*tangent);
-//    tangent_world[1] = normalize(mat3(ubo.model)*bitangent);
-//    tangent_world[2] = normalize(mat3(ubo.model)*normal);
-//    mat3 tangent_world_mat = mat3(tangent_world[0], tangent_world[1], tangent_world[2]);
-//    mat3 tangent_world_mat = mat3(normal,tangent,bitangent);
 
-//    vec3 normal_vec = normalize(tangent_world_mat*(normal_map_value*2.0-1.0));
-
-    vec3 normal_vec = normal_map_value;
-    //此处表示人眼观察点在（0，0，0）原点处
-    vec3 view_dir = normalize(-position.xyz);
+    vec3 view_dir= normalize(ubo.camera_position - fragPosition);
     //todo:传入光源方向
-    vec3 light_dir = vec3(0, 1.0, 1.0);
+    vec3 light_position = vec3(0, -10.0, 5.0);
+
+    vec3 light_dir =normalize(light_position - fragPosition);
     vec3 half_vec = normalize(view_dir +light_dir);
 
-    //BRDF 世界坐标系下的计算
-    float n_dot_l = max(0.0, dot(normal_vec, light_dir));
-    float n_dot_v = max(0.0, dot(normal_vec, view_dir));
-    float n_dot_h = max(0.0, dot(normal_vec, half_vec));
-    float v_dot_h = max(0.0, dot(view_dir, half_vec));
-    float f = 0.0;
-    if (material.metallic_factor>0.0){
-        float F0 = 0.04;
-        f = F0 + (1.0 - F0) * pow(1.0 - v_dot_h, 5.0);
-    }
-    float d =0.0;
-    if (material.roughness_factor>0.0){
-        float roughness_sq = material.roughness_factor*material.roughness_factor;
-        float denom = n_dot_h*n_dot_h*(roughness_sq-1.0)+1.0;
-        d = roughness_sq/(M_PI*denom*denom);
-    }
-    float g = 0.0;
-    if (material.roughness_factor>0.0){
-        float k = (material.roughness_factor + 1.0) * (material.roughness_factor + 1.0) / 8.0;
-        float G1 = n_dot_v / (n_dot_v * (1.0 - k) + k);
-        float G2 = n_dot_l / (n_dot_l * (1.0 - k) + k);
-        g = G1*G2;
-    }
-    vec3 diffuse_color = albedo.rgb*(1.0-metallic);
-    vec3 specular_color = mix(vec3(0.04), albedo.rgb, metallic)*f*g*d;
-    vec3 ambient_color = albedo.rgb*0.04;
-    vec4 out_color = vec4(diffuse_color+specular_color+ambient_color, albedo.a);
-    return out_color;
+    vec3 f0 = vec3(0.04);
+    f0 = mix(f0,vec3(albedo),metallic);
+
+    float distance = length(light_position - fragPosition);
+    float attenuation = 1.0/(distance*distance);
+    //100: 光源的强度，测试使用
+    vec3 radiance = ubo.light_color*attenuation*100;
+
+    float ndf = distrubution_ggx(world_normal,half_vec,roughness);
+    float g = geometry_smith(world_normal,view_dir,light_dir,roughness);
+
+    float v_dot_h = clamp( dot(view_dir, half_vec),0.0,1.0);
+    vec3 f = fresnel_schlick(v_dot_h,f0);
+    vec3 numerator  = ndf*g*f;
+    float denominator = 4.0 * max(dot(world_normal, view_dir), 0.0) * max(dot(world_normal, light_dir), 0.0) + 0.0001;
+    vec3 specular = numerator  / denominator;
+    vec3 kd = vec3(1.0)-f;
+    kd=kd*(1.0-metallic);
+    float n_dot_l = max(0.0, dot(world_normal, light_dir));
+    vec3 lo = (kd * vec3(albedo) / M_PI + specular) * radiance * n_dot_l;
+
+    // ambient lighting
+    float ao = 1.0;
+    vec3 ambient = vec3(0.03) * vec3(albedo) * ao;
+    vec3 color = ambient + lo;
+    color = color / (color + vec3(1.0));
+    color = pow(color, vec3(1.0/2.2));
+
+    return vec4(color,albedo.a);
 }

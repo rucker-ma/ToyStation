@@ -30,6 +30,7 @@ public:
     Vector3& GetPosition();
     void SetAspect(float aspect);
     void Rotate(int x,int y);
+    void ViewMove(int x,int y);
 private:
     void Update();
 private:

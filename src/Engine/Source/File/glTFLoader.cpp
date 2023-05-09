@@ -54,9 +54,9 @@ void GltfModelLoader::Load(std::string path, std::shared_ptr<TObject> obj) {
                 auto data =
                     GetTexture(model, gltf_material.normalTexture.index);
                 material->SetTexture(TextureType::Texture_Normal, data);
-                material->Factor().has_normal_map = true;
+                material->Factor().has_normal_map = 1;
             }else{
-                material->Factor().has_normal_map = false;
+                material->Factor().has_normal_map = 0;
             }
             // basecolor texture, basecolor factor?
             if (gltf_material.pbrMetallicRoughness.baseColorTexture.index >=

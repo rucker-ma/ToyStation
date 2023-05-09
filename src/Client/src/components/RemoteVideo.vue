@@ -8,31 +8,50 @@ const container = ref<HTMLDivElement | null>(null);
 const remoteVideo = ref<HTMLVideoElement | null>(null);
 
 let dragging: boolean = false;
-let mouse_delta_position = { x: 0, y: 0 };
+let moving:boolean = false;
+// let mouse_delta_position = { x: 0, y: 0 };
 
 onMounted(() => {
   if (remoteVideo.value) {
     // remoteVideo.value.load();
     remoteVideo.value.addEventListener("mousedown", (e: MouseEvent) => {
-      dragging = true;
-      mouse_delta_position = { x: e.clientX, y: e.clientY };
+      if(e.button == 0){ //鼠标左键按下
+        dragging = true;
+        // mouse_delta_position = { x: e.clientX, y: e.clientY };
+      }else if(e.button == 2){
+        remoteVideo.value?.requestPointerLock(); //监听请求结果：document.onpointerlockchange
+      }
+      
     });
 
     remoteVideo.value.addEventListener("mousemove", (e: MouseEvent) => {
       if (dragging) {
-        const deltaX = e.clientX - mouse_delta_position.x;
-        const deltaY = e.clientY - mouse_delta_position.y;
-        console.log(deltaX, deltaY);
-        mouse_delta_position = { x: e.clientX, y: e.clientY };
+        // const deltaX = e.clientX - mouse_delta_position.x;
+        // const deltaY = e.clientY - mouse_delta_position.y;
+        // console.log("deltax:",deltaX, deltaY);
+        // console.log("offset",deltaX,deltaY);
+        // mouse_delta_position = { x: e.clientX, y: e.clientY };
         const keyinfo = {
-          type: "mousemove",
+          type: "dragmove",
           value: {
-            deltax:deltaX,
-            deltay:deltaY
+            deltax:e.offsetX,
+            deltay:e.offsetY
           },
         };
         let content = JSON.stringify(keyinfo);
         client.sendInput(content);
+      }
+      if(moving){
+          // console.log(e.movementX,e.movementY);
+          const keyinfo = {
+          type: "lockmove",
+          value: {
+            deltax:e.movementX,
+            deltay:e.movementY
+          },
+        };
+        let content = JSON.stringify(keyinfo);
+        client.sendInput(content);          
       }
     });
     remoteVideo.value.addEventListener("mouseup", (e: MouseEvent) => {
@@ -93,7 +112,16 @@ document.addEventListener("keydown", function (e) {
     let content = JSON.stringify(keyinfo);
     client.sendInput(content);
   }
+  if(e.key == "Escape"){
+    document.exitPointerLock();
+    moving = false;
+  }
 });
+document.addEventListener("pointerlockchange",function(e) {
+  moving = !moving;
+  console.log(moving);
+});
+
 document.addEventListener("keyup", (e: KeyboardEvent) => {
   if (filter_key.find((candidate) => candidate === e.key) !== undefined) {
     const keyinfo = {

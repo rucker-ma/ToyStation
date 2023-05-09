@@ -21,6 +21,7 @@ include_directories(
     ${TINY_GLTF}
     ${RENDERDOC}
     ${NVCodec}/Interface
+    ${KTX}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/Source
 )
 #查找cuda库
@@ -57,7 +58,7 @@ target_link_libraries(${MODULE_NAME} ${FFMPEG_LIB})
 target_link_libraries(${MODULE_NAME} ${JSONCPP_LIB})
 target_link_libraries(${MODULE_NAME} ${FFMPEG_LIBRARIES})
 target_link_libraries(${MODULE_NAME} ${FREETYPE_LIB})
-
+target_link_libraries(${MODULE_NAME} ${KTX_LIB})
 IF(${CUDAToolkit_FOUND})
     target_link_libraries(${MODULE_NAME} CUDA::cudart)
     target_link_libraries(${MODULE_NAME} CUDA::cuda_driver)

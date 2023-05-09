@@ -14,7 +14,13 @@ struct UniformBuffer {
     Matrix4 model;
     Matrix4 view;
     Matrix4 proj;
+    Vector3 camera_position;
+    Vector3 light_color;
     bool has_tangent;
+    UniformBuffer(){
+        has_tangent = false;
+        light_color = Vector3(1.0);
+    }
 };
 class RenderMesh{
 public:

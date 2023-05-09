@@ -7,6 +7,7 @@
 #include <mutex>
 #include <map>
 #include <future>
+#include "File/FileUtil.h"
 
 namespace toystation{
 
@@ -22,7 +23,8 @@ constexpr int KEY_INVALID = 0;
 enum InputAction{
     PRESS,
     RELEASE,
-    MOUSEMOVE
+    DRAG_MOVE, //鼠标左键按下拖动
+    LOCK_MOVE //鼠标pointerlock 拖动
 };
 
 class InputSystem{
@@ -32,25 +34,20 @@ public:
     //Tigger function
     //contain keyboard key and mouse key
     void OnKey(InputAction action,int keycode);
-    void OnMoveDelta(int x,int y);
-    std::pair<int,int> GetMoveDelta();
-    void OnFocus(bool enable);
+    std::pair<int,int> GetMoveDelta(InputAction action);
 
-    bool IsFoucs();
-    bool IsPress(int keycode);
-    //consider multi key pressed,now only assume one key for move
-    int PressedKey();
     int TakeoutOneKey(int keycode);
-    void ProcessRemoteMessage();
     void OnInputMessage(std::string msg);
+private:
+    std::pair<int,int> GetMove(std::list<std::pair<int,int>>& container);
 private:
     //TODO:record key press time
     std::list<int> pressed_keys_;
     std::map<int,int> pressed_counter_;
-    std::list<std::pair<int,int>> move_deltas_;
+    std::list<std::pair<int,int>> drag_mvoe_;
+    std::list<std::pair<int,int>> lock_move_;
     std::mutex mtx;
-    std::condition_variable cv_;
     std::list<std::string> msgs_;
-    std::future<void> process_input_future_;
+    JsonParseHelper helper;
 };
 }

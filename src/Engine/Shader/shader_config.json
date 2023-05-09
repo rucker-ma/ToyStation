@@ -23,6 +23,18 @@
       "file": "src/Engine/Shader/convert_yuv.comp",
       "hash": "",
       "define":[]
+    },
+    {
+      "type": "skybox_vert",
+      "file": "src/Engine/Shader/skybox.vert",
+      "hash": "",
+      "define":[]
+    },
+    {
+      "type": "skybox_frag",
+      "file": "src/Engine/Shader/skybox.frag",
+      "hash": "",
+      "define":[]
     }
   ]
 }

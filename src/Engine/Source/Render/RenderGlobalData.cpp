@@ -2,6 +2,7 @@
 // Created by ma on 2023/4/3.
 //
 #include "RenderGlobalData.h"
+
 #include "Vulkan/Images.h"
 
 namespace toystation {
@@ -19,35 +20,34 @@ void RenderGlobalData::AddRenderObject(std::shared_ptr<TObject> obj) {
     // TODO:添加实现细节
     for (auto& submesh : meshes->GetSubMesh()) {
         std::shared_ptr<RenderMesh> render_mesh = render_object->CreateMesh();
-        if(!submesh->Position().empty()) {
+        if (!submesh->Position().empty()) {
             render_mesh->position_buffer =
                 render_context->GetAllocator()->CreateBuffer(
                     cmd, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                     submesh->Position());
         }
-        if(!submesh->Normal().empty()) {
+        if (!submesh->Normal().empty()) {
             render_mesh->normal_buffer =
                 render_context->GetAllocator()->CreateBuffer(
                     cmd, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, submesh->Normal());
         }
-        if(!submesh->Indices().empty()) {
+        if (!submesh->Indices().empty()) {
             render_mesh->indices_buffer =
                 render_context->GetAllocator()->CreateBuffer(
                     cmd, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, submesh->Indices());
         }
-        if(!submesh->TexCoord().empty()) {
+        if (!submesh->TexCoord().empty()) {
             render_mesh->texcoord_buffer =
                 render_context->GetAllocator()->CreateBuffer(
                     cmd, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                     submesh->TexCoord());
         }
-        if(!submesh->Tangent().empty()){
+        if (!submesh->Tangent().empty()) {
             render_mesh->has_tangent = true;
             render_mesh->tangent_buffer =
                 render_context->GetAllocator()->CreateBuffer(
-                    cmd, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-                    submesh->Tangent());
-        }else{
+                    cmd, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, submesh->Tangent());
+        } else {
             LogWarn("mesh not tangent data");
             render_mesh->has_tangent = false;
             render_mesh->tangent_buffer =
@@ -65,8 +65,8 @@ void RenderGlobalData::AddRenderObject(std::shared_ptr<TObject> obj) {
                 render_mesh->indices_type = VK_INDEX_TYPE_UINT32;
                 break;
             default:
-                assert(0&&"other type for indices is not supported");
-                break ;
+                assert(0 && "other type for indices is not supported");
+                break;
         }
         render_mesh->material_index = submesh->MaterialIndex();
         render_mesh->UpdateSet();
@@ -87,21 +87,30 @@ void RenderGlobalData::AddRenderObject(std::shared_ptr<TObject> obj) {
         std::shared_ptr<Texture> metallic =
             material->MetallicRoughnessTexture();
         if (metallic) {
-            CreateRenderTexture(cmd, metallic,render_material->metallic_roughness);
-            render_material->factor_buffer =  render_context->GetAllocator()->CreateBuffer(
-                cmd, sizeof(material->Factor()),&material->Factor(), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+            CreateRenderTexture(cmd, metallic,
+                                render_material->metallic_roughness);
+            render_material->factor_buffer =
+                render_context->GetAllocator()->CreateBuffer(
+                    cmd, sizeof(material->Factor()), &material->Factor(),
+                    VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
         }
         std::shared_ptr<Texture> normal = material->NormalTexture();
         if (normal) {
             CreateRenderTexture(cmd, normal, render_material->normal);
-        }else{
-            //mock normal map
+        } else {
+            // mock normal map
             CreateRenderTexture(cmd, basecolor, render_material->normal);
         }
         render_material->UpdateSet();
     }
     render_context->GetCommandPool()->SubmitAndWait(cmd);
     render_resource->render_objects_.insert(std::make_pair(id, render_object));
+}
+void RenderGlobalData::LoadSkybox(std::string path) {
+    render_resource->skybox_texture =
+        render_context->GetAllocator()->LoadKTXFileAsTexture(
+            path, render_context->GetContext()->GetQueue(VK_QUEUE_GRAPHICS_BIT),
+            render_context->GetCommandPool());
 }
 void RenderGlobalData::CreateRenderTexture(
     VkCommandBuffer& cmd, std::shared_ptr<Texture> texture_data,

@@ -9,6 +9,7 @@ public:
     static constexpr uint32_t kRenderAttachRefColor = 0;
     static constexpr uint32_t kRenderAttachRefDepth = 1;
     static constexpr uint32_t kGbuffer0 = 2;
+    static constexpr uint32_t kGbuffer1 = 3;
 };
 
 struct RenderPassInitInfo {
@@ -33,7 +34,7 @@ public:
     virtual void Draw()=0;
 protected:
     VkRenderPass render_pass_;
-    RenderPipeline pipeline_;
+    std::vector<RenderPipeline> pipelines_;
     Descriptor descriptor_;
 };
 }  // namespace toystation

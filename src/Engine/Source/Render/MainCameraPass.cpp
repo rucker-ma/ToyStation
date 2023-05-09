@@ -21,6 +21,7 @@ void MainCameraPass::Initialize(RenderPassInitInfo& info) {
     SetupRenderPass(info);
     SetupDescriptorSetLayout(info);
     SetupPipeline(info);
+    SetupSkyboxPipeline(info);
     SetupFrameBuffer(info);
     PostInitialize();
 }
@@ -56,10 +57,10 @@ void MainCameraPass::Draw() {
     vkCmdSetViewport(cmd, 0, 1, viewport);
     vkCmdSetScissor(cmd, 0, 1, scissor);
 
-    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_.pipeline);
-
-    VkDeviceSize offset = {};
     UpdateUniform();
+
+    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines_[SUBPASS_BASEPASS].pipeline);
+    VkDeviceSize offset = {};
     //一个对象中每一份顶点或材质对应一个descriptor set,在使用时进行绑定，常规最大绑定数为4个
     
     //获取渲染对象，绑定资源绘制
@@ -74,13 +75,13 @@ void MainCameraPass::Draw() {
             vkCmdBindVertexBuffers(cmd,2,1,&mesh->texcoord_buffer.buffer,&offset);
             vkCmdBindVertexBuffers(cmd,3,1,&mesh->tangent_buffer.buffer,&offset);
 
-            vkCmdBindDescriptorSets(cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,pipeline_.layout,0,1,
+            vkCmdBindDescriptorSets(cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,pipelines_[SUBPASS_BASEPASS].layout,0,1,
                                     &mesh->set_container.GetSet(0),0,nullptr);
             if (material != pair.second->Material(mesh->material_index)) {
                 material = pair.second->Material(mesh->material_index);
                 if(material->IsValid()) {
                     vkCmdBindDescriptorSets(
-                        cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_.layout,
+                        cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines_[SUBPASS_BASEPASS].layout,
                         1, 2, &material->set_container.GetSet(0), 0, nullptr);
                 }
             }
@@ -88,13 +89,38 @@ void MainCameraPass::Draw() {
             vkCmdDrawIndexed(cmd,mesh->indices_size,1,0,0,0);
         }
     }
+    vkCmdNextSubpass(cmd,VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines_[SUBPASS_SKYBOX].pipeline);
+    vkCmdSetViewport(cmd, 0, 1, viewport);
+    vkCmdSetScissor(cmd, 0, 1, scissor);
+
+    VkDescriptorBufferInfo buffer_info;
+    buffer_info.buffer = uniform_buffer_.buffer;
+    buffer_info.offset = 0;
+    buffer_info.range = sizeof(toystation::UniformBuffer);
+    std::vector<VkWriteDescriptorSet> sets;
+    sets.push_back(
+        skybox_set_container_.MakeWrite(0, 0, &buffer_info /* uniform buffer*/));
+    sets.push_back(skybox_set_container_.MakeWrite(0,1,&(resource_->skybox_texture.descriptor)));
+    skybox_set_container_.UpdateSets(sets);
+
+    ubo.has_tangent = false;
+    ubo.model =glm::mat4 (1.0);
+    void*data = RenderSystem::kRenderGlobalData.render_context->GetAllocator()->Map(uniform_buffer_);
+    memcpy(data,&ubo,sizeof(ubo));
+    RenderSystem::kRenderGlobalData.render_context->GetAllocator()->UnMap(uniform_buffer_);
+
+    vkCmdBindDescriptorSets(cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,pipelines_[SUBPASS_SKYBOX].layout,0,1,
+                            &skybox_set_container_.GetSet(0),0,nullptr);
+
+    vkCmdDraw(cmd,36,1,0,0);//?
     vkCmdEndRenderPass(cmd);
 //     submit ,wait and destroy commandbuffer
     context_->GetCommandPool()->SubmitAndWait(cmd);
     // SaveImage(); //for debug
 }
 void MainCameraPass::RebuildShaderAndPipeline(){
-    context_->GetContext()->DestroyPipeline(pipeline_.pipeline);
+    context_->GetContext()->DestroyPipeline(pipelines_[SUBPASS_BASEPASS].pipeline);
     RenderPassInitInfo info = {context_,resource_};
     SetupPipeline(info);
 }
@@ -129,6 +155,12 @@ void MainCameraPass::SetupRenderPass(RenderPassInitInfo& info) {
     depth_attachment.finalLayout =
         VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
+    attachments.push_back(color_attachment);
+    attachments.push_back(depth_attachment);
+    for (int i = 0; i <gbuffers_.size() ; ++i) {
+        attachments.push_back(color_attachment);
+    }
+
     VkAttachmentReference color_attachment_ref{};
     color_attachment_ref.attachment = RenderAttachRef::kRenderAttachRefColor;
     color_attachment_ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
@@ -143,33 +175,53 @@ void MainCameraPass::SetupRenderPass(RenderPassInitInfo& info) {
     depth_attachment_ref.attachment =RenderAttachRef::kRenderAttachRefDepth;
     depth_attachment_ref.layout =
         VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
+    //subpass for pbr render
     VkSubpassDescription base_pass{};
     base_pass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
     base_pass.colorAttachmentCount = color_attachment_refs.size();
     base_pass.pColorAttachments = color_attachment_refs.data();
     base_pass.pDepthStencilAttachment = &depth_attachment_ref;
 
-    VkSubpassDependency dependency{};
-    dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-    dependency.dstSubpass =
+    VkSubpassDependency basepass_dependency{};
+    basepass_dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+    basepass_dependency.dstSubpass =
         static_cast<uint32_t>(MainCameraSubpassType::SUBPASS_BASEPASS);
-    dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
+    basepass_dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
                               VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-    dependency.srcAccessMask = 0;
-    dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
+    basepass_dependency.srcAccessMask = 0;
+    basepass_dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
                               VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-    dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT |
+    basepass_dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT |
                                VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
-    attachments.push_back(color_attachment);
-    attachments.push_back(depth_attachment);
-    for (int i = 0; i <gbuffers_.size() ; ++i) {
-        attachments.push_back(color_attachment);
-    }
-
-    dependencies.push_back(dependency);
+    dependencies.push_back(basepass_dependency);
     subpasses.push_back(base_pass);
+
+    //subpass for render skybox
+    VkAttachmentReference skybox_color_attachment_ref{};
+    skybox_color_attachment_ref.attachment = RenderAttachRef::kRenderAttachRefColor;
+    skybox_color_attachment_ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+    VkSubpassDescription skybox_pass{};
+    skybox_pass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    skybox_pass.colorAttachmentCount = 1;
+    skybox_pass.pColorAttachments = &skybox_color_attachment_ref;
+    skybox_pass.pDepthStencilAttachment = &depth_attachment_ref;
+
+    VkSubpassDependency skybox_dependency{};
+    skybox_dependency.srcSubpass =  static_cast<uint32_t>(MainCameraSubpassType::SUBPASS_BASEPASS);
+    skybox_dependency.dstSubpass = static_cast<uint32_t>(MainCameraSubpassType::SUBPASS_SKYBOX);
+    skybox_dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
+                                     VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    skybox_dependency.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT|VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    skybox_dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
+                                     VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    skybox_dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT |
+                                        VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+
+    dependencies.push_back(skybox_dependency);
+    subpasses.push_back(skybox_pass);
+
 
     VkRenderPassCreateInfo pass_create_info{};
     pass_create_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
@@ -191,6 +243,9 @@ void MainCameraPass::SetupDescriptorSetLayout(RenderPassInitInfo& info) {
     resource_->main_pass_resource_.set_container.AddBinding(
         0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1,
         VK_SHADER_STAGE_VERTEX_BIT|VK_SHADER_STAGE_FRAGMENT_BIT, 0);
+//    resource_->main_pass_resource_.set_container.AddBinding(
+//        1,VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,1,
+//        VK_SHADER_STAGE_FRAGMENT_BIT,0);
     // set=1,binding=0
     resource_->main_pass_resource_.set_container.AddBinding(
         0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1,
@@ -210,17 +265,20 @@ void MainCameraPass::SetupDescriptorSetLayout(RenderPassInitInfo& info) {
         VK_SHADER_STAGE_FRAGMENT_BIT, 2);
     descriptor_.layout =
         resource_->main_pass_resource_.set_container.InitLayout();
-    // how to set default set? now use default 2
+
     resource_->main_pass_resource_.set_container.InitPool(3);
 
 }
 void MainCameraPass::SetupPipeline(RenderPassInitInfo& info) {
+    if(pipelines_.size()<SUBPASS_BASEPASS+1) {
+        pipelines_.push_back({});
+    }
     VkPipelineLayoutCreateInfo pipeline_layout_info{};
     pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     pipeline_layout_info.setLayoutCount = descriptor_.layout.size();
     pipeline_layout_info.pSetLayouts = descriptor_.layout.data();
     info.context->GetContext()->CreatePipelineLayout(pipeline_layout_info,
-                                                     pipeline_.layout);
+                                                     pipelines_[SUBPASS_BASEPASS].layout);
 
     VkPipelineShaderStageCreateInfo vert_shaderstage_info{};
     vert_shaderstage_info.sType =
@@ -338,14 +396,173 @@ void MainCameraPass::SetupPipeline(RenderPassInitInfo& info) {
     pipeline_info.pRasterizationState = &rasterizer;
     pipeline_info.pMultisampleState = &multisampling;
     pipeline_info.pColorBlendState = &color_blending;
-    pipeline_info.layout = pipeline_.layout;
+    pipeline_info.layout = pipelines_[SUBPASS_BASEPASS].layout;
     pipeline_info.renderPass = render_pass_;
     pipeline_info.pDepthStencilState = &depth_stencil;
     pipeline_info.pDynamicState = &dynamic_state;
-    pipeline_info.subpass = 0;
+    pipeline_info.subpass = SUBPASS_BASEPASS;
 
     info.context->GetContext()->CreateGraphicsPipeline(1, &pipeline_info,
-                                                       pipeline_.pipeline);
+                                                       pipelines_[SUBPASS_BASEPASS].pipeline);
+}
+void MainCameraPass::SetupSkyboxPipeline(RenderPassInitInfo& info) {
+    if(pipelines_.size()<SUBPASS_SKYBOX+1) {
+        pipelines_.push_back({});
+    }
+
+    skybox_set_container_.Init(
+        info.context->GetContext().get());
+    // set =0,binding=0
+    skybox_set_container_.AddBinding(
+        0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1,
+        VK_SHADER_STAGE_VERTEX_BIT|VK_SHADER_STAGE_FRAGMENT_BIT, 0);
+    skybox_set_container_.AddBinding(
+        1,VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,1,
+        VK_SHADER_STAGE_FRAGMENT_BIT,0);
+
+    auto skybox_layout = skybox_set_container_.InitLayout();
+    skybox_set_container_.InitPool(1);
+
+    uniform_buffer_ = info.context->GetAllocator()
+            ->CreateBuffer(sizeof(toystation::UniformBuffer),
+                           VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                           VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                               VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+    VkPipelineLayoutCreateInfo pipeline_layout_info{};
+    pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    pipeline_layout_info.setLayoutCount = skybox_layout.size();
+    pipeline_layout_info.pSetLayouts =skybox_layout.data();
+    info.context->GetContext()->CreatePipelineLayout(pipeline_layout_info,
+                                                     pipelines_[SUBPASS_SKYBOX].layout);
+
+    VkPipelineShaderStageCreateInfo vert_shaderstage_info{};
+    vert_shaderstage_info.sType =
+        VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    vert_shaderstage_info.stage = VK_SHADER_STAGE_VERTEX_BIT;
+
+    vert_shaderstage_info.module = context_->GetContext()->CreateShader(
+        ShaderCompilerSystem::kCompileResult.at(kSkyBoxPassVert));
+
+    vert_shaderstage_info.pName = "main";
+
+    VkPipelineShaderStageCreateInfo frag_shaderstage_info{};
+    frag_shaderstage_info.sType =
+        VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    frag_shaderstage_info.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+    frag_shaderstage_info.module = context_->GetContext()->CreateShader(
+        ShaderCompilerSystem::kCompileResult.at(kSkyBoxPassFrag));
+    frag_shaderstage_info.pName = "main";
+
+    VkPipelineShaderStageCreateInfo shader_stages[] = {vert_shaderstage_info,
+                                                       frag_shaderstage_info};
+
+//    PipelineVertexState vertex_state;
+//
+//    vertex_state.AddBindingDescription(0, sizeof(Vector3),
+//                                       VK_VERTEX_INPUT_RATE_VERTEX);
+//    vertex_state.AddBindingDescription(1, sizeof(Vector3),
+//                                       VK_VERTEX_INPUT_RATE_VERTEX);
+//    vertex_state.AddBindingDescription(2, sizeof(Vector2),
+//                                       VK_VERTEX_INPUT_RATE_VERTEX);
+//    vertex_state.AddBindingDescription(3,sizeof(Vector3),VK_VERTEX_INPUT_RATE_VERTEX);
+//    //inPosition
+//    vertex_state.AddAtributeDescription(0, 0, VK_FORMAT_R32G32B32_SFLOAT,0);
+//    //inNormal
+//    vertex_state.AddAtributeDescription(1, 1, VK_FORMAT_R32G32B32_SFLOAT,0);
+//    //inTexCoord
+//    vertex_state.AddAtributeDescription(2, 2, VK_FORMAT_R32G32_SFLOAT,0);
+//    //inTangent
+//    vertex_state.AddAtributeDescription(3, 3, VK_FORMAT_R32G32B32_SFLOAT,0);
+    VkPipelineVertexInputStateCreateInfo vertex_state_info;
+    ZeroVKStruct(vertex_state_info,
+                 VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO);
+
+    VkPipelineInputAssemblyStateCreateInfo input_assembly{};
+    input_assembly.sType =
+        VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+    input_assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    input_assembly.primitiveRestartEnable = VK_FALSE;
+
+    std::vector<VkDynamicState> dynamic_state_enables = {
+        VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+    // 对于inline的渲染需要设置视口的一些参数，对于offline的渲染，返回为nullptr
+    VkPipelineViewportStateCreateInfo view_port_state;
+    ZeroVKStruct(view_port_state,
+                 VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO);
+    view_port_state.viewportCount = 1;
+    view_port_state.pViewports = info.context->GetSwapchain()->GetViewport();
+    view_port_state.scissorCount = 1;
+    view_port_state.pScissors = info.context->GetSwapchain()->GetScissor();
+
+    VkPipelineDynamicStateCreateInfo dynamic_state;
+    ZeroVKStruct(dynamic_state,
+                 VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO);
+    dynamic_state.dynamicStateCount = dynamic_state_enables.size();
+    dynamic_state.pDynamicStates = dynamic_state_enables.data();
+
+    VkPipelineRasterizationStateCreateInfo rasterizer{};
+    rasterizer.sType =
+        VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+    rasterizer.depthClampEnable = VK_FALSE;
+    rasterizer.rasterizerDiscardEnable = VK_FALSE;
+    rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+    rasterizer.lineWidth = 1.0F;
+    rasterizer.cullMode = VK_CULL_MODE_NONE;
+    rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+    rasterizer.depthBiasEnable = VK_FALSE;
+
+    VkPipelineMultisampleStateCreateInfo multisampling{};
+    multisampling.sType =
+        VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+    multisampling.sampleShadingEnable = VK_FALSE;
+    multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+
+    VkPipelineColorBlendAttachmentState color_blend_attachment{};
+    color_blend_attachment.colorWriteMask =
+        VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
+        VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+    color_blend_attachment.blendEnable = VK_FALSE;
+
+    std::vector<VkPipelineColorBlendAttachmentState> color_blend_attachments(
+        1, color_blend_attachment);
+
+    VkPipelineColorBlendStateCreateInfo color_blending{};
+    color_blending.sType =
+        VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    color_blending.logicOpEnable = VK_FALSE;
+    color_blending.attachmentCount = color_blend_attachments.size();
+    color_blending.pAttachments = color_blend_attachments.data();
+
+    VkPipelineDepthStencilStateCreateInfo depth_stencil{};
+    depth_stencil.sType =
+        VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    depth_stencil.depthTestEnable = VK_TRUE;
+    depth_stencil.depthWriteEnable = VK_TRUE;
+    depth_stencil.depthCompareOp = VK_COMPARE_OP_LESS;
+    depth_stencil.depthBoundsTestEnable = VK_FALSE;
+    depth_stencil.stencilTestEnable = VK_FALSE;
+
+    VkGraphicsPipelineCreateInfo pipeline_info;
+    ZeroVKStruct(pipeline_info,
+                 VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO);
+    pipeline_info.stageCount = 2;
+    pipeline_info.pStages = shader_stages;
+    pipeline_info.pVertexInputState = &vertex_state_info;
+    pipeline_info.pInputAssemblyState = &input_assembly;
+    pipeline_info.pViewportState = &view_port_state;
+    pipeline_info.pRasterizationState = &rasterizer;
+    pipeline_info.pMultisampleState = &multisampling;
+    pipeline_info.pColorBlendState = &color_blending;
+    pipeline_info.layout = pipelines_[SUBPASS_SKYBOX].layout;
+    pipeline_info.renderPass = render_pass_;
+    pipeline_info.pDepthStencilState = &depth_stencil;
+    pipeline_info.pDynamicState = &dynamic_state;
+    pipeline_info.subpass = SUBPASS_SKYBOX;
+
+    info.context->GetContext()->CreateGraphicsPipeline(1, &pipeline_info,
+                                                       pipelines_[SUBPASS_SKYBOX].pipeline);
 }
 void MainCameraPass::SetupFrameBuffer(RenderPassInitInfo& info) {
     auto alloc = info.context->GetAllocator();
@@ -417,6 +634,7 @@ void MainCameraPass::UpdateUniform() {
     assert(camera_component);
     ubo.view = camera_component->GetView();
     ubo.proj = camera_component->GetProjection();
+    ubo.camera_position = camera_component->GetPosition();
 }
 // SaveImage for test and debug
 void MainCameraPass::SaveImage() {

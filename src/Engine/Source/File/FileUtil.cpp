@@ -48,10 +48,13 @@ unsigned char* FileUtil::ReadImg(std::string name, int& width, int& height,
     return stbi_load(name.c_str(), &width, &height, &channel, STBI_rgb_alpha);
 }
 std::string FileUtil::Combine(const char* relative_path) {
+    return FileUtil::Combine(std::string(relative_path));
+}
+std::string FileUtil::Combine(std::string relative_path) {
     std::string root = "D:/project/ToyStation/";
-    std::string full_path = root+std::string(relative_path);
+    std::string full_path = root + relative_path;
     std::ifstream f(full_path);
-    if(!f.good()){
+    if (!f.good()) {
         assert(0);
         LogError("path not exits");
     }

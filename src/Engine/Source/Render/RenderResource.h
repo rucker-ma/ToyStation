@@ -14,6 +14,7 @@ public:
         RHITexture sampler_tex;
     };
     std::unordered_map<int,std::shared_ptr<RenderObject>> render_objects_;
+    RHITexture skybox_texture;
     MainCameraPassResource main_pass_resource_;
     VkRenderPass current_pass_;
 };

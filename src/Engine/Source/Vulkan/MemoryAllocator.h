@@ -18,6 +18,7 @@ public:
     MemHandle AllocMemory(const MemoryAllocateInfo& info);
 
     MemHandle AllocMemory(const VkMemoryAllocateInfo & info);
+    MemHandle WrapperMemory(VkDeviceMemory memory,VkDeviceSize size = 0);
     void FreeMemory(MemHandle mem_handle);
     MemoryInfo GetMemoryInfo(MemHandle mem_handle) const;
     void* Map(MemHandle mem_handle, VkDeviceSize offset = 0,

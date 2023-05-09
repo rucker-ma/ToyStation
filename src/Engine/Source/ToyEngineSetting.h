@@ -30,7 +30,7 @@ public:
     void SetUseHWAccel(bool value);
     bool GetUseHWAccel();
     bool SaveVideo();
-    bool EnableRenderdoc(){return false;}
+    bool EnableRenderdoc();
 private:
     ToyEngineSetting() = default;
 

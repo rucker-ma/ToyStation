@@ -8,6 +8,7 @@
 #include "Compiler/ShaderCompilerSystem.h"
 namespace toystation {
 void FrameConvertYCrCbPass::Initialize(RenderPassInitInfo& info) {
+    pipelines_.resize(1);
     context_ = info.context;
     resource_ = info.resource;
     render_pass_ = resource_->current_pass_;
@@ -19,7 +20,7 @@ void FrameConvertYCrCbPass::Draw() {
     VkCommandBuffer cmd = context_->GetCommandPool()->CreateCommandBuffer(
         VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
-    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline_.pipeline);
+    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipelines_[0].pipeline);
 
     VkImageSubresourceRange sub_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
     VkImageUtil::CmdBarrierImageLayout(
@@ -27,7 +28,7 @@ void FrameConvertYCrCbPass::Draw() {
         VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_IMAGE_LAYOUT_GENERAL, sub_range);
 
     vkCmdBindDescriptorSets(
-        cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline_.layout, 0, 1,
+        cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipelines_[0].layout, 0, 1,
         &convert_resource_.set_container.GetSet(0), 0, nullptr);
 
     VkExtent2D extent = context_->GetSwapchain()->GetScissor()->extent;
@@ -81,8 +82,6 @@ void FrameConvertYCrCbPass::SetupPipeline(RenderPassInitInfo& info) {
     compute_stage_info.stage = VK_SHADER_STAGE_COMPUTE_BIT;
     compute_stage_info.module =context_->GetContext()->CreateShader(
         ShaderCompilerSystem::kCompileResult.at(kConvertYUVPassComp));
-//        GetShader("D:/project/ToyStation/src/Engine/Shader/Spv/comp.spv",
-//                  info.context->GetContext());
     compute_stage_info.pName = "main";
 
     VkPipelineLayoutCreateInfo pipeline_layout_info{};
@@ -90,16 +89,16 @@ void FrameConvertYCrCbPass::SetupPipeline(RenderPassInitInfo& info) {
     pipeline_layout_info.setLayoutCount = descriptor_.layout.size();
     pipeline_layout_info.pSetLayouts = descriptor_.layout.data();
     info.context->GetContext()->CreatePipelineLayout(pipeline_layout_info,
-                                                     pipeline_.layout);
+                                                     pipelines_[0].layout);
 
     VkComputePipelineCreateInfo pipeline_info;
     ZeroVKStruct(pipeline_info, VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO);
 
     pipeline_info.stage = compute_stage_info;
-    pipeline_info.layout = pipeline_.layout;
+    pipeline_info.layout = pipelines_[0].layout;
 
     info.context->GetContext()->CreateComputePipeline(1, &pipeline_info,
-                                                      pipeline_.pipeline);
+                                                      pipelines_[0].pipeline);
 }
 
 void FrameConvertYCrCbPass::SetupTexture(RenderPassInitInfo& info) {
@@ -170,6 +169,7 @@ std::unique_ptr<RenderFrame> FrameConvertYCrCbPass::GetConvertFrame() {
 void FrameConvertNV12Pass::Initialize(RenderPassInitInfo& info) {
     context_ = info.context;
     resource_ = info.resource;
+    pipelines_.resize(1);
     render_pass_ = resource_->current_pass_;
     SetupTexture(info);
     SetupDescriptorSetLayout(info);
@@ -179,7 +179,7 @@ void FrameConvertNV12Pass::Draw() {
     VkCommandBuffer cmd = context_->GetCommandPool()->CreateCommandBuffer(
         VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
-    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline_.pipeline);
+    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipelines_[0].pipeline);
 
     VkImageSubresourceRange sub_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
     VkImageUtil::CmdBarrierImageLayout(
@@ -187,7 +187,7 @@ void FrameConvertNV12Pass::Draw() {
         VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_IMAGE_LAYOUT_GENERAL, sub_range);
 
     vkCmdBindDescriptorSets(
-        cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline_.layout, 0, 1,
+        cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipelines_[0].layout, 0, 1,
         &convert_resource_.set_container.GetSet(0), 0, nullptr);
 
     VkExtent2D extent = context_->GetSwapchain()->GetScissor()->extent;
@@ -246,16 +246,16 @@ void FrameConvertNV12Pass::SetupPipeline(RenderPassInitInfo& info) {
     pipeline_layout_info.setLayoutCount = descriptor_.layout.size();
     pipeline_layout_info.pSetLayouts = descriptor_.layout.data();
     info.context->GetContext()->CreatePipelineLayout(pipeline_layout_info,
-                                                     pipeline_.layout);
+                                                     pipelines_[0].layout);
 
     VkComputePipelineCreateInfo pipeline_info;
     ZeroVKStruct(pipeline_info, VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO);
 
     pipeline_info.stage = compute_stage_info;
-    pipeline_info.layout = pipeline_.layout;
+    pipeline_info.layout = pipelines_[0].layout;
 
     info.context->GetContext()->CreateComputePipeline(1, &pipeline_info,
-                                                      pipeline_.pipeline);
+                                                      pipelines_[0].pipeline);
 }
 
 void FrameConvertNV12Pass::SetupTexture(RenderPassInitInfo& info) {

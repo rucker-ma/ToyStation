@@ -20,4 +20,7 @@ void ToyEngineSetting::SetUseHWAccel(bool value) {
 }
 bool ToyEngineSetting::GetUseHWAccel() { return use_hwaccel_; }
 bool ToyEngineSetting::SaveVideo(){return false;}
+bool ToyEngineSetting::EnableRenderdoc(){
+    return true;
+}
 }

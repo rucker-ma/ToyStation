@@ -62,7 +62,7 @@ public:
         Vector4 base_color;
         float metallic_factor;
         float roughness_factor;
-        bool has_normal_map;
+        int has_normal_map; //use int because glsl bool = 4 bytes but c++ bool = 1 byte
     };
     MaterialFactor& Factor(){return factor_;}
 private:

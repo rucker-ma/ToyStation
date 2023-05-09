@@ -24,6 +24,7 @@ public:
                                   int& channel);
 
     static std::string Combine(const char* relative_path);
+    static std::string Combine(std::string relative_path);
     static std::string GetSuffix(std::string path);
     static std::vector<FilterPath> FolderFilter(
         const char* relative_path,  std::vector<std::string> suffixs);

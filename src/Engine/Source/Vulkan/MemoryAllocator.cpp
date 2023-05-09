@@ -70,6 +70,11 @@ MemHandle VkMemoryAllocator::AllocMemory(const VkMemoryAllocateInfo & info)
         memory, info.allocationSize);
     return dedicated_mem_handle;
 }
+MemHandle VkMemoryAllocator::WrapperMemory(VkDeviceMemory memory,VkDeviceSize size){
+    auto* dedicated_mem_handle = new DedicatedMemoryHandle(
+        memory, size);
+    return dedicated_mem_handle;
+}
 void VkMemoryAllocator::FreeMemory(MemHandle mem_handle) {
     if (!mem_handle) {
         return;

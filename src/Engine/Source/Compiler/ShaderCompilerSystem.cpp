@@ -186,7 +186,7 @@ bool ShaderCompilerSystem::LoadShader(std::unordered_map<std::string,std::vector
                 shader_type,
                 std::vector<char>(spv_data_begin,spv_data_begin+ length)));
         } else {
-            LogError("compile shader file failed: "+ result.GetErrorMessage());
+            LogFatal("compile shader file failed: "+ result.GetErrorMessage());
             return false;
         }
     }

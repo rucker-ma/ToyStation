@@ -38,6 +38,18 @@ void CameraComponent::Rotate(int x,int y){
     pos = pos/pos.w;
     position_ = Vector3(pos);
 }
+void CameraComponent::ViewMove(int x, int y) {
+    yaw_ +=x;
+    pitch_ +=y;
+    if(pitch_> 89.9f){
+        pitch_ = 89.9;
+    }
+    if(pitch_ < -89.9){
+        pitch_ = -89.9;
+    }
+    Update();
+}
+
 void CameraComponent::Update() {
     forward_[0] = cosf(glm::radians(yaw_)) * cosf(glm::radians(pitch_));
     forward_[1] = sinf(glm::radians(pitch_));

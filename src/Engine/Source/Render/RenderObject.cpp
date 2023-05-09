@@ -86,7 +86,6 @@ void RenderMaterial::UpdateSet() {
     buffer_info.buffer = factor_buffer.buffer;
     buffer_info.offset = 0;
     buffer_info.range = sizeof(toystation::Material::MaterialFactor);
-
     sets.push_back(
         set_container.MakeWrite(1, 0, &buffer_info /* uniform buffer*/));
     if(sets.empty()){

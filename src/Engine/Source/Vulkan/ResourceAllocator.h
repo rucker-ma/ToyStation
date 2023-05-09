@@ -1,5 +1,7 @@
 #pragma once
 #include "StagingMemoryManager.h"
+#include "CommandPool.h"
+#include <ktxvulkan.h>
 
 namespace toystation {
 
@@ -90,11 +92,14 @@ public:
     void* Map(const RHIImage& image);
     void UnMap(const RHIImage& image);
 
+    RHITexture LoadKTXFileAsTexture(std::string path,VkQueue queue,std::shared_ptr<CommandPool> pool);
+
 protected:
     virtual void CreateBufferEx(const VkBufferCreateInfo& info,
                                 VkBuffer* RHIBuffer,bool with_external=false);
     virtual void CreateImageEx(const VkImageCreateInfo& info, VkImage* image);
 
+    RHITexture CreateCubemap(ktxTexture* ktxtexture,std::shared_ptr<CommandPool> pool);
 private:
     VkDevice device_ = nullptr;
     VkPhysicalDevice physical_device_ = nullptr;
