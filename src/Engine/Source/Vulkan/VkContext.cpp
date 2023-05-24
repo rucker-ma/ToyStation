@@ -3,12 +3,10 @@
 #ifdef _WIN32
 #include <Windows.h>
 #define VK_USE_PLATFORM_WIN32_KHR
-
 #endif
 
 #include <extensions_vk.hpp>
 
-#include "Helper.h"
 namespace toystation {
 
 void AddExtension(std::vector<VkContextCreateInfo::Entry>& container,
@@ -374,6 +372,11 @@ VKAPI_ATTR VkBool32 VKAPI_CALL VkContext::VulkanDebugCallback(
             LogWarn(callback_data->pMessage);
             break;
         case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
+            if(callback_data->messageIdNumber == -168767885){
+                //"VUID-vkBindBufferMemory-memory-02726"
+                //renderdoc enable validation layer output时，alloc export memory导致该错误产生，实际无影响
+                break ;
+            }
             LogError(callback_data->pMessage);
             break;
         case VK_DEBUG_UTILS_MESSAGE_SEVERITY_FLAG_BITS_MAX_ENUM_EXT:

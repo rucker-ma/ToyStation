@@ -68,16 +68,23 @@ int32_t CudaEncoder::Encode(
         std::vector<std::vector<uint8_t>> packets;
         if(rate_control_){
             NV_ENC_RECONFIGURE_PARAMS reconfigure_params = {NV_ENC_RECONFIGURE_PARAMS_VER};
-            memcpy( &reconfigure_params.reInitEncodeParams,&initialize_params,sizeof(NV_ENC_INITIALIZE_PARAMS));
-            encode_config.encodeCodecConfig.h264Config.disableSPSPPS = 1;
-            encode_config.rcParams.rateControlMode = NV_ENC_PARAMS_RC_CBR;
-            encode_config.rcParams.averageBitRate = rate_control_->target_bitrate.get_sum_bps();
+            memcpy( &reconfigure_params.reInitEncodeParams,&initialize_params_,sizeof(NV_ENC_INITIALIZE_PARAMS));
+            encode_config_.encodeCodecConfig.h264Config.disableSPSPPS = 1;
+            encode_config_.rcParams.rateControlMode = NV_ENC_PARAMS_RC_CBR;
+            encode_config_.rcParams.averageBitRate = rate_control_->target_bitrate.get_sum_bps();
             if(!encoder_->Reconfigure(&reconfigure_params)){
                 LogError("reconfigure encoder error");
             }
             rate_control_ = nullptr;
         }
-        encoder_->EncodeFrame(packets);
+//        if(frame_types->front() == webrtc::VideoFrameType::kVideoFrameKey){
+//            LogInfo("WebRTC request encode key frame");
+//            NV_ENC_PIC_PARAMS pic_params = {};
+//            pic_params.pictureType = NV_ENC_PIC_TYPE_IDR;
+//            encoder_->EncodeFrame(packets,&pic_params);
+//        }else {
+            encoder_->EncodeFrame(packets);
+        //}
         if(packets.empty()){
             return WEBRTC_VIDEO_CODEC_NO_OUTPUT;
         }
@@ -89,7 +96,7 @@ int32_t CudaEncoder::Encode(
             image.SetTimestamp(frame.timestamp());
             image.SetSpatialIndex(0);
             assert(pkt.size()>5);
-            if(pkt[4] == H264_NALU_IDR || pkt[4] == H264_NALU_IDR){ //65 IDR frame,61 I frame
+            if(pkt[4] == H264_NALU_IDR || pkt[4] == H264_NALU_I){ //65 IDR frame,61 I frame
                 image._frameType =  webrtc::VideoFrameType::kVideoFrameKey;
                 std::vector<uint8_t> spspps;
                 encoder_->GetSequenceParams(spspps);
@@ -113,7 +120,7 @@ int32_t CudaEncoder::Encode(
             codec_spec.codecSpecific.H264.packetization_mode =
                 webrtc::H264PacketizationMode::NonInterleaved;
             codec_spec.codecSpecific.H264.temporal_idx = webrtc::kNoTemporalIdx;
-            codec_spec.codecSpecific.H264.idr_frame = (pkt[4] == H264_NALU_IDR);
+            codec_spec.codecSpecific.H264.idr_frame = (pkt[4] == H264_NALU_IDR||pkt[4] == H264_NALU_I);
 
             debug::TimePiling::Instance().Mark("send to remote",60);
             encoded_done_->OnEncodedImage(image,&codec_spec);
@@ -134,19 +141,6 @@ void CudaEncoder::SetRates(
     if(rate_control_ == nullptr){
         rate_control_ = std::make_shared<webrtc::VideoEncoder::RateControlParameters>(parameters);
     }
-
-//    NV_ENC_RECONFIGURE_PARAMS reconfigure_params = {NV_ENC_RECONFIGURE_PARAMS_VER};
-//
-//    NV_ENC_CONFIG encode_config = { NV_ENC_CONFIG_VER };
-//    encode_config.encodeCodecConfig.h264Config.disableSPSPPS = 1;
-//    encode_config.rcParams.rateControlMode = NV_ENC_PARAMS_RC_CBR;
-//    encode_config.rcParams.averageBitRate = parameters.target_bitrate.get_sum_bps();
-//
-//
-//    reconfigure_params.reInitEncodeParams.encodeConfig = &encode_config;
-//    if(!encoder_->Reconfigure(&reconfigure_params)){
-//        LogError("reconfigure encoder error");
-//    }
 }
 void CudaEncoder::OnPacketLossRateUpdate(float packet_loss_rate) {
     VideoEncoder::OnPacketLossRateUpdate(packet_loss_rate);
@@ -168,13 +162,13 @@ int CudaEncoder::InitNvEncoderCuda(const webrtc::VideoCodec* codec_settings,
     encoder_ = std::make_unique<NvEncoderCuda>(CudaPlatform::Instance().GetContext(),
                                                codec_settings->width,codec_settings->height,
                                                NV_ENC_BUFFER_FORMAT_NV12,2);
-    initialize_params = { NV_ENC_INITIALIZE_PARAMS_VER };
-    encode_config = { NV_ENC_CONFIG_VER };
-    encode_config.rcParams.rateControlMode = NV_ENC_PARAMS_RC_CBR;
-    initialize_params.encodeConfig = &encode_config;
+    initialize_params_ = { NV_ENC_INITIALIZE_PARAMS_VER };
+    encode_config_ = { NV_ENC_CONFIG_VER };
+    encode_config_.rcParams.rateControlMode = NV_ENC_PARAMS_RC_CBR;
+    initialize_params_.encodeConfig = &encode_config_;
 
-    encoder_->CreateDefaultEncoderParams(&initialize_params,NV_ENC_CODEC_H264_GUID,NV_ENC_PRESET_P3_GUID,NV_ENC_TUNING_INFO_ULTRA_LOW_LATENCY);
-    encoder_->CreateEncoder(&initialize_params);
+    encoder_->CreateDefaultEncoderParams(&initialize_params_,NV_ENC_CODEC_H264_GUID,NV_ENC_PRESET_P3_GUID,NV_ENC_TUNING_INFO_ULTRA_LOW_LATENCY);
+    encoder_->CreateEncoder(&initialize_params_);
 
     encode_cal.OnEnd = [](double result,long long duration) {
         // LogDebug("Receive Render Frame,Process Time: " +

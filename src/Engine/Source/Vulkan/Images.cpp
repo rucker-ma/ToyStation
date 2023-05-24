@@ -1,10 +1,8 @@
 #include "Images.h"
 
-#include "Helper.h"
-
 namespace toystation {
 VkImageCreateInfo MakeImage2DCreateInfo(const VkExtent2D &size, VkFormat format,
-                                        VkImageUsageFlags usage, bool mipmaps) {
+                                        VkImageUsageFlags usage,bool mipmaps) {
     VkImageCreateInfo create_info;
     ZeroVKStruct(create_info, VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO);
 
@@ -18,6 +16,7 @@ VkImageCreateInfo MakeImage2DCreateInfo(const VkExtent2D &size, VkFormat format,
     create_info.extent.depth = 1;
     create_info.usage = usage | VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
                         VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+
     return create_info;
 }
 VkImageViewCreateInfo MakeImage2DViewCreateInfo(VkImage image,

@@ -1,9 +1,9 @@
 #include "SwapChain.h"
 
-#include "Helper.h"
+#include "VkHelper.h"
 
-#define SURFACE_DEFAULT_WIDTH 1920
-#define SURFACE_DEFAULT_HEIGHT 1080
+#define SURFACE_DEFAULT_WIDTH 2400
+#define SURFACE_DEFAULT_HEIGHT 1600
 
 namespace toystation {
 

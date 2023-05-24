@@ -8,6 +8,7 @@ namespace toystation {
 class RenderPipeline {
 public:
     void Initialize();
+    void PreRender();
     void Tick();
     void MarkUpdateShader(){ update_shader_ = true;}
     RenderPassInitInfo GetRenderPassInitInfo();
@@ -16,6 +17,8 @@ private:
 private:
     std::shared_ptr<RenderPassBase> main_camera_pass_;
     std::shared_ptr<RenderPassBase> text_pass_;
+    std::shared_ptr<RenderPassBase> skybox_pass_;
+    std::shared_ptr<RenderPassBase> postprocess_pass_;
     bool update_shader_;
 };
 }  // namespace toystation

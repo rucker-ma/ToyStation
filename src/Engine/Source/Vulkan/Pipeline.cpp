@@ -1,7 +1,5 @@
 #include "Pipeline.h"
 
-#include "Helper.h"
-
 namespace toystation {
 void PipelineVertexState::AddBindingDescription(uint32_t binding,
                                                 uint32_t stride,

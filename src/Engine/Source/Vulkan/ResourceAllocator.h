@@ -71,7 +71,8 @@ public:
         VkImageLayout layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
     RHITexture CreateTexture(const RHIImage& image,
-                          const VkImageViewCreateInfo& imageview_create_info);
+                          const VkImageViewCreateInfo& imageview_create_info,
+                             bool create_sampler =false);
     RHITexture CreateTexture(const RHIImage& image,
                           const VkImageViewCreateInfo& imageview_create_info,
                           const VkSamplerCreateInfo& sampler_create_info);

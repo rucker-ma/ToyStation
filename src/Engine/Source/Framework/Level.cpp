@@ -18,7 +18,26 @@ struct TObjectInfoReader {
         asset_path = value["asset"].asString();
     }
 };
+void BVHTree::AddObject( std::shared_ptr<TObject> object){
 
+}
+std::shared_ptr<TObject> BVHTree::HitObject(Ray ray){
+    if(box->Intersect(ray)){
+        if(object){
+            return object;
+        }else{
+            auto left_hitresult = left->HitObject(ray);
+            if(left_hitresult){
+                return left_hitresult;
+            }
+            auto right_hitresult = right->HitObject(ray);
+            if(right_hitresult){
+                return right_hitresult;
+            }
+        }
+    }
+    return nullptr;
+}
 void Level::Load(std::string path) {
     JsonParseHelper parser;
     std::vector<char> data;
@@ -29,41 +48,54 @@ void Level::Load(std::string path) {
     }
     assert(value["objects"].isArray());
     Json::Value ojects_ref = value["objects"];
-    std::vector<std::shared_ptr<TaskFuture>> results;
+    bvh_root_ = std::make_shared<BVHTree>();
+    //std::vector<std::shared_ptr<TaskFuture>> results;
     for (int i = 0; i < ojects_ref.size(); ++i) {
         TObjectInfoReader reader(ojects_ref[i]);
         std::shared_ptr<TaskFuture> task_future = LoadObjectWithTask(reader);
         if(task_future) {
-            results.push_back(task_future);
+            task_results_.push_back(task_future);
         }
     }
     Json::Value environment = value["environment"];
     if(!environment.empty())
     {
-        Json::Value skybox = environment["skybox"];
-        std::string skybox_path =FileUtil::Combine(skybox.asString());
-
-        auto task = std::make_shared<TaskMessage<std::function<void()>>>(
-            kRenderTaskID,[skybox_path]{
-                //此处的执行会在渲染线程中执行
-                RenderSystem::kRenderGlobalData.LoadSkybox(skybox_path);
-            }
-        );
-        kMesssageQueue.Post(kRendThread.get_id(),task);
-        results.push_back(task->GetFuture());
+        LoadMap(MapType::Map_Environment,environment["skybox"],task_results_);
+        LoadMap(MapType::Map_Irradiance,environment["irradiance"],task_results_);
+        LoadMap(MapType::Map_Radiance,environment["radiance"],task_results_);
+        LoadMap(MapType::Map_BrdfLut,environment["brdf_lut"],task_results_);
     }
-
-    for(auto& future:results){
+    controller_ =std::make_shared<EditorController>();
+}
+void Level::CheckLoadResult(){
+    for(auto& future:task_results_){
         future->Wait();
     }
-    camera_ =std::make_shared<Camera>();
+    task_results_.clear();
+}
+void Level::LoadMap(MapType type,Json::Value value, std::vector<std::shared_ptr<TaskFuture>>& results){
+    std::string path = value.asString();
+    if(path.empty()){
+        return;
+    }
+    std::string full_path =FileUtil::Combine(path);
+
+    auto task = std::make_shared<TaskMessage<std::function<void()>>>(
+        kRenderTaskID,[full_path,type]{
+            //此处的执行会在渲染线程中执行
+            RenderSystem::kRenderGlobalData.LoadMapAsTexture(type,full_path);
+        }
+    );
+    kMesssageQueue.Post(kRendThread.get_id(),task);
+    results.push_back(task->GetFuture());
 }
 std::shared_ptr<TaskFuture> Level::LoadObjectWithTask(Level::TObjectInfoReader& object_info) {
-    std::shared_ptr<TObject> obj = std::make_shared<TObject>(object_info.name);
     if (!object_info.asset_path.empty()) {
+        std::shared_ptr<TObject> obj = std::make_shared<TObject>(object_info.name);
         GltfModelLoader loader;
         loader.Load(object_info.asset_path, obj);
         objects_.push_back(obj);
+        bvh_root_->AddObject(obj);
         // dispatch to rhi,create render handle
         auto task = std::make_shared<TaskMessage<std::function<void()>>>(
             kRenderTaskID,[obj]{
@@ -77,11 +109,21 @@ std::shared_ptr<TaskFuture> Level::LoadObjectWithTask(Level::TObjectInfoReader& 
     return nullptr;
 }
 void Level::Tick() {
-    camera_->Tick();
+    controller_->Tick();
 }
-std::shared_ptr<Camera> Level::GetCamera(){
-    assert(camera_);
-    return camera_;
+void Level::BoundingBoxHit(Ray ray){
+    auto result = bvh_root_->HitObject(ray);
+    if(result){
+        MarkSelected(result);
+    }
+}
+
+void Level::MarkSelected(std::shared_ptr<TObject> obj){
+
+}
+std::shared_ptr<EditorController> Level::GetController(){
+    assert(controller_);
+    return controller_;
 }
 Level::TObjectInfoReader::TObjectInfoReader(Json::Value value) {
     name = value["name"].asString();

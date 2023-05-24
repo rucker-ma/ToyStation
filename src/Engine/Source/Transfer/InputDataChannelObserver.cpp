@@ -40,7 +40,7 @@ void InpuDataChannelObserver::OnStateChange() {
             " changed:" + ToString(channel_->state()));
 }
 void InpuDataChannelObserver::OnMessage(const webrtc::DataBuffer& buffer) {
-    LogDebug("Input channel data:"+buffer.data.data<char>());
+    //LogDebug("Input channel data:"+buffer.data.data<char>());
     kEngine.GetInputSystem().OnInputMessage(std::string(buffer.data.data<char>(),buffer.size()));
 }
 void InpuDataChannelObserver::OnBufferedAmountChange(uint64_t sent_data_size) {}

@@ -16,7 +16,8 @@ struct UniformBuffer {
     Matrix4 proj;
     Vector3 camera_position;
     Vector3 light_color;
-    bool has_tangent;
+    int has_tangent;
+    int has_envmap;
     UniformBuffer(){
         has_tangent = false;
         light_color = Vector3(1.0);
@@ -24,20 +25,21 @@ struct UniformBuffer {
 };
 class RenderMesh{
 public:
+    RenderMesh();
     RHIBuffer position_buffer;
     RHIBuffer normal_buffer;
     RHIBuffer indices_buffer;
     RHIBuffer texcoord_buffer;
     RHIBuffer tangent_buffer;
-    RHIBuffer uniform_buffer;
+//    RHIBuffer uniform_buffer;
 
     VkIndexType indices_type;
     uint32_t indices_size;
     int material_index;
-    DescriptorSetContainer set_container;
     bool has_tangent;
-    void UpdateSet();
-    void UpdateUniform(UniformBuffer& buffer);
+    Matrix4 GetModel();
+private:
+    Matrix4 model_{1.0};
 };
 
 class RenderMaterial{
@@ -55,9 +57,9 @@ private:
     bool valid_;
 };
 
-class RenderObject
-{
+class RenderObject{
 public:
+    RenderObject() =default;
     RenderObject(int id);
     int GetID()const{return id_;}
     std::vector<std::shared_ptr<RenderMesh>>& Meshes(){return meshes_;}

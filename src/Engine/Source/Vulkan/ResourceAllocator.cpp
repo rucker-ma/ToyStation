@@ -1,7 +1,7 @@
 #include "ResourceAllocator.h"
 
 #include "VkImageUtil.h"
-
+#include "VkHelper.h"
 #ifdef _WIN64
 #include <AclAPI.h>
 #include <vulkan/vulkan_win32.h>
@@ -314,11 +314,17 @@ RHIImage VkResourceAllocator::CreateImage(const VkCommandBuffer& cmd_buffer,
     return result_image;
 }
 RHITexture VkResourceAllocator::CreateTexture(
-    const RHIImage& image, const VkImageViewCreateInfo& imageview_create_info) {
+    const RHIImage& image, const VkImageViewCreateInfo& imageview_create_info,
+    bool create_sampler) {
+    if(create_sampler){
+        VkSamplerCreateInfo sampler_info{};
+        return CreateTexture(image,imageview_create_info,sampler_info);
+    }
+
     RHITexture result_texture;
     result_texture.image = image.image;
     result_texture.handle = image.handle;
-    result_texture.descriptor.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+    result_texture.descriptor.imageLayout =VK_IMAGE_LAYOUT_GENERAL;
     assert(imageview_create_info.image == image.image);
     vkCreateImageView(device_, &imageview_create_info, nullptr,
                       &result_texture.descriptor.imageView);
@@ -516,16 +522,32 @@ RHITexture VkResourceAllocator::LoadKTXFileAsTexture(std::string path,
 RHITexture VkResourceAllocator::CreateCubemap(ktxTexture* ktxtexture,std::shared_ptr<CommandPool> pool){
     ktx_uint8_t * texture_data = ktxTexture_GetData(ktxtexture);
     ktx_size_t texture_size = ktxTexture_GetDataSize(ktxtexture);
-    VkFormat format =  ktxTexture_GetVkFormat(ktxtexture);
+    VkFormat src_format =  ktxTexture_GetVkFormat(ktxtexture);
     RHIBuffer buffer =  CreateBuffer(texture_size,VK_BUFFER_USAGE_TRANSFER_SRC_BIT,VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
     uint8_t *data= (uint8_t*)Map(buffer);
     memcpy(data,texture_data,texture_size);
     UnMap(buffer);
 
+    VkFormat dst_format;
+    switch (src_format) {
+        case VK_FORMAT_R8G8B8A8_SINT:
+        case VK_FORMAT_R8G8B8A8_UINT:
+        case VK_FORMAT_R8G8B8A8_UNORM:
+            dst_format = VK_FORMAT_R8G8B8A8_UNORM;
+            break ;
+        case VK_FORMAT_R32G32B32A32_UINT:
+        case VK_FORMAT_R32G32B32A32_SINT:
+        case VK_FORMAT_R32G32B32A32_SFLOAT:
+            dst_format = VK_FORMAT_R32G32B32A32_SFLOAT;
+            break ;
+        default:
+            LogFatal("Not support cubemap format");
+    }
     VkImageCreateInfo image_create_info;
     ZeroVKStruct(image_create_info,VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO);
+    uint32_t mip_levels = 4;
     image_create_info.imageType = VK_IMAGE_TYPE_2D;
-    image_create_info.format = VK_FORMAT_R8G8B8A8_UNORM;
+    image_create_info.format = dst_format;
     image_create_info.mipLevels = ktxtexture->numLevels;
     image_create_info.samples = VK_SAMPLE_COUNT_1_BIT;
     image_create_info.tiling = VK_IMAGE_TILING_OPTIMAL;
@@ -590,11 +612,10 @@ RHITexture VkResourceAllocator::CreateCubemap(ktxTexture* ktxtexture,std::shared
     sampler.mipLodBias = 0.0f;
     sampler.compareOp = VK_COMPARE_OP_NEVER;
     sampler.minLod = 0.0f;
-    sampler.maxLod = ktxtexture->numLevels;
+    sampler.maxLod = ktxtexture->numLevels-1;
     sampler.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
     sampler.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
-
-
+    
     VkImageViewCreateInfo view_create_info;
     ZeroVKStruct(view_create_info,VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO);
     view_create_info.image = cuabemap.image;
@@ -602,7 +623,7 @@ RHITexture VkResourceAllocator::CreateCubemap(ktxTexture* ktxtexture,std::shared
     view_create_info.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
     view_create_info.subresourceRange=  { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
     view_create_info.subresourceRange.layerCount =6;
-    view_create_info.subresourceRange.levelCount = ktxtexture->numLevels;
+    view_create_info.subresourceRange.levelCount =ktxtexture->numLevels;
     return CreateTexture(cuabemap,view_create_info,sampler);
 }
 //---------------------DedicatedResourceAllocator--------------------//

@@ -12,13 +12,11 @@ layout(set=1,binding =1) uniform sampler2D occlusion_map;
 layout(set=1,binding =2) uniform sampler2D metallic_roughness_map;
 layout(set=1,binding =3) uniform sampler2D normal_map;
 
-
 float get_metallic(){
-    return texture(metallic_roughness_map, fragTexCoord).b*material.metallic_factor;
+    return clamp(texture(metallic_roughness_map, fragTexCoord).b*material.metallic_factor,0.0,1.0);
 }
-
 float get_roughness(){
-    return texture(metallic_roughness_map, fragTexCoord).g*material.roughness_factor;
+    return clamp(texture(metallic_roughness_map, fragTexCoord).g*material.roughness_factor,0.0,1.0);
 }
 //--------------------------------------
 //Cook-Torrance BRDF
@@ -68,3 +66,6 @@ vec3 fresnel_schlick(float cosTheta, vec3 F0)
     return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
 
+vec3 fresnel_schlick_roughness(float costheta,vec3 F0,float roughness){
+    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(1.0 - costheta, 5.0);
+}

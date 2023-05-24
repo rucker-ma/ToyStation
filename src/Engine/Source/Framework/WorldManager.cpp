@@ -10,6 +10,9 @@ namespace toystation{
 void WorldManager::Initialize() {
     LoadLevel();
 }
+void WorldManager::PostInitialize(){
+    current_level_->CheckLoadResult();
+}
 void WorldManager::Tick(){
     current_level_->Tick();
 }

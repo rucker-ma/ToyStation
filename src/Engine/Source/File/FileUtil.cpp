@@ -45,7 +45,33 @@ void FileUtil::WriteJpg(std::string name, unsigned char* data, int width,
 }
 unsigned char* FileUtil::ReadImg(std::string name, int& width, int& height,
                                  int& channel) {
-    return stbi_load(name.c_str(), &width, &height, &channel, STBI_rgb_alpha);
+    return stbi_load(name.c_str(), &width, &height, &channel,STBI_rgb_alpha);
+}
+std::shared_ptr<Texture> FileUtil::ReadImageAsRGBA(std::string path){
+    int width,height,channel;
+    unsigned char* data = nullptr;
+    std::shared_ptr<Texture> tex = std::make_shared<Texture>();
+    int data_length;
+    if (stbi_is_hdr(path.c_str())) {
+        data = (unsigned char*)stbi_loadf(path.c_str(), &width, &height,
+                                          &channel, STBI_rgb_alpha);
+        tex->type = ImageType::FRAME_RGBA_F32;
+        data_length = width * height * 4 * sizeof(float);
+    } else {
+         data =
+            stbi_load(path.c_str(), &width, &height, &channel, STBI_rgb_alpha);
+        tex->type = ImageType::FRAME_RGBA;
+        data_length = width * height * 4 ;
+    }
+    assert(data && "must read data");
+
+     tex->data = std::move(std::vector<unsigned char>(
+        data, data +data_length));
+
+    tex->width = width;
+    tex->height = height;
+    stbi_image_free(data);
+    return tex;
 }
 std::string FileUtil::Combine(const char* relative_path) {
     return FileUtil::Combine(std::string(relative_path));

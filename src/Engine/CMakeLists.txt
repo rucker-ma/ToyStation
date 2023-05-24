@@ -37,6 +37,16 @@ file(GLOB_RECURSE HEADER_FILE *.H)
 
 # add_library(${MODULE_NAME} STATIC ${SOURCE_FILE} ${HEADER_FILE})
 add_executable(${MODULE_NAME} ${SOURCE_FILE} ${HEADER_FILE})
+
+function(set_group_for_ide rootdir filepath)
+    string(REPLACE  ${rootdir} "" substr_file ${filepath})
+    string(FIND ${substr_file} "/" postion REVERSE)
+#    message("${substr_file}")
+#    message("${postion}")
+    string(SUBSTRING  ${substr_file} 0 ${postion} group)
+    source_group("${group}" REGULAR_EXPRESSION "${rootdir}${group}/[^/.]+.(cpp|h|c)")
+endfunction()
+
 if(MSVC)
     # disable warning for chinese
     set_target_properties(${MODULE_NAME} PROPERTIES COMPILE_FLAGS "/wd4819")
@@ -44,6 +54,13 @@ if(MSVC)
 #    set_property(TARGET ${MODULE_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreadedDebugDLL")
     set_property(TARGET ${MODULE_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
     add_definitions(-DWEBRTC_WIN -DNOMINMAX -D_HAS_ITERATOR_DEBUGGING=0 -DWEBRTC_USE_H264)
+
+    foreach(cppfile ${SOURCE_FILE})
+        set_group_for_ide(${CMAKE_CURRENT_SOURCE_DIR} ${cppfile})
+    endforeach(cppfile)
+    foreach(hfile ${HEADER_FILE})
+        set_group_for_ide(${CMAKE_CURRENT_SOURCE_DIR} ${hfile})
+    endforeach(hfile)
 endif()
 
 # PROPERTIES

@@ -9,6 +9,7 @@ namespace toystation{
 class WorldManager{
 public:
     void Initialize();
+    void PostInitialize();
     void Tick();
     std::shared_ptr<Level> ActiveLevel();
 private:

@@ -30,16 +30,20 @@ using RenderMessage = DataMsg<RenderPayload>;
 class TS_CPP_API RenderSystem {
 public:
     void Initialize();
+    void PostInitialize();
     void Tick();
 
     static RenderGlobalData kRenderGlobalData;
 private:
     void Run();
     void ProcessEvent();
+    void RegisterCapture();
 private:
     std::shared_ptr<RenderPipeline> render_pipeline_;
     std::shared_ptr<FrameConvertPass> frame_convert_;
     bool connected_; //anyone connect to server
+    bool initialize_phase_;
+    bool capture_frame_;
 };
 
 }  // namespace toystation

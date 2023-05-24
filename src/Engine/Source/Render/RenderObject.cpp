@@ -8,41 +8,12 @@
 #include "RenderSystem.h"
 
 namespace toystation {
-
-void RenderMesh::UpdateSet() {
-    set_container.Init(
-        RenderSystem::kRenderGlobalData.render_context->GetContext().get());
-    set_container.AddBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1,
-                             VK_SHADER_STAGE_VERTEX_BIT|VK_SHADER_STAGE_FRAGMENT_BIT);
-
-    uniform_buffer =
-        RenderSystem::kRenderGlobalData.render_context->GetAllocator()
-            ->CreateBuffer(sizeof(toystation::UniformBuffer),
-                           VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                           VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                               VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-
-    VkDescriptorBufferInfo buffer_info;
-    buffer_info.buffer = uniform_buffer.buffer;
-    buffer_info.offset = 0;
-    buffer_info.range = sizeof(toystation::UniformBuffer);
-
-    set_container.InitLayout();
-    set_container.InitPool(1);
-    std::vector<VkWriteDescriptorSet> sets;
-
-    sets.push_back(
-        set_container.MakeWrite(0, 0, &buffer_info /* uniform buffer*/));
-    set_container.UpdateSets(sets);
+RenderMesh::RenderMesh() { 
+    model_ = glm::rotate(model_, (float)90, Vector3(1,0,0));
 }
-void RenderMesh::UpdateUniform(UniformBuffer& buffer)
-{
-    UniformBuffer local_buffer = buffer;
-    local_buffer.has_tangent = has_tangent;
-    local_buffer.model = glm::rotate(buffer.model,(float)90.0,Vector3(0.0,0.0,1.0));
-    void*data = RenderSystem::kRenderGlobalData.render_context->GetAllocator()->Map(uniform_buffer);
-    memcpy(data,&local_buffer,sizeof(local_buffer));
-    RenderSystem::kRenderGlobalData.render_context->GetAllocator()->UnMap(uniform_buffer);
+Matrix4 RenderMesh::GetModel() {
+    //model_ = glm::rotate(model_,(float)90.0,Vector3(0.0,0.0,1.0));
+    return model_;
 }
 RenderMaterial::RenderMaterial():valid_(false){}
 void RenderMaterial::UpdateSet() {
@@ -94,7 +65,6 @@ void RenderMaterial::UpdateSet() {
     set_container.UpdateSets(sets);
     valid_ = true;
 }
-
 RenderObject::RenderObject(int id) {
     assert(id > 0);
     id_ = id;

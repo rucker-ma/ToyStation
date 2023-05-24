@@ -46,7 +46,8 @@ private:
 };
 enum RenderFrameType {
     FRAME_RED,FRAME_RG,
-    FRAME_RGB, FRAME_RGBA, FRAME_YCbCr,FRAME_NV12};
+    FRAME_RGB, FRAME_RGBA, FRAME_YCbCr,FRAME_NV12,
+    FRAME_RGBA_F32};
 
 class RenderFrame {
 public:

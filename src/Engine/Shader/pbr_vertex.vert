@@ -18,7 +18,7 @@ void main(){
     fragPosition = vec3(ubo.model* vec4( inPosition,1.0));
     fragNormal = normalize(mat3(transpose(inverse(ubo.model)))*inNormal);;
     fragTexCoord = inTexCoord;
-    if(ubo.has_tangent){
+    if(ubo.has_tangent == 1){
         fragTangent = inTangent;
     }else{
         vec3 c1 = cross(inNormal,vec3(0.0,0.0,1.0));

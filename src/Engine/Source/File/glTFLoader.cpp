@@ -127,8 +127,9 @@ void GltfModelLoader::Load(std::string path, std::shared_ptr<TObject> obj) {
         std::shared_ptr<MeshComponent> mesh_comp =
             obj->CreateComponent<MeshComponent>();
         for (auto& mesh : model.meshes) {
-            std::shared_ptr<SubMesh> sub_mesh = mesh_comp->CreateSubMesh();
-            meshes.push_back(sub_mesh);
+//            std::shared_ptr<SubMesh> sub_mesh = mesh_comp->CreateSubMesh();
+            std::shared_ptr<SubMesh> sub_mesh = std::make_shared<SubMesh>();
+                meshes.push_back(sub_mesh);
             // TODO:一个mesh多个primitive怎么额解决？
             for (auto& primitive : mesh.primitives) {
                 // primitive.mode 渲染模式，TINYGLTF_MODE_*
@@ -157,6 +158,7 @@ void GltfModelLoader::Load(std::string path, std::shared_ptr<TObject> obj) {
                     }
                 }
             }
+            mesh_comp->AddSubMesh(sub_mesh);
         }
     }
     //通过scene和node获取mesh的local matrix

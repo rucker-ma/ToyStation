@@ -14,6 +14,12 @@ const ShaderType kMainCameraPassVert="mainpass_vert";
 const ShaderType kMainCameraPassFrag= "mainpass_frag";
 const ShaderType kSkyBoxPassVert = "skybox_vert";
 const ShaderType kSkyBoxPassFrag = "skybox_frag";
+
+const ShaderType kPostProcessVert = "postprocess_vert";
+const ShaderType kPostProcessFrag = "postprocess_frag";
+
 const ShaderType kConvertNV12PassComp = "convert_nv12_comp";
 const ShaderType kConvertYUVPassComp = "convert_yuv_comp";
+const ShaderType kTextPassVert = "text_vert";
+const ShaderType kTextPassFrag = "text_frag";
 }

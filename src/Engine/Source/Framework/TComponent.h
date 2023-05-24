@@ -8,7 +8,8 @@ namespace toystation{
 enum ComponentType{
     Component_Mesh,
     Component_Material,
-    Component_Camera
+    Component_Camera,
+    Component_Input
 };
 
 class TComponent

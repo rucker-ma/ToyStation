@@ -24,7 +24,7 @@ enum class BufferType{
 struct VertexDataInfo{
     std::vector<unsigned char> buffer;
     BufferType type;
-    int nums;
+    int nums; //表示buffer对于的顶点个数
 };
 
 enum class TextureType{

@@ -11,7 +11,6 @@ void FrameConvertYCrCbPass::Initialize(RenderPassInitInfo& info) {
     pipelines_.resize(1);
     context_ = info.context;
     resource_ = info.resource;
-    render_pass_ = resource_->current_pass_;
     SetupTexture(info);
     SetupDescriptorSetLayout(info);
     SetupPipeline(info);
@@ -24,7 +23,7 @@ void FrameConvertYCrCbPass::Draw() {
 
     VkImageSubresourceRange sub_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
     VkImageUtil::CmdBarrierImageLayout(
-        cmd, resource_->main_pass_resource_.color_image.image,
+        cmd, resource_->shading_texture.image,
         VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_IMAGE_LAYOUT_GENERAL, sub_range);
 
     vkCmdBindDescriptorSets(
@@ -36,7 +35,7 @@ void FrameConvertYCrCbPass::Draw() {
     vkCmdDispatch(cmd, extent.width / 16, extent.height / 8, 1);
 
     VkImageUtil::CmdBarrierImageLayout(
-        cmd, resource_->main_pass_resource_.color_image.image,
+        cmd, resource_->shading_texture.image,
         VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, sub_range);
 
     context_->GetCommandPool()->SubmitAndWait(cmd);
@@ -65,7 +64,7 @@ void FrameConvertYCrCbPass::SetupDescriptorSetLayout(RenderPassInitInfo& info) {
     std::vector<VkWriteDescriptorSet> sets;
     // index 0: render渲染的rgba图像
     sets.push_back(convert_resource_.set_container.MakeWrite(
-        0, 0, &info.resource->main_pass_resource_.sampler_tex.descriptor));
+        0, 0, &info.resource->shading_texture.descriptor));
     sets.push_back(convert_resource_.set_container.MakeWrite(
         0, 1, &convert_resource_.tex_y.descriptor));
     sets.push_back(convert_resource_.set_container.MakeWrite(
@@ -76,13 +75,13 @@ void FrameConvertYCrCbPass::SetupDescriptorSetLayout(RenderPassInitInfo& info) {
 }
 
 void FrameConvertYCrCbPass::SetupPipeline(RenderPassInitInfo& info) {
-    VkPipelineShaderStageCreateInfo compute_stage_info{};
-    ZeroVKStruct(compute_stage_info,
-                 VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO);
-    compute_stage_info.stage = VK_SHADER_STAGE_COMPUTE_BIT;
-    compute_stage_info.module =context_->GetContext()->CreateShader(
-        ShaderCompilerSystem::kCompileResult.at(kConvertYUVPassComp));
-    compute_stage_info.pName = "main";
+//    VkPipelineShaderStageCreateInfo compute_stage_info{};
+//    ZeroVKStruct(compute_stage_info,
+//                 VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO);
+//    compute_stage_info.stage = VK_SHADER_STAGE_COMPUTE_BIT;
+//    compute_stage_info.module =context_->GetContext()->CreateShader(
+//        ShaderCompilerSystem::kCompileResult.at(kConvertYUVPassComp));
+//    compute_stage_info.pName = "main";
 
     VkPipelineLayoutCreateInfo pipeline_layout_info{};
     pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -94,7 +93,8 @@ void FrameConvertYCrCbPass::SetupPipeline(RenderPassInitInfo& info) {
     VkComputePipelineCreateInfo pipeline_info;
     ZeroVKStruct(pipeline_info, VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO);
 
-    pipeline_info.stage = compute_stage_info;
+    pipeline_info.stage = VkHelper::CreateComputeShaderState(info.context->GetContext(),
+        ShaderCompilerSystem::kCompileResult.at(kConvertYUVPassComp));
     pipeline_info.layout = pipelines_[0].layout;
 
     info.context->GetContext()->CreateComputePipeline(1, &pipeline_info,
@@ -170,7 +170,6 @@ void FrameConvertNV12Pass::Initialize(RenderPassInitInfo& info) {
     context_ = info.context;
     resource_ = info.resource;
     pipelines_.resize(1);
-    render_pass_ = resource_->current_pass_;
     SetupTexture(info);
     SetupDescriptorSetLayout(info);
     SetupPipeline(info);
@@ -183,7 +182,7 @@ void FrameConvertNV12Pass::Draw() {
 
     VkImageSubresourceRange sub_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
     VkImageUtil::CmdBarrierImageLayout(
-        cmd, resource_->main_pass_resource_.color_image.image,
+        cmd, resource_->shading_texture.image,
         VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_IMAGE_LAYOUT_GENERAL, sub_range);
 
     vkCmdBindDescriptorSets(
@@ -195,7 +194,7 @@ void FrameConvertNV12Pass::Draw() {
     vkCmdDispatch(cmd, extent.width / 16, extent.height / 8, 1);
 
     VkImageUtil::CmdBarrierImageLayout(
-        cmd, resource_->main_pass_resource_.color_image.image,
+        cmd, resource_->shading_texture.image,
         VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, sub_range);
 
     context_->GetCommandPool()->SubmitAndWait(cmd);
@@ -220,7 +219,7 @@ void FrameConvertNV12Pass::SetupDescriptorSetLayout(RenderPassInitInfo& info) {
     std::vector<VkWriteDescriptorSet> sets;
     // index 0: render渲染的rgba图像
     sets.push_back(convert_resource_.set_container.MakeWrite(
-        0, 0, &info.resource->main_pass_resource_.sampler_tex.descriptor));
+        0, 0, &info.resource->shading_texture.descriptor));
     sets.push_back(convert_resource_.set_container.MakeWrite(
         0, 1, &convert_resource_.tex_y.descriptor));
     sets.push_back(convert_resource_.set_container.MakeWrite(
@@ -230,16 +229,14 @@ void FrameConvertNV12Pass::SetupDescriptorSetLayout(RenderPassInitInfo& info) {
 }
 
 void FrameConvertNV12Pass::SetupPipeline(RenderPassInitInfo& info) {
-    VkPipelineShaderStageCreateInfo compute_stage_info{};
-    ZeroVKStruct(compute_stage_info,
-                 VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO);
-    compute_stage_info.stage = VK_SHADER_STAGE_COMPUTE_BIT;
-    compute_stage_info.module = context_->GetContext()->CreateShader(
-            ShaderCompilerSystem::kCompileResult.at(kConvertNV12PassComp));
-
-//        GetShader("D:/project/ToyStation/src/Engine/Shader/Spv/convert_nv12.spv",
-//                  info.context->GetContext());
-    compute_stage_info.pName = "main";
+//    VkPipelineShaderStageCreateInfo compute_stage_info{};
+//    ZeroVKStruct(compute_stage_info,
+//                 VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO);
+//    compute_stage_info.stage = VK_SHADER_STAGE_COMPUTE_BIT;
+//    compute_stage_info.module = context_->GetContext()->CreateShader(
+//            ShaderCompilerSystem::kCompileResult.at(kConvertNV12PassComp));
+//
+//    compute_stage_info.pName = "main";
 
     VkPipelineLayoutCreateInfo pipeline_layout_info{};
     pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -251,7 +248,8 @@ void FrameConvertNV12Pass::SetupPipeline(RenderPassInitInfo& info) {
     VkComputePipelineCreateInfo pipeline_info;
     ZeroVKStruct(pipeline_info, VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO);
 
-    pipeline_info.stage = compute_stage_info;
+    pipeline_info.stage =VkHelper::CreateComputeShaderState(info.context->GetContext(),
+        ShaderCompilerSystem::kCompileResult.at(kConvertNV12PassComp));
     pipeline_info.layout = pipelines_[0].layout;
 
     info.context->GetContext()->CreateComputePipeline(1, &pipeline_info,

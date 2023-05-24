@@ -4,10 +4,10 @@
 #include "CameraComponent.h"
 namespace toystation{
 CameraComponent::CameraComponent(){
-    position_ = {-20.0, 0.0, 0.0};
-    forward_ = {1.0, 0.0, 0.0};
-    up_ = {0.0, 0.0, 1.0};
-    yaw_ = 0;
+    position_ = {0.0, 5.0, 0.0};
+    forward_ = {0.0, 0.0, 1.0};
+    up_ = {0.0, 1.0, 0.0};
+    yaw_ = 90;
     pitch_ = 0;
     view_up_ = up_;
     Update();
@@ -38,7 +38,7 @@ void CameraComponent::Rotate(int x,int y){
     pos = pos/pos.w;
     position_ = Vector3(pos);
 }
-void CameraComponent::ViewMove(int x, int y) {
+void CameraComponent::ViewMove(float x, float y) {
     yaw_ +=x;
     pitch_ +=y;
     if(pitch_> 89.9f){
@@ -49,12 +49,21 @@ void CameraComponent::ViewMove(int x, int y) {
     }
     Update();
 }
+void CameraComponent::Move(Vector3 f){
+    //相机的移动向前为视角方向，向上为world的向上方式，向右则叉乘，相机高度不应该改变
+    Vector3 move_right = glm::normalize(glm::cross({0.0,1.0,0.0},forward_));
+    position_ += forward_*f.z;
+    position_ += Vector3 (0.0,1.0,0.0)*f.y;
+    position_ += move_right*f.x;
 
+    //position_ += glm::transpose(Matrix3(move_right,Vector3 (0.0,1.0,0.0),forward_))*f;
+    Update();
+}
 void CameraComponent::Update() {
     forward_[0] = cosf(glm::radians(yaw_)) * cosf(glm::radians(pitch_));
     forward_[1] = sinf(glm::radians(pitch_));
     forward_[2] = sinf(glm::radians(yaw_)) * cos(glm::radians(pitch_));
-    view_right_ = glm::normalize(glm::cross(forward_, up_));
-    view_up_ = glm::normalize(glm::cross(view_right_, forward_));
+    view_right_ = glm::normalize(glm::cross(up_,forward_));
+    view_up_ = glm::normalize(glm::cross(forward_,view_right_));
 }
 }

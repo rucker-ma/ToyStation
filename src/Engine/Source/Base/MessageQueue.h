@@ -109,7 +109,7 @@ public:
 
     void Push(std::shared_ptr<Msg>&& msg);
     bool Pop(std::shared_ptr<Msg>& msg);
-
+    bool Pop(std::shared_ptr<Msg>& msg,int timeout);
 private:
     std::mutex mtx_;
     std::condition_variable cv_;
@@ -121,7 +121,7 @@ class MessageQueue {
 public:
     void Post(std::thread::id dst, std::shared_ptr<Msg>&& msg);
     bool Get(std::shared_ptr<Msg>& msg);
-
+    bool Wait(std::shared_ptr<Msg>& msg,int timeout);
 private:
     std::map<std::thread::id, ThreadSafeQueue> queues_;
     std::mutex create_mtx_;

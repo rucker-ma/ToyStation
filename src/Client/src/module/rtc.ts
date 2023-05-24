@@ -2,7 +2,8 @@ export { RtcClient };
 class RtcClient {
   pc: RTCPeerConnection;
   ws: WebSocket | undefined;
-  input_datachannel:RTCDataChannel |undefined;
+
+  input_datachannel: RTCDataChannel | undefined;
 
   constructor() {
     this.pc = new RTCPeerConnection();
@@ -11,25 +12,29 @@ class RtcClient {
     this.ws = new WebSocket("ws://localhost:9002");
     this.ws.onmessage = this.wsMessage.bind(this);
 
-    this.pc.ondatachannel = this.getDatachannel.bind(this)
+    this.pc.ondatachannel = this.getDatachannel.bind(this);
     console.log("connect to ...");
   }
 
-  getDatachannel(event:RTCDataChannelEvent):void{
+  getDatachannel(event: RTCDataChannelEvent): void {
     this.input_datachannel = event.channel;
   }
-  sendInput(message:string):void{
-    this.input_datachannel?.send(message)
+  sendInput(message: string): void {
+    this.input_datachannel?.send(message);
+  }
+  sendJsonInput(message:JSON):void{
+    const content = JSON.stringify(message);
+    this.input_datachannel?.send(content);
   }
   async wsMessage(ev: MessageEvent): Promise<void> {
-    let payload = JSON.parse(ev.data);
+    const payload = JSON.parse(ev.data);
     if (payload.type == "welcome") {
       payload.type = "join";
       this.ws?.send(JSON.stringify(payload));
     }
     if (payload.type == "offer") {
       if (payload.payload != null) {
-        let session_init = new RTCSessionDescription({
+        const session_init = new RTCSessionDescription({
           sdp: payload.payload,
           type: "offer",
         });
@@ -43,7 +48,7 @@ class RtcClient {
     }
     if (payload.type == "candidate") {
       const recvCandidate = JSON.parse(payload.payload);
-      let candidate = new RTCIceCandidate({
+      const candidate = new RTCIceCandidate({
         candidate: recvCandidate.candidate,
         sdpMid: recvCandidate.sdpMid,
         sdpMLineIndex: recvCandidate.sdpMLineIndex,

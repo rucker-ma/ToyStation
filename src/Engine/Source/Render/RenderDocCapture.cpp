@@ -39,7 +39,7 @@ bool RenderDocCapture::Init() {
         // 防止renderdoc抑制vulkan validation layer输出
         // 这个地方有个问题，如果开启此选项，vkexternalmemory会报错，实际不加载renderdoc
         // 直接使用validation layer并不会报错
-        //ret = rdoc_api->SetCaptureOptionU32(eRENDERDOC_Option_DebugOutputMute, 0);
+        ret = rdoc_api->SetCaptureOptionU32(eRENDERDOC_Option_DebugOutputMute, 0);
         assert(ret == 1);
         return true;
     }

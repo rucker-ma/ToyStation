@@ -13,11 +13,15 @@ void ToyEngine::PreInit(){
     ToyEngineSetting::Instance().SetUseHWAccel(true);
 }
 void ToyEngine::Init() {
-    shader_system_.LoadShaderConfig();
+    shader_system_.Initialize();
     render_system_.Initialize();
     transfer_system_.Initialize();
     input_system_.Initialize();
     world_manager_.Initialize();
+}
+void ToyEngine::PostInit(){
+    world_manager_.PostInitialize();
+    render_system_.PostInitialize();
 }
 void ToyEngine::Run() {
     while (true) {

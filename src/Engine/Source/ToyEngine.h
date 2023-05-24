@@ -18,6 +18,7 @@ public:
     void PreInit();
     //system init
     void Init();
+    void PostInit();
     void Run();
     void PushRenderFlag(RenderAction flag);
     InputSystem& GetInputSystem();

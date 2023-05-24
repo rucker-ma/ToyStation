@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "Framework/MaterialComponent.h"
 
 namespace toystation {
 class FileUtil {
@@ -22,7 +23,7 @@ public:
                          int height);
     static unsigned char* ReadImg(std::string name, int& width, int& height,
                                   int& channel);
-
+    static std::shared_ptr<Texture> ReadImageAsRGBA(std::string path);
     static std::string Combine(const char* relative_path);
     static std::string Combine(std::string relative_path);
     static std::string GetSuffix(std::string path);

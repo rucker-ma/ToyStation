@@ -11,11 +11,12 @@ namespace toystation{
 class ShaderCompilerSystem
 {
 public:
-    void Comiple();
-    void LoadShaderConfig();
-    bool ReloadShader();
+    void Initialize();
+    //void Comiple();
     static std::unordered_map<std::string,std::vector<char>> kCompileResult;
 private:
+    void LoadShaderConfig();
+    bool ReloadShader();
     bool LoadShader(std::unordered_map<std::string,std::vector<char>>& container);
 private:
     shaderc::Compiler compiler_;

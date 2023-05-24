@@ -19,7 +19,7 @@ struct RenderPassInitInfo {
 
 class RenderPassBase {
 public:
-    struct RenderPipeline {
+    struct RHIPipeline {
         VkPipeline pipeline;
         VkPipelineLayout layout;
     };
@@ -30,11 +30,15 @@ public:
 
     virtual void Initialize(RenderPassInitInfo& info){};
     virtual void PostInitialize(){};
+
     virtual void PrepareData(){};
     virtual void Draw()=0;
+    virtual void ResetPass(){}
 protected:
     VkRenderPass render_pass_;
-    std::vector<RenderPipeline> pipelines_;
+    std::vector<RHIPipeline> pipelines_;
     Descriptor descriptor_;
+    VkFramebuffer framebuffer_;
+    DescriptorSetContainer set_container_;
 };
 }  // namespace toystation

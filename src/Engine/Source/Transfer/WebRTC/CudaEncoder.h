@@ -35,7 +35,7 @@ private:
     std::unique_ptr<NvEncoderCuda> encoder_;
     webrtc::EncodedImageCallback* encoded_done_;
     std::shared_ptr<RateControlParameters> rate_control_;
-    NV_ENC_INITIALIZE_PARAMS initialize_params;
-    NV_ENC_CONFIG encode_config;
+    NV_ENC_INITIALIZE_PARAMS initialize_params_;
+    NV_ENC_CONFIG encode_config_;
 };
 }

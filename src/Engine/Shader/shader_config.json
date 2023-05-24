@@ -35,6 +35,30 @@
       "file": "src/Engine/Shader/skybox.frag",
       "hash": "",
       "define":[]
+    },
+    {
+      "type": "text_vert",
+      "file": "src/Engine/Shader/text.vert",
+      "hash": "",
+      "define":[]
+    },
+    {
+      "type": "text_frag",
+      "file": "src/Engine/Shader/text.frag",
+      "hash": "",
+      "define":[]
+    },
+    {
+      "type": "postprocess_vert",
+      "file": "src/Engine/Shader/postprocess.vert",
+      "hash": "",
+      "define":[]
+    },
+    {
+      "type": "postprocess_frag",
+      "file": "src/Engine/Shader/postprocess.frag",
+      "hash": "",
+      "define":[]
     }
   ]
 }
