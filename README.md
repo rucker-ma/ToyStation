@@ -23,14 +23,3 @@ TODO:
       * 采用硬件编码完成
     - 需要查看webrtc中videostreamencoder对象逻辑
 
-
-### Vukan和渲染的记录
-1. Vulkan中NDC空间范围为[0,1]
-2. 渲染系统使用左手系
-3. 相机移动规则,针对相机视角而言
-   * e：up d: right w:in
-
-4. ue系统参考：
-   left hand: x left ,y in ,z up //x需要再确认
-5. 当前系统：
-   left hand: x right ,y up,  z in
