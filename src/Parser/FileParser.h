@@ -2,6 +2,8 @@
 #include <filesystem>
 #include <string>
 
+#include <string>
+
 #include "ClassCursor.h"
 #include "Helper.h"
 
@@ -14,8 +16,16 @@ public:
     std::vector<std::shared_ptr<Cursor>>& Cursors();
     std::filesystem::path Path();
 
+    FileParser(std::filesystem::path filepath, CXIndex index);
+    ~FileParser();
+    void Generate();
+    void Parse(Cursor& root_cursor);
+    std::vector<std::shared_ptr<Cursor>>& Cursors();
+    std::filesystem::path Path();
+
 private:
     void Verify();
+
 
 private:
     std::filesystem::path file_path_;
@@ -25,7 +35,14 @@ private:
     std::vector<std::string> name_space;
     std::shared_ptr<MacrosDelegate> Del;
     std::vector<std::shared_ptr<Cursor>> output_cursors_;
+    CXIndex idx_;
+    CXTranslationUnit unit_;
+    Cursor root_cursor_;
+    std::vector<std::string> name_space;
+    std::shared_ptr<MacrosDelegate> Del;
+    std::vector<std::shared_ptr<Cursor>> output_cursors_;
 
+    std::vector<const char*> arguments = {{
     std::vector<const char*> arguments = {{
         "-x",
         "c++",         // 将输入文件视为c++语言文件

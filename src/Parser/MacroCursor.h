@@ -2,18 +2,23 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <string>
 #include <vector>
 
 #include "Cursor.h"
+#include "Cursor.h"
 
 class MacroCursor : public Cursor {
+class MacroCursor : public Cursor {
     friend class MacrosDelegate;
+
 
 public:
     MacroCursor();
     MacroCursor(const Cursor& cursor);
     Cursor GetNextCursor();
     std::vector<std::string> GetKeys();
+
 
 private:
     void ParseKeys();
@@ -23,15 +28,19 @@ private:
     bool ClassMatch(std::string linestr, unsigned int& offset);
     bool FunctionMatch(std::string linestr, unsigned int& offset);
 
+
 private:
     Cursor modified_cursor_;
     std::vector<std::string> keys;
 };
 
 class MacrosDelegate {
+class MacrosDelegate {
 public:
     MacrosDelegate();
     void Push(MacroCursor cursor);
+    bool Modified(Cursor cursor, std::vector<std::string>& keys);
+
     bool Modified(Cursor cursor, std::vector<std::string>& keys);
 
 private:

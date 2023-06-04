@@ -33,4 +33,5 @@
 // modify for CLASS Macro
 #define SINGLETON
 // export for csharp use,
+// export for csharp use,
 #define CSHARP
