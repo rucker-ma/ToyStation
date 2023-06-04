@@ -9,7 +9,7 @@
 
 namespace toystation {
 RenderMesh::RenderMesh() { 
-    model_ = glm::rotate(model_, (float)90, Vector3(1,0,0));
+    //model_ = glm::rotate(model_, (float)90, Vector3(1,0,0));
 }
 Matrix4 RenderMesh::GetModel() {
     //model_ = glm::rotate(model_,(float)90.0,Vector3(0.0,0.0,1.0));
@@ -35,12 +35,18 @@ void RenderMaterial::UpdateSet() {
     std::vector<VkWriteDescriptorSet> sets;
     if (basecolor.image) {
         sets.push_back(set_container.MakeWrite(0, 0, &basecolor.descriptor));
+    } else {
+        LogError("current material not have basecolor texture");
     }
     if (occlusion.image) {
         sets.push_back(set_container.MakeWrite(0, 1, &occlusion.descriptor));
+    } else {
+        LogError("current material not have occlusion texture");
     }
     if(metallic_roughness.image){
         sets.push_back(set_container.MakeWrite(0, 2, &metallic_roughness.descriptor));
+    } else {
+        LogError("current material not have metallic roughness texture");
     }
     if(normal.image){
         sets.push_back(set_container.MakeWrite(0, 3, &normal.descriptor));

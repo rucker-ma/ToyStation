@@ -47,6 +47,7 @@ void RenderContext::Initialize(RenderContextCreateInfo& info) {
         // for local render, we also need `VK_KHR_surface` and
         // `VK_KHR_win32_surface` or other platform surface,now not test
     }
+    context_create_info.AddDeviceExtension(VK_KHR_MAINTENANCE_1_EXTENSION_NAME);
 //    context_create_info.AddInstanceExtension(VK_KHR_SURFACE_EXTENSION_NAME);
 //    context_create_info.AddInstanceExtension(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
 #ifdef _WIN64

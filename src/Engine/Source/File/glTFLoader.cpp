@@ -74,10 +74,16 @@ void GltfModelLoader::Load(std::string path, std::shared_ptr<TObject> obj) {
                                           .metallicRoughnessTexture.index);
                 material->SetTexture(TextureType::Texture_Metallic_Roughness,
                                      data);
-
                 material->SetFactor(ToVector4(gltf_material.pbrMetallicRoughness.baseColorFactor),
                                     gltf_material.pbrMetallicRoughness.metallicFactor,
                                     gltf_material.pbrMetallicRoughness.roughnessFactor);
+            } else {        
+                LogWarn("not exist metallic-roughness image");
+                material->SetFactor(
+                    ToVector4(
+                        gltf_material.pbrMetallicRoughness.baseColorFactor),
+                    gltf_material.pbrMetallicRoughness.metallicFactor,
+                    gltf_material.pbrMetallicRoughness.roughnessFactor);
             }
             // occlusion texture
             if (gltf_material.occlusionTexture.index >= 0) {
@@ -127,21 +133,20 @@ void GltfModelLoader::Load(std::string path, std::shared_ptr<TObject> obj) {
         std::shared_ptr<MeshComponent> mesh_comp =
             obj->CreateComponent<MeshComponent>();
         for (auto& mesh : model.meshes) {
-//            std::shared_ptr<SubMesh> sub_mesh = mesh_comp->CreateSubMesh();
-            std::shared_ptr<SubMesh> sub_mesh = std::make_shared<SubMesh>();
-                meshes.push_back(sub_mesh);
             // TODO:一个mesh多个primitive怎么额解决？
             for (auto& primitive : mesh.primitives) {
+                std::shared_ptr<SubMesh> sub_mesh = std::make_shared<SubMesh>();
+                meshes.push_back(sub_mesh);
+
                 // primitive.mode 渲染模式，TINYGLTF_MODE_*
                 // primitive.attributes
                 // attributes中类型索引指向accessor,获取具体的数据
                 // primitive.material  材质索引
                 auto indices_data = GetAccessorData(model, primitive.indices);
                 sub_mesh->AddData(MeshDataType::Mesh_Indices, indices_data);
-
                 sub_mesh->SetMaterialIndex(primitive.material);
-                // get material
-                // Material& material = model.materials[primitive.material];
+               
+                // get material:Material& material = model.materials[primitive.material];
                 for (auto& pair : primitive.attributes) {
                     std::string attr_name = pair.first;
                     auto attr_data = GetAccessorData(model, pair.second);
@@ -157,8 +162,8 @@ void GltfModelLoader::Load(std::string path, std::shared_ptr<TObject> obj) {
                         LogError("MeshComponent unsupported Data");
                     }
                 }
+                mesh_comp->AddSubMesh(sub_mesh);
             }
-            mesh_comp->AddSubMesh(sub_mesh);
         }
     }
     //通过scene和node获取mesh的local matrix

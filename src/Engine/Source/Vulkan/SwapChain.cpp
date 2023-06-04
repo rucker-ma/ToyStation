@@ -118,6 +118,8 @@ SwapChainOffline::SwapChainOffline() : SwapChainBase() {
     scissor_ = {0};
     scissor_.extent.width = SURFACE_DEFAULT_WIDTH;
     scissor_.extent.height = SURFACE_DEFAULT_HEIGHT;
-    viewport_ = {0, 0, SURFACE_DEFAULT_WIDTH, SURFACE_DEFAULT_HEIGHT, 0, 1};
+//    viewport_ = {0, 0, SURFACE_DEFAULT_WIDTH, SURFACE_DEFAULT_HEIGHT, 0, 1};
+//    这样修改是应用VK_KHR_MAINTENANCE1_EXTENSION,将NDC变换的y down改为y up
+    viewport_ = {0, SURFACE_DEFAULT_HEIGHT, SURFACE_DEFAULT_WIDTH, -SURFACE_DEFAULT_HEIGHT, 0, 1};
 }
 }  // namespace toystation

@@ -78,6 +78,9 @@ std::shared_ptr<AABBBox> AABBBox::Combine(std::shared_ptr<AABBBox> box){
     //assert(0&&"not implement");
     return std::make_shared<AABBBox>(xmin,xmax,ymin,ymax,zmin,zmax);
 }
+std::shared_ptr<AABBBox> AABBBox::Copy(){
+    return std::make_shared<AABBBox>(xmin_,xmax_,ymin_,ymax_,zmin_,zmax_);
+}
 bool AABBBox::Inside(Vector3 point){
     return (xmin_<= point.x&& point.x<=xmax_)&&
            (ymin_<= point.y&& point.y<=ymax_)&&
@@ -139,18 +142,19 @@ void SubMesh::GenerateBoundingBox(){
         memcpy(vertexs.data(),position_buffer_.buffer.data(),
                sizeof(Vector3)*position_buffer_.nums);
 
-        float xmin,ymin,zmin = std::numeric_limits<float>::min();
-        float xmax,ymax,zmax = std::numeric_limits<float>::max();
-
+        float xmin = std::numeric_limits<float>::max();
+        float ymin = xmin,zmin = xmin;
+        float xmax = std::numeric_limits<float>::min();
+        float ymax = xmax,zmax=xmax;
         for(auto& vert:vertexs){
             xmin = std::min(xmin,vert.x);
-            xmax = std::min(xmax,vert.x);
+            xmax = std::max(xmax,vert.x);
 
             ymin = std::min(ymin,vert.y);
-            ymax = std::min(ymax,vert.y);
+            ymax = std::max(ymax,vert.y);
 
             zmin = std::min(zmin,vert.z);
-            zmax = std::min(zmax,vert.z);
+            zmax = std::max(zmax,vert.z);
         }
         bounding_box_= std::make_shared<AABBBox>(xmin,xmax,ymin,ymax,zmin,zmax);
     }else{

@@ -1,9 +1,9 @@
 <template>
   <div style="height: 100vh">
     <el-container style="height: 100%">
-      <el-header class="main-header" style="height: 40px">Header</el-header>
+      <el-header class="main-header" style="height: 30px">Header</el-header>
       <el-container>
-        <el-aside class="main-aside" style="width: 50px">Sid</el-aside>
+        <el-aside class="main-aside" style="width: 40px">Sid</el-aside>
         <el-main class="main-layout">
           <MainAreaLayout></MainAreaLayout>
         </el-main>
@@ -19,7 +19,7 @@ import MainAreaLayout from "./MainAreaLayout.vue";
 </script>
 <style scoped>
 .main-footer {
-  height: 40px;
+  height: 20px;
   width: 100%;
   /* position: fixed; 将footer固定在页面底部 */
   bottom: 0;

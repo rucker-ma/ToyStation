@@ -21,6 +21,7 @@ public:
 private:
     RHITexture CreateTextureFromKtx(std::string path);
     RHITexture CreateTextureFromOther(std::string path);
+    RHITexture CreateTextureFromValue(int width, int height, Vector4 vec);
     void CreateRenderTexture(VkCommandBuffer& cmd,std::shared_ptr<Texture> texture_data,RHITexture& texture, 
         VkFormat format = VK_FORMAT_R8G8B8A8_UNORM);
     void CreateRenderTexture(VkCommandBuffer& cmd,

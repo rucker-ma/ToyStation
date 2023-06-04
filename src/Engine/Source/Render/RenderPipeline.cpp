@@ -53,8 +53,8 @@ void RenderPipeline::Tick() {
 
     main_camera_pass_->Draw();
     skybox_pass_->Draw();
-    text_pass_->Draw();
     postprocess_pass_->Draw();
+    text_pass_->Draw();
     //text_pass使用的是正交投影，会修改`resource->ubo_.proj`,因此放在最后
 
 }

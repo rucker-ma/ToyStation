@@ -7,6 +7,8 @@ layout(location=1) in vec3 fragNormal;      //normal
 layout(location=2) in vec2 fragTexCoord;    //texcoord
 layout(location=3) in vec3 fragTangent;     //tangent
 
+layout(location=4) in vec3 projPosition;
+
 layout(set=1,binding =0) uniform sampler2D albedo_map;
 layout(set=1,binding =1) uniform sampler2D occlusion_map;
 layout(set=1,binding =2) uniform sampler2D metallic_roughness_map;

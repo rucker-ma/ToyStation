@@ -14,18 +14,26 @@ void EditorController::Init(){
     input_component_->OnScreenHit = [this](Vector2 point){
         ConvertHitToRay(point);
     };
+    auto response = std::make_shared<CustomInputEventResponse>();
+    response->name = "move_factor";
+    response->handler = [this](Json::Value value) {
+        float factor = value["value"].asInt();
+        move_factor_ = factor*factor / 10.0f;
+    };
+    kEngine.GetInputSystem().RegisterCustomResponse(response);
 }
+//此处是在InputSystem Tick是被触发
 void EditorController::ConvertHitToRay(Vector2 screen_point){
     //将屏幕空间转换到世界空间，以便于包围盒求交
     Matrix4  proj_mat = camera_component_->GetProjection();
     Matrix4 view_mat = camera_component_->GetView();
     Matrix4 p_v_inv = glm::inverse(proj_mat*view_mat);
-    Vector4  world_near = p_v_inv*Vector4 (screen_point,0,1);
-    Vector4 world_far = p_v_inv*Vector4 (screen_point,1,1);
+    Vector4  world_near = p_v_inv*Vector4 (screen_point,0.000001,1);
+    Vector4 world_far = p_v_inv*Vector4 (screen_point,0.999999,1);
     Ray ray;
-    ray.origin = Vector3 (world_near);
-    ray.direction = glm::normalize(Vector3 (world_far) - ray.origin);
-
+    ray.origin = Vector3 (world_near)/world_near.w;
+    ray.direction = glm::normalize(Vector3 (world_far)/world_far.w - ray.origin);
+    kEngine.GetWorldManager().ActiveLevel()->BoundingBoxHit(ray);
 }
 Vector3 EditorController::Location(){
     return camera_component_->GetPosition();
@@ -52,7 +60,9 @@ void EditorController::EditorInputComponent::OnMouseEvent(MouseEvent event){
             }
             if (event.key == MouseKey::LEFT) {
                 //convert screen point to hit ray
-                OnScreenHit(event.position);
+                if(OnScreenHit) {
+                    OnScreenHit(event.position);
+                }
             }
             break ;
         case EventType::Move:

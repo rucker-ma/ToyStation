@@ -12,9 +12,14 @@ layout(location=0) out vec3 fragPosition; //location
 layout(location=1) out vec3 fragNormal; //normal
 layout(location=2) out vec2 fragTexCoord;
 layout(location=3) out vec3 fragTangent;
+layout(location=4) out vec3 projPosition;
 
 void main(){
-    gl_Position = ubo.proj*ubo.view*ubo.model*vec4(inPosition,1.0);
+    vec4 proj_position =  ubo.proj*ubo.view*ubo.model*vec4(inPosition,1.0);
+    gl_Position = proj_position;
+    projPosition = vec3(proj_position)/proj_position.w;
+    projPosition.xy = projPosition.xy/2.0 + vec2(0.5);
+
     fragPosition = vec3(ubo.model* vec4( inPosition,1.0));
     fragNormal = normalize(mat3(transpose(inverse(ubo.model)))*inNormal);;
     fragTexCoord = inTexCoord;

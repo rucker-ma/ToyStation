@@ -85,45 +85,31 @@ void TextPass::PrepareRenderString(IVector2 position,std::string content){
         }
         Character info = chars_[c];
         //左上角为（0，0）点
-        Vector3  v_leftup = {(position.x+info.bearing.x)/(float)tex_size_.x,
-                            (position.y-info.bearing.y)/(float)tex_size_.y,0};
-        Vector3  v_rightup = {(position.x+info.bearing.x+info.size.x)/(float)tex_size_.x,
-                            (position.y-info.bearing.y)/(float)tex_size_.y,0};
-        Vector3  v_leftdown = {(position.x+info.bearing.x)/(float)tex_size_.x,
-                             (position.y-info.bearing.y+info.size.y)/(float)tex_size_.y,0};
-        Vector3  v_rightdown = {(position.x+info.bearing.x+info.size.x)/(float)tex_size_.x,
-                              (position.y-info.bearing.y+info.size.y)/(float)tex_size_.y,0};
-//        current_render_char_.push_back({v_leftup,info.coords.leftup});
-//        current_render_char_.push_back({v_rightup,info.coords.rightup});
-//        current_render_char_.push_back({v_leftdown,info.coords.leftdown});
-//
-//        current_render_char_.push_back({v_rightup,info.coords.rightup});
-//        current_render_char_.push_back({v_leftdown,info.coords.leftdown});
-//        current_render_char_.push_back({v_rightdown,info.coords.rightdown});
+        //Vector3 v_leftup = {position.x + info.bearing.x,
+        //                 position.y - info.bearing.y, 0};
+        //Vector3 v_rightup = {position.x + info.bearing.x + info.size.x,
+        //                     position.y - info.bearing.y, 0};
+        //Vector3 v_leftdown = {position.x + info.bearing.x,
+        //                      position.y - info.bearing.y + info.size.y, 0};
+        //Vector3 v_rightdown = {position.x + info.bearing.x + info.size.x,
+        //                       position.y - info.bearing.y + info.size.y, 0};
+        
+        // 左下角为（0，0）点
+        Vector3 v_leftdown = {position.x + info.bearing.x,
+                         position.y + info.bearing.y - info.size.y, 0};
+        Vector3 v_rightdown = {position.x + info.bearing.x + info.size.x,
+                               position.y + info.bearing.y - info.size.y, 0};
+        Vector3 v_leftup = {position.x + info.bearing.x,
+                              position.y + info.bearing.y, 0};
+        Vector3 v_rightup = {position.x + info.bearing.x + info.size.x,
+                               position.y + info.bearing.y, 0};
 
-        current_render_char_.push_back({
-            {position.x+info.bearing.x,position.y-info.bearing.y,0},info.coords.leftup
-        });
-
-        current_render_char_.push_back({
-            {position.x+info.bearing.x+info.size.x,position.y-info.bearing.y,0},info.coords.rightup
-        });
-
-        current_render_char_.push_back({
-            {position.x+info.bearing.x,position.y-info.bearing.y+info.size.y,0},info.coords.leftdown
-        });
-
-        current_render_char_.push_back({
-            {position.x+info.bearing.x+info.size.x,position.y-info.bearing.y,0},info.coords.rightup
-        });
-
-        current_render_char_.push_back({
-            {position.x+info.bearing.x,position.y-info.bearing.y+info.size.y,0},info.coords.leftdown
-        });
-
-        current_render_char_.push_back({
-            {position.x+info.bearing.x+info.size.x,position.y-info.bearing.y+info.size.y,0},info.coords.rightdown
-        });
+        current_render_char_.push_back({ v_leftup,info.coords.leftup});
+        current_render_char_.push_back({ v_rightup,info.coords.rightup});
+        current_render_char_.push_back({v_leftdown,info.coords.leftdown});
+        current_render_char_.push_back({v_rightup,info.coords.rightup });
+        current_render_char_.push_back({ v_leftdown,info.coords.leftdown});
+        current_render_char_.push_back({ v_rightdown,info.coords.rightdown});
         position.x = position.x+ info.advance.x/64.0f;
     }
 
@@ -195,12 +181,11 @@ void TextPass::AddChar(unsigned long char_code,Vector2 position,Character info){
     info.coords.leftdown = {position.x/tex_size_.x,(position.y+info.size.y)/tex_size_.y};
     info.coords.rightdown = {(position.x+info.size.x)/tex_size_.x,
                              (position.y+info.size.y)/tex_size_.y};
-
     chars_[char_code] = info;
 }
 //设置文字为正交投影
 void TextPass::UpdateUniform(){
-    resource_->ubo_.proj = glm::ortho<float>(0,tex_size_.x,0,tex_size_.y,0.1F,100.0F);
+    resource_->ubo_.proj = glm::ortho<float>(0,tex_size_.x,0,tex_size_.y,1.0F,3000.0F);
     void*data = context_->GetAllocator()->Map(resource_->ubo_buffer_);
     memcpy(data,&resource_->ubo_,sizeof(resource_->ubo_));
     context_->GetAllocator()->UnMap(resource_->ubo_buffer_);
@@ -339,7 +324,7 @@ void TextPass::SetupPipeline(RenderPassInitInfo& info){
         VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
     color_blend_attachment.blendEnable = VK_TRUE; //enable blend for text output to shading texture
     color_blend_attachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-    color_blend_attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+    color_blend_attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
     color_blend_attachment.colorBlendOp = VK_BLEND_OP_ADD;
     color_blend_attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
     color_blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;

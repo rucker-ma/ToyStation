@@ -42,6 +42,7 @@ void RenderSystem::Initialize() {
     Global::SetRenderThread(std::thread([this] { Run(); }));
 }
 void RenderSystem::PostInitialize(){
+    RegisterCapture();
     initialize_phase_ = false;
 }
 void RenderSystem::Tick() {
@@ -153,5 +154,6 @@ void RenderSystem::RegisterCapture(){
     response->handler = [this](Json::Value value){
         capture_frame_ = true;
     };
+    kEngine.GetInputSystem().RegisterCustomResponse(response);
 }
 }  // namespace toystation

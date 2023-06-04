@@ -1,21 +1,20 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from "vue";
 import { RtcClient } from "../module/rtc";
-import {InputProcess} from "@/module/input_process";
+import { InputProcess } from "@/module/input_process";
+import type { Arrayable } from "element-plus/es/utils";
 
 const client = new RtcClient();
-
+const moveScale = ref(3);
 const container = ref<HTMLDivElement | null>(null);
 const remoteVideo = ref<HTMLVideoElement | null>(null);
 
-const input_process = new InputProcess((msg:JSON)=>{
+const input_process = new InputProcess((msg: JSON) => {
   client.sendJsonInput(msg);
 });
 
-
 onMounted(() => {
   if (remoteVideo.value) {
-
     input_process.setupVideoMouseInput(remoteVideo.value);
     input_process.setupKeyboardInput();
   }
@@ -27,18 +26,18 @@ function connectToServer() {
 }
 function renderdocCapture() {
   const keyinfo = {
-    trigger:"event",
-    name:"capture",
-    packet:{}
+    trigger: "event",
+    name: "capture",
+    packet: {},
   };
   let content = JSON.stringify(keyinfo);
   client.sendInput(content);
 }
 function shaderUpdate() {
   const keyinfo = {
-    trigger:"event",
-    name:"shader",
-    packet:{}
+    trigger: "event",
+    name: "shader",
+    packet: {},
   };
   let content = JSON.stringify(keyinfo);
   client.sendInput(content);
@@ -63,7 +62,19 @@ function getTrack(ev: RTCTrackEvent): void {
     }
   }
 }
-
+function moveSacleChanged(scale: Arrayable<number>){
+  if(typeof scale == "number"){
+    const keyinfo = {
+    trigger: "event",
+    name: "move_factor",
+    packet: {
+      value:scale
+    },
+  };
+  let content = JSON.stringify(keyinfo);
+  client.sendInput(content);
+  }
+}
 const maxWidth = computed(() => {
   if (!remoteVideo.value) return "none";
   const { width, height } = remoteVideo.value;
@@ -105,6 +116,9 @@ const maxHeight = computed(() => {
     </div>
     <div class="shader-button-container">
       <el-button @click="shaderUpdate">Shader</el-button>
+    </div>
+    <div class="slider-block">
+      <el-slider class="el-slider" v-model="moveScale" :step="1" :min="1" :max="10" @change="moveSacleChanged"/>
     </div>
   </div>
 </template>
@@ -148,4 +162,28 @@ const maxHeight = computed(() => {
   right: 10px;
   z-index: 2;
 }
+.slider-block {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 100px;
+}
+.slider-block .el-slider {
+  margin-top: 0;
+  margin-left: 12px;
+}
+
+/* .slider-block .demonstration {
+  font-size: 14px;
+  color: var(--el-text-color-secondary);
+  line-height: 44px;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-bottom: 0;
+} */
+/* .slider-block .demonstration + .el-slider {
+  flex: 0 0 70%;
+} */
 </style>

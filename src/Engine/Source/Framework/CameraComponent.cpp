@@ -23,9 +23,9 @@ Matrix4 CameraComponent::GetView() {
 }
 Matrix4 CameraComponent::GetProjection() {
     Matrix4 projection =
-        glm::perspective(glm::radians(fovy_), 1920 / (float)1080, 0.1F, 100.0F);
+        glm::perspective(glm::radians(fovy_), 1920 / (float)1080, 1.0F, 3000.0F);
 
-    projection[1][1] *= -1;
+    //projection[1][1] *= -1;
     return projection;
 }
 Vector3& CameraComponent::GetPosition() { return position_; }
@@ -53,10 +53,9 @@ void CameraComponent::Move(Vector3 f){
     //相机的移动向前为视角方向，向上为world的向上方式，向右则叉乘，相机高度不应该改变
     Vector3 move_right = glm::normalize(glm::cross({0.0,1.0,0.0},forward_));
     position_ += forward_*f.z;
-    position_ += Vector3 (0.0,1.0,0.0)*f.y;
+//    position_ += Vector3 (0.0,1.0,0.0)*f.y;
+    position_ +=view_up_*f.y;
     position_ += move_right*f.x;
-
-    //position_ += glm::transpose(Matrix3(move_right,Vector3 (0.0,1.0,0.0),forward_))*f;
     Update();
 }
 void CameraComponent::Update() {

@@ -26,6 +26,11 @@ private:
     RenderAction action_;
 };
 
+//class RenderDataUpdatePipe {
+//
+//};
+
+
 using RenderMessage = DataMsg<RenderPayload>;
 class TS_CPP_API RenderSystem {
 public:

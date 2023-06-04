@@ -109,13 +109,13 @@ onMounted(() => {
 }
 
 .top-container {
-  height: 65%;
+  height: 75%;
   display: flex;
 }
 
 .left-container {
   /* flex: 0 0 30%; */
-  width: 35%;
+  width: 20%;
   background-color: #f0f0f0;
 }
 .left-splitter{

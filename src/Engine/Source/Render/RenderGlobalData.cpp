@@ -91,6 +91,13 @@ void RenderGlobalData::AddRenderObject(std::shared_ptr<TObject> obj) {
                 render_context->GetAllocator()->CreateBuffer(
                     cmd, sizeof(material->Factor()), &material->Factor(),
                     VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+        } else {
+            LogInfo("create constant metallic-roughness texture from  factor");
+            render_material->metallic_roughness = CreateTextureFromValue(1, 1, Vector4(1.0));
+            render_material->factor_buffer =
+                render_context->GetAllocator()->CreateBuffer(
+                    cmd, sizeof(material->Factor()), &material->Factor(),
+                    VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
         }
         std::shared_ptr<Texture> normal = material->NormalTexture();
         if (normal) {
@@ -154,6 +161,40 @@ RHITexture RenderGlobalData::CreateTextureFromOther(std::string path){
     } else {
         assert(0 && "not support format");
     }
+    render_context->GetCommandPool()->SubmitAndWait(cmd);
+    return texture;
+}
+
+RHITexture RenderGlobalData::CreateTextureFromValue(int width, int height,
+                                                    Vector4 vec) {
+    RHITexture texture;
+    VkCommandBuffer cmd = render_context->GetCommandPool()->CreateCommandBuffer(
+        VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+
+    VkSamplerCreateInfo sampler_info{};
+    ZeroVKStruct(sampler_info, VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO);
+    sampler_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    sampler_info.magFilter = VK_FILTER_LINEAR;
+    sampler_info.minFilter = VK_FILTER_LINEAR;
+    sampler_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    sampler_info.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    sampler_info.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    sampler_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+    sampler_info.compareOp = VK_COMPARE_OP_ALWAYS;
+    sampler_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+
+    std::vector<Vector4> image_data;
+    image_data.resize(width * height, vec);
+
+    std::shared_ptr<Texture> tex = std::make_shared<Texture>();
+    tex->width = width;
+    tex->height = height;
+    tex->type = FRAME_RGBA_F32;
+    unsigned char* begin =  (unsigned char*)image_data.data();
+    unsigned char* end = begin + sizeof(Vector4) * image_data.size();
+    tex->data = std::vector<unsigned char>(begin,end);
+    CreateRenderTexture(cmd, tex, texture, VK_FORMAT_R32G32B32A32_SFLOAT,
+                            sampler_info);
     render_context->GetCommandPool()->SubmitAndWait(cmd);
     return texture;
 }

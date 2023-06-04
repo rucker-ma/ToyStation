@@ -11,5 +11,6 @@ layout(location = 0) out vec2 fragPosition;
 
 void main(){
     gl_Position = ubo.proj*vec4(inPosition,1.0);
+    gl_Position.z = 0;
     fragPosition = inTexCoord;
 }

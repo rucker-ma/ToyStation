@@ -45,6 +45,7 @@ public:
     bool Intersect(Ray ray);
     bool Intersect(std::shared_ptr<AABBBox> box);
     std::shared_ptr<AABBBox> Combine(std::shared_ptr<AABBBox> box);
+    std::shared_ptr<AABBBox> Copy();
     bool Inside(Vector3 point);
     float Xmin(){return xmin_;}
     float Xmax(){return xmax_;}
