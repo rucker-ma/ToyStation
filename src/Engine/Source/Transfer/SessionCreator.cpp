@@ -44,7 +44,8 @@ void SessionCreator::Initialize() {
 std::shared_ptr<TransferSession> SessionCreator::CreateSession(
     std::unique_ptr<SessionClient> client) {
     config.sdp_semantics = webrtc::SdpSemantics::kUnifiedPlan;
-    config.enable_dtls_srtp = true;
+    //config.enable_dtls_srtp = true;
+
     auto session = std::make_shared<TransferSession>(std::move(client));
 
     session->SetPeerConnection(peer_connection_factory_->CreatePeerConnection(
@@ -108,6 +109,8 @@ void SessionCreator::SetupTracks() {
     auto source = new rtc::RefCountedObject<RenderVideoSource>();
     source->Initialize();
     video_source_ = source;
-    video_track_ = peer_connection_factory_->CreateVideoTrack("video", video_source_);
+    //video_track_ = peer_connection_factory_->CreateVideoTrack("video", video_source_);
+    video_track_ = peer_connection_factory_->CreateVideoTrack("video", source);
+
 }
 }  // namespace toystation

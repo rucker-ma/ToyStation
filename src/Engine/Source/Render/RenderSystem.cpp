@@ -45,6 +45,9 @@ void RenderSystem::PostInitialize(){
     RegisterCapture();
     initialize_phase_ = false;
 }
+std::shared_ptr<RenderDataUpdatePipe> RenderSystem::GetUpdatePipe(){
+    return kRenderGlobalData.render_resource->update_pipe;
+}
 void RenderSystem::Tick() {
     if(kEngine.GetTransferSystem().AnyConnected()){
         if(!connected_){
@@ -148,6 +151,7 @@ void RenderSystem::ProcessEvent() {
                 kTransferMessageID, frame_convert_->GetConvertFrame()));
     }
 }
+
 void RenderSystem::RegisterCapture(){
     auto response = std::make_shared<CustomInputEventResponse>();
     response->name = "capture";

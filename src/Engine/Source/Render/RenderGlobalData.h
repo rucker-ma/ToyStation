@@ -6,7 +6,7 @@
 
 #include "RenderResource.h"
 #include "RenderContext.h"
-#include "Framework/MeshComponent.h"
+#include "Framework/Component/MeshComponent.h"
 #include "Framework/TObject.h"
 #include "Framework/Level.h"
 namespace toystation{

@@ -34,7 +34,7 @@ void SocketServer::OnClose(websocketpp::connection_hdl hdl) {
     connections_.erase(hdl);
 }
 void SocketServer::OnMessage(websocketpp::connection_hdl hdl, message_ptr msg) {
-    LogDebug("get socket server msg: ", msg->get_payload());
+    LogDebug("get socket server msg: "+ msg->get_payload());
     OnMessageEvent(hdl, msg);
 }
 void SocketServer::Send(websocketpp::connection_hdl hdl, std::string msg) {

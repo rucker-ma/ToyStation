@@ -22,4 +22,6 @@ const ShaderType kConvertNV12PassComp = "convert_nv12_comp";
 const ShaderType kConvertYUVPassComp = "convert_yuv_comp";
 const ShaderType kTextPassVert = "text_vert";
 const ShaderType kTextPassFrag = "text_frag";
+const ShaderType kDebugPassVert = "debug_vert";
+const ShaderType kDebugtPassFrag = "debug_frag";
 }

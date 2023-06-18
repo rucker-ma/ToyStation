@@ -21,7 +21,7 @@ public:
     void OnFailure(webrtc::RTCError error) override {
         // LOG(INFO) << __FUNCTION__ << " " << ToString(error.type()) << ": "
         //	<< error.message();
-        LogError("Set Sdp error", error.message());
+        LogError("Set Sdp error:" + std::string(error.message()));
     }
 };
 
@@ -130,15 +130,17 @@ void TransferSession::OnIceCandidate(
                            candidate_str, candidate->candidate().username()));
 }
 void TransferSession::OnIceConnectionReceivingChange(bool receiving) {}
-void TransferSession::OnIceCandidateError(const std::string& host_candidate,
-                                          const std::string& url,
-                                          int error_code,
-                                          const std::string& error_text) {}
+//void TransferSession::OnIceCandidateError(const std::string& host_candidate,
+//                                          const std::string& url,
+//                                          int error_code,
+//                                          const std::string& error_text) {}
+void TransferSession::OnIceCandidateError(const std::string& address,int port,
+                         const std::string& url,int error_code,const std::string& error_text){};
 void TransferSession::OnNegotiationNeededEvent(uint32_t event_id) {}
 void TransferSession::OnSuccess(webrtc::SessionDescriptionInterface* desc) {
     std::string sdp;
     desc->ToString(&sdp);
-    LogInfo("Local Description: ", sdp);
+    LogInfo("Local Description: "+ sdp);
 
     cricket::SessionDescription* desp = desc->description();
     cricket::TransportInfos& infos = desp->transport_infos();

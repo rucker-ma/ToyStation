@@ -3,7 +3,7 @@
 #include <tiny_gltf.h>
 #include "Base/Vector.h"
 #include "Framework/TObject.h"
-#include "Framework/MeshComponent.h"
+#include "Framework/Component/MeshComponent.h"
 
 namespace toystation{
 

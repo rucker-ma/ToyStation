@@ -7,13 +7,10 @@
 namespace toystation {
 void RenderGlobalData::AddRenderObject(std::shared_ptr<TObject> obj) {
     int id = obj->GetID();
-    std::shared_ptr<RenderObject> render_object =
-        std::make_shared<RenderObject>(id);
-
+    std::shared_ptr<RenderObject> render_object = std::make_shared<RenderObject>(id);
     std::shared_ptr<MeshComponent> meshes = obj->GetComponent<MeshComponent>();
     std::shared_ptr<MaterialComponent> materials =
         obj->GetComponent<MaterialComponent>();
-
     VkCommandBuffer cmd = render_context->GetCommandPool()->CreateCommandBuffer(
         VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
     // TODO:添加实现细节

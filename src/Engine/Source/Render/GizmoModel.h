@@ -4,12 +4,13 @@
 
 #pragma once
 #include <vector>
-#include "Framework/MeshComponent.h"
-
+#include "Framework/Component/MeshComponent.h"
+#include "Framework/TObject.h"
 namespace toystation{
-class GizmoModel{
+class GizmoModel:public TObject{
 public:
     virtual ~GizmoModel(){}
+    virtual void GenerateModel(){}
     virtual std::vector<std::shared_ptr<SubMesh>> GetMeshes() = 0;
 };
 
@@ -17,9 +18,9 @@ class MoveGizmoModel:public GizmoModel{
 public:
     MoveGizmoModel();
     virtual ~MoveGizmoModel();
+    void GenerateModel();
     std::vector<std::shared_ptr<SubMesh>> GetMeshes()override;
 private:
-
     void Generate(Matrix3 rotate);
     void AddOrigin();
 private:
@@ -28,13 +29,13 @@ private:
     float axis_length_;
     float axis_radius_;
     int samples_;//一个圆周上采样多少个点,指定为偶数
-    std::vector<std::shared_ptr<SubMesh>> meshes_;
 };
 
 class RotateGizmoModel:public GizmoModel{
 public:
     RotateGizmoModel();
     virtual ~RotateGizmoModel();
+    void GenerateModel();
     std::vector<std::shared_ptr<SubMesh>> GetMeshes()override;
 private:
     void Generate(Matrix3 rotate);

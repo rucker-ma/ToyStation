@@ -59,6 +59,18 @@
       "file": "src/Engine/Shader/postprocess.frag",
       "hash": "",
       "define":[]
+    },
+    {
+      "type": "debug_vert",
+      "file": "src/Engine/Shader/outline.vert",
+      "hash": "",
+      "define":[]
+    },
+    {
+      "type": "debug_frag",
+      "file": "src/Engine/Shader/outline.frag",
+      "hash": "",
+      "define":[]
     }
   ]
 }

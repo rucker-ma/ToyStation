@@ -15,6 +15,7 @@
 #pragma comment(lib, "wmcodecdspuuid.lib")
 #pragma comment(lib, "msdmo.lib")
 #pragma comment(lib, "Strmiids.lib")
+#pragma comment(lib, "IPHLPAPI.lib")
 #endif
 namespace toystation {
 

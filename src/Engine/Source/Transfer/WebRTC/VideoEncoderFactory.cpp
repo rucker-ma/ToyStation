@@ -69,11 +69,11 @@ ToyVideoEncoderFactory::GetSupportedFormats() const {
                              webrtc::H264Level::kLevel3_1, "0")};
 }
 
-webrtc::VideoEncoderFactory::CodecInfo
-ToyVideoEncoderFactory::QueryVideoEncoder(
-    const webrtc::SdpVideoFormat& format) const {
-    return webrtc::VideoEncoderFactory::CodecInfo{};
-}
+//webrtc::VideoEncoderFactory::CodecInfo
+//ToyVideoEncoderFactory::QueryVideoEncoder(
+//    const webrtc::SdpVideoFormat& format) const {
+//    return webrtc::VideoEncoderFactory::CodecInfo{};
+//}
 std::unique_ptr<webrtc::VideoEncoder>
 ToyVideoEncoderFactory::CreateVideoEncoder(
     const webrtc::SdpVideoFormat& format) {

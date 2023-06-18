@@ -39,15 +39,17 @@ class InputProcess {
       trigger:"mouse",
       type: "down",
       key: e.button,
+      //在后端引擎中，以坐下角为（x,y)最小点，因此y = 1-y
       position: {
         x: e.offsetX/this._video_ele.clientWidth,
-        y: e.offsetY/this._video_ele.clientHeight,
+        y: 1.0- e.offsetY/this._video_ele.clientHeight,
       },
       delta:{
         x:e.movementX/this._video_ele.clientWidth,
         y:e.movementY/this._video_ele.clientHeight
       }
     };
+    console.log(keyinfo.position.x,keyinfo.position.y);
     this.onSendMessage(keyinfo);
   }
   videoMouseMove(e: MouseEvent) {

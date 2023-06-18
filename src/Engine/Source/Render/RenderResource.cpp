@@ -2,7 +2,9 @@
 #include "Vulkan/Images.h"
 
 namespace toystation{
-
+RenderResource::RenderResource(){
+    update_pipe = std::make_shared<RenderDataUpdatePipe>();
+}
 void RenderResource::Initialize(std::shared_ptr<RenderContext> context){
     gbuffers.resize(GBUFFER_COUNT);
 
@@ -44,4 +46,27 @@ void RenderResource::Initialize(std::shared_ptr<RenderContext> context){
     //ubo_.model = Matrix4(1.0);
 }
 
+void RenderDataUpdatePipe::AddDirtyComponent(std::shared_ptr<TObject> obj,ComponentType type){
+    if(use_first_) {
+        swap_dirty_components0_[obj].push_back(type);
+    }else{
+        swap_dirty_components1_[obj].push_back(type);
+    }
+}
+const std::map<std::shared_ptr<TObject>,std::vector<ComponentType>>&
+RenderDataUpdatePipe::DirtyComponents(){
+    if(use_first_) {
+        return swap_dirty_components1_;
+    }else{
+        return swap_dirty_components0_;
+    }
+}
+void RenderDataUpdatePipe::RenderClear(){
+    if(use_first_){
+        swap_dirty_components1_.clear();
+    }else{
+        swap_dirty_components0_.clear();
+    }
+    use_first_ = !use_first_;
+}
 }

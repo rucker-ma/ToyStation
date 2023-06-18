@@ -6,7 +6,7 @@
 
 #include "Base/Vector.h"
 #include "File/FileUtil.h"
-#include "Framework/TComponent.h"
+#include "Framework/Component/TComponent.h"
 namespace toystation{
 enum EventType{
     Down,

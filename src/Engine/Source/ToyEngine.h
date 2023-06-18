@@ -25,6 +25,7 @@ public:
     TransferSystem& GetTransferSystem();
     WorldManager& GetWorldManager();
     ShaderCompilerSystem& GetShaderSystem();
+    RenderSystem& GetRenderSystem();
 private:
     void SystemTick();
     void RenderTick();

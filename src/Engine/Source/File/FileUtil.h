@@ -4,7 +4,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "Framework/MaterialComponent.h"
+#include "Framework/Component/MaterialComponent.h"
 
 namespace toystation {
 class FileUtil {

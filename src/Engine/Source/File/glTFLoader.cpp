@@ -135,7 +135,7 @@ void GltfModelLoader::Load(std::string path, std::shared_ptr<TObject> obj) {
         for (auto& mesh : model.meshes) {
             // TODO:一个mesh多个primitive怎么额解决？
             for (auto& primitive : mesh.primitives) {
-                std::shared_ptr<SubMesh> sub_mesh = std::make_shared<SubMesh>();
+                std::shared_ptr<SubMesh> sub_mesh = mesh_comp->CreateSubMesh();
                 meshes.push_back(sub_mesh);
 
                 // primitive.mode 渲染模式，TINYGLTF_MODE_*

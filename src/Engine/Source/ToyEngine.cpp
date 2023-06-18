@@ -57,6 +57,9 @@ WorldManager& ToyEngine::GetWorldManager(){
 ShaderCompilerSystem& ToyEngine::GetShaderSystem(){
     return shader_system_;
 }
+RenderSystem& ToyEngine::GetRenderSystem(){
+    return render_system_;
+}
 void ToyEngine::PushRenderFlag(RenderAction flag) {
     std::lock_guard<std::mutex> lock(mtx_);
     render_flags_.push_back(flag);

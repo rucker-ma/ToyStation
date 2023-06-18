@@ -5,7 +5,7 @@
 
 #include "RenderContext.h"
 #include "RenderPipeline.h"
-#include "ConvertPass.h"
+#include "RenderPass/ConvertPass.h"
 #include "RenderGlobalData.h"
 
 
@@ -26,18 +26,13 @@ private:
     RenderAction action_;
 };
 
-//class RenderDataUpdatePipe {
-//
-//};
-
-
 using RenderMessage = DataMsg<RenderPayload>;
 class TS_CPP_API RenderSystem {
 public:
     void Initialize();
     void PostInitialize();
     void Tick();
-
+    std::shared_ptr<RenderDataUpdatePipe> GetUpdatePipe();
     static RenderGlobalData kRenderGlobalData;
 private:
     void Run();

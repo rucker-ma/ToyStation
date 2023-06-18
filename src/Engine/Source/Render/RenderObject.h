@@ -7,14 +7,14 @@
 
 #include "Vulkan/ResourceAllocator.h"
 #include "Vulkan/DescriptorSets.h"
-
+#include "Framework/Component/MaterialComponent.h"
 namespace toystation{
 
 struct UniformBuffer {
     Matrix4 model;
     Matrix4 view;
     Matrix4 proj;
-    Vector3 camera_position;
+    Vector3 camera_position ;
     Vector3 light_color;
     int has_tangent;
     int has_envmap;

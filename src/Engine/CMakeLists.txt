@@ -1,17 +1,16 @@
 set(MODULE_NAME Engine)
 #当前使用的webrtc库不支持c++17标准，因此不能开启c++17
-#set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 find_package(FFmpeg COMPONENTS avcodec avdevice avformat avutil)
-
 include_directories(
     ${GLM}
     ${STB_IMAGE}
     ${VULKAN}/Include
     ${SPDLOG}/include
     ${VK_EXTENSION}
-    ${WebRTC}/include
-    ${WebRTC}/include/third_party/abseil-cpp
-    ${WebRTC}/include/third_party/jsoncpp/source/include
+    ${WebRTC110_PATH}
+    ${WebRTC110_PATH}/third_party/abseil-cpp
+    ${WebRTC110_PATH}/third_party/jsoncpp/source/include
     ${ASIO}/include
     
     ${FFMPEG_INCLUDE_DIR}
@@ -31,7 +30,6 @@ IF(${CUDAToolkit_FOUND})
     include_directories(${CUDAToolkit_INCLUDE_DIRS})
 ENDIF(${CUDAToolkit_FOUND})
 
-
 file(GLOB_RECURSE SOURCE_FILE *.cpp)
 file(GLOB_RECURSE HEADER_FILE *.H)
 
@@ -49,11 +47,12 @@ endfunction()
 
 if(MSVC)
     # disable warning for chinese
+    message("msvc compiler")
     set_target_properties(${MODULE_NAME} PROPERTIES COMPILE_FLAGS "/wd4819")
     set_target_properties(${MODULE_NAME} PROPERTIES LINK_FLAGS "/ignore:4099")
 #    set_property(TARGET ${MODULE_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreadedDebugDLL")
     set_property(TARGET ${MODULE_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
-    add_definitions(-DWEBRTC_WIN -DNOMINMAX -D_HAS_ITERATOR_DEBUGGING=0 -DWEBRTC_USE_H264)
+    add_definitions(-DNDEBUG -DWEBRTC_WIN -DNOMINMAX -D_HAS_ITERATOR_DEBUGGING=0 -DWEBRTC_USE_H264)
 
     foreach(cppfile ${SOURCE_FILE})
         set_group_for_ide(${CMAKE_CURRENT_SOURCE_DIR} ${cppfile})
@@ -62,17 +61,29 @@ if(MSVC)
         set_group_for_ide(${CMAKE_CURRENT_SOURCE_DIR} ${hfile})
     endforeach(hfile)
 endif()
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    # /EHa:开启c++ exceptions
+    set_target_properties(${MODULE_NAME} PROPERTIES COMPILE_FLAGS "/EHa")
+endif()
 
 # PROPERTIES
 # ARCHIVE_OUTPUT_NAME_DEBUG ${CMAKE_CURRENT_SOURCE_DIR}/Output
 # LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/Output
 # RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/Output)
 
-#message("Debug:find vulkan lib: ${VULKAN_LIB}")
+#string(COMPARE EQUAL ${CMAKE_BUILD_TYPE} "Debug" IS_DEBUG)
+#message("build type: ${IS_DEBUG}")
+#if(IS_DEBUG)
+#    message("use debug lib")
+#    find_library(WebRTC110_LIB NAMES webrtc PATHS ${WebRTC110_PATH}/out/Debug/obj)
+#else()
+find_library(WebRTC110_LIB NAMES webrtc PATHS ${WebRTC110_PATH}/out/Release/obj)
+#endif()
+message("webrtc lib path: ${WebRTC110_LIB}")
 target_link_libraries(${MODULE_NAME} ${VULKAN_LIB} ${SHADERC_LIB} VK_EXTENSION)
-target_link_libraries(${MODULE_NAME} ${WebRTC_LIB})
+target_link_libraries(${MODULE_NAME} ${WebRTC110_LIB})
+
 target_link_libraries(${MODULE_NAME} ${FFMPEG_LIB})
-target_link_libraries(${MODULE_NAME} ${JSONCPP_LIB})
 target_link_libraries(${MODULE_NAME} ${FFMPEG_LIBRARIES})
 target_link_libraries(${MODULE_NAME} ${FREETYPE_LIB})
 target_link_libraries(${MODULE_NAME} ${KTX_LIB})

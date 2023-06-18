@@ -1,12 +1,13 @@
 #pragma once
 
 #include "Base/Vector.h"
-#include "CameraComponent.h"
+#include "Component/CameraComponent.h"
 #include "Input/InputComponent.h"
+#include "Component/TextComponent.h"
 #include "TObject.h"
 namespace toystation {
 
-class EditorController: public TObject {
+class EditorController : public toystation::TObject {
 
     class EditorInputComponent:public InputComponent{
     public:
@@ -25,13 +26,14 @@ class EditorController: public TObject {
 public:
     EditorController();
     void Init();
-    virtual void  Tick();
+    virtual void Tick();
     Vector3 Location();
 private:
     void ConvertHitToRay(Vector2 screen_point);
 private:
     std::shared_ptr<CameraComponent> camera_component_;
     std::shared_ptr<EditorInputComponent> input_component_;
+    std::shared_ptr<TextComponent> text_component_;
     float move_factor_;
 };
 

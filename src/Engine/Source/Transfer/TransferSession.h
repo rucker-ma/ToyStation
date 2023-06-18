@@ -54,9 +54,11 @@ public:
     void OnIceCandidate(
         const webrtc::IceCandidateInterface* candidate) override;
     void OnIceConnectionReceivingChange(bool receiving) override;
-    void OnIceCandidateError(const std::string& host_candidate,
-                             const std::string& url, int error_code,
-                             const std::string& error_text) override;
+//    void OnIceCandidateError(const std::string& host_candidate,
+//                             const std::string& url, int error_code,
+//                             const std::string& error_text) override;
+    void OnIceCandidateError(const std::string& address,int port,
+        const std::string& url,int error_code,const std::string& error_text)override;
     void OnNegotiationNeededEvent(uint32_t event_id) override;
     // CreateSessionDescriptionObserver implementation.
     void OnSuccess(webrtc::SessionDescriptionInterface* desc) override;

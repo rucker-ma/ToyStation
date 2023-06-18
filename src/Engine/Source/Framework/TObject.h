@@ -9,11 +9,11 @@
 #include <string>
 #include <atomic>
 
-#include "TComponent.h"
+#include "Component/TComponent.h"
 
 namespace toystation {
 
-class TObject {
+class TObject: public std::enable_shared_from_this<TObject>{
 public:
     TObject()=default;
     TObject(std::string name);
@@ -21,10 +21,10 @@ public:
     template <class T,typename = std::enable_if_t<std::is_base_of_v<TComponent, T>>>
     std::shared_ptr<T> CreateComponent() {
         auto component = std::make_shared<T>();
+        component->SetParent(shared_from_this());
         AddComponent(component);
         return component;
     }
-
     //获取组件，如果不存在返回nullptr
     template <class T,typename = std::enable_if_t<std::is_base_of_v<TComponent, T>>>
     std::shared_ptr<T> GetComponent() {

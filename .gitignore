@@ -2,6 +2,7 @@
 .vscode/
 .idea/
 build/
+cbuild/
 tools/
 out/
 resource/
@@ -16,5 +17,3 @@ resource/
 !src/ThirdParty/LLVM/bin/libclang.dll
 !src/ThirdParty/Vulkan/Bin/VkLayer_khronos_validation.dll
 src/ThirdParty/tinygltf-2.8.3/examples
-src/ThirdParty/webrtc-m111
-src/ThirdParty/webrtc-m94/lib/webrtc.lib
