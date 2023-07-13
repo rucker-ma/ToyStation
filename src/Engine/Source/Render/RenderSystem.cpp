@@ -118,11 +118,6 @@ void RenderSystem::Run() {
                                 Tick();
                             }
                             break;
-//                        case RenderAction::Render_RenderDocCapture:
-//                            RenderDocCapture::Instance().StartCapture();
-//                            Tick();
-//                            RenderDocCapture::Instance().EndCapture();
-//                            break;
                         case RenderAction::Render_UpdatePipeline:
                             render_pipeline_->MarkUpdateShader();
                             Tick();

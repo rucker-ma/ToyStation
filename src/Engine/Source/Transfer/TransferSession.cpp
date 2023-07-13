@@ -130,10 +130,6 @@ void TransferSession::OnIceCandidate(
                            candidate_str, candidate->candidate().username()));
 }
 void TransferSession::OnIceConnectionReceivingChange(bool receiving) {}
-//void TransferSession::OnIceCandidateError(const std::string& host_candidate,
-//                                          const std::string& url,
-//                                          int error_code,
-//                                          const std::string& error_text) {}
 void TransferSession::OnIceCandidateError(const std::string& address,int port,
                          const std::string& url,int error_code,const std::string& error_text){};
 void TransferSession::OnNegotiationNeededEvent(uint32_t event_id) {}

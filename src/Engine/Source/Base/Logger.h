@@ -1,4 +1,5 @@
 #pragma once
+#define SPDLOG_USE_STD_FORMAT
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/daily_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
@@ -17,17 +18,22 @@ constexpr const char *FilenameWithoutPath(const char *path) {
     return result;
 }
 
+//#define LOG_WRITE(log_level, ...)                                             \
+//    toystation::Logger::GetInstance()->write(                                 \
+//        log_level, "[" + std::string(FilenameWithoutPath(__FILE__)) + ":" + \
+//                       std::to_string(__LINE__) + "] " , __VA_ARGS__)
 #define LOG_WRITE(log_level, ...)                                             \
-    toystation::Logger::GetInstance()->write(                                             \
-        log_level, "[" + std::string(FilenameWithoutPath(__FILE__)) + ":" + \
-                       std::to_string(__LINE__) + "] " + __VA_ARGS__)
+    toystation::Logger::GetInstance()->write(spdlog::source_loc{__FILE__,__LINE__,__FUNCTION__},\
+        log_level , __VA_ARGS__)
+#define SCRIPT_WRITE(log_level,...)  \
+    toystation::Logger::GetInstance()->ScriptWrite(log_level, __VA_ARGS__)
+#define ScriptInfo(...) SCRIPT_WRITE(spdlog::level::level_enum::info, __VA_ARGS__)
 
 #define LogDebug(...) LOG_WRITE(spdlog::level::level_enum::debug, __VA_ARGS__)
 #define LogInfo(...) LOG_WRITE(spdlog::level::level_enum::info, __VA_ARGS__)
 #define LogWarn(...) LOG_WRITE(spdlog::level::level_enum::warn, __VA_ARGS__)
 #define LogError(...) LOG_WRITE(spdlog::level::level_enum::err, __VA_ARGS__)
-#define LogFatal(...) \
-    LOG_WRITE(spdlog::level::level_enum::critical, __VA_ARGS__)
+#define LogFatal(...) LOG_WRITE(spdlog::level::level_enum::critical, __VA_ARGS__)
 
 namespace toystation {
 class Logger {
@@ -39,6 +45,14 @@ public:
     template <typename... ARGS>
     void write(spdlog::level::level_enum level, ARGS &&...args) {
         logger_->log(level, std::forward<ARGS>(args)...);
+    }
+    template <typename... ARGS>
+    void write(spdlog::source_loc loc, spdlog::level::level_enum level, ARGS &&...args) {
+        logger_->log(loc, level, std::forward<ARGS>(args)...);
+    }
+    template <typename... ARGS>
+    void ScriptWrite(spdlog::level::level_enum level, ARGS &&...args) {
+        script_logger_->log(level, std::forward<ARGS>(args)...);
     }
     static Logger *GetInstance() {
         static Logger logger;
@@ -59,15 +73,19 @@ private:
         sink_list.push_back(basic_sink);
         logger_ = std::make_shared<spdlog::logger>("log", std::begin(sink_list),
                                                    std::end(sink_list));
-
+        script_logger_ =  std::make_shared<spdlog::logger>("script", std::begin(sink_list),
+                                                          std::end(sink_list));
         spdlog::register_logger(logger_);
+        spdlog::register_logger(script_logger_);
         spdlog::set_level(spdlog::level::debug);
         logger_->flush_on(spdlog::level::debug);
+
         std::chrono::seconds flush_seconds = std::chrono::seconds(1);
         spdlog::flush_every(flush_seconds);
     }
     ~Logger() { spdlog::drop_all(); }
     std::shared_ptr<spdlog::logger> logger_;
+    std::shared_ptr<spdlog::logger> script_logger_;
     std::vector<spdlog::sink_ptr> sink_list;
 };
 

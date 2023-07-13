@@ -1,5 +1,5 @@
 set(MODULE_NAME Engine)
-#当前使用的webrtc库不支持c++17标准，因此不能开启c++17
+
 set(CMAKE_CXX_STANDARD 20)
 find_package(FFmpeg COMPONENTS avcodec avdevice avformat avutil)
 include_directories(
@@ -21,6 +21,7 @@ include_directories(
     ${RENDERDOC}
     ${NVCodec}/Interface
     ${KTX}/include
+    ${NODEJS}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/Source
 )
 #查找cuda库
@@ -36,21 +37,18 @@ file(GLOB_RECURSE HEADER_FILE *.H)
 # add_library(${MODULE_NAME} STATIC ${SOURCE_FILE} ${HEADER_FILE})
 add_executable(${MODULE_NAME} ${SOURCE_FILE} ${HEADER_FILE})
 
+#根据文件路径生成vs工程中的目录结构
 function(set_group_for_ide rootdir filepath)
     string(REPLACE  ${rootdir} "" substr_file ${filepath})
     string(FIND ${substr_file} "/" postion REVERSE)
-#    message("${substr_file}")
-#    message("${postion}")
     string(SUBSTRING  ${substr_file} 0 ${postion} group)
     source_group("${group}" REGULAR_EXPRESSION "${rootdir}${group}/[^/.]+.(cpp|h|c)")
 endfunction()
 
 if(MSVC)
     # disable warning for chinese
-    message("msvc compiler")
     set_target_properties(${MODULE_NAME} PROPERTIES COMPILE_FLAGS "/wd4819")
     set_target_properties(${MODULE_NAME} PROPERTIES LINK_FLAGS "/ignore:4099")
-#    set_property(TARGET ${MODULE_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreadedDebugDLL")
     set_property(TARGET ${MODULE_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
     add_definitions(-DNDEBUG -DWEBRTC_WIN -DNOMINMAX -D_HAS_ITERATOR_DEBUGGING=0 -DWEBRTC_USE_H264)
 
@@ -61,15 +59,14 @@ if(MSVC)
         set_group_for_ide(${CMAKE_CURRENT_SOURCE_DIR} ${hfile})
     endforeach(hfile)
 endif()
-if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+#win平台上获取的compiler id 无法匹配clang-cl
+#if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     # /EHa:开启c++ exceptions
-    set_target_properties(${MODULE_NAME} PROPERTIES COMPILE_FLAGS "/EHa")
-endif()
 
-# PROPERTIES
-# ARCHIVE_OUTPUT_NAME_DEBUG ${CMAKE_CURRENT_SOURCE_DIR}/Output
-# LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/Output
-# RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/Output)
+    set_target_properties(${MODULE_NAME} PROPERTIES COMPILE_FLAGS "/EHa")
+    add_definitions(-D_SILENCE_CXX20_IS_POD_DEPRECATION_WARNING
+                    -D_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING)
+#endif()
 
 #string(COMPARE EQUAL ${CMAKE_BUILD_TYPE} "Debug" IS_DEBUG)
 #message("build type: ${IS_DEBUG}")
@@ -87,6 +84,7 @@ target_link_libraries(${MODULE_NAME} ${FFMPEG_LIB})
 target_link_libraries(${MODULE_NAME} ${FFMPEG_LIBRARIES})
 target_link_libraries(${MODULE_NAME} ${FREETYPE_LIB})
 target_link_libraries(${MODULE_NAME} ${KTX_LIB})
+target_link_libraries(${MODULE_NAME} ${NODE_LIB})
 IF(${CUDAToolkit_FOUND})
     target_link_libraries(${MODULE_NAME} CUDA::cudart)
     target_link_libraries(${MODULE_NAME} CUDA::cuda_driver)

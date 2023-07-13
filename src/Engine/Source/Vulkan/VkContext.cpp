@@ -147,7 +147,7 @@ bool VkContext::InitInstance(VkContextCreateInfo& info) {
     auto layer_properties = GetInstanceLayers();
 
     for (auto&& layer : layer_properties) {
-        LogDebug("Supported Layer: " + layer.layerName);
+        LogDebug("Supported Layer: " ,layer.layerName);
     }
 
     if (!FillFilteredLayers(layer_properties, info.instance_layers,
@@ -159,7 +159,7 @@ bool VkContext::InitInstance(VkContextCreateInfo& info) {
     auto extensions = GetInstanceExtensions();
 
     for (auto&& exten : extensions) {
-        LogDebug("Supported instance extensions: " + exten.extensionName);
+        LogDebug("Supported instance extensions: " , exten.extensionName);
     }
 
     if (!FillFilteredExtensions(extensions, info.instance_extensions,

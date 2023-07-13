@@ -15,19 +15,22 @@ namespace toystation {
 constexpr int kDefaultJpgQuality = 75;
 
 void FileUtil::ReadBinary(const std::string path, std::vector<char>& out_data) {
-    LogDebug("Start Read " + path);
-    std::ifstream file(path, std::ios::ate | std::ios::binary);
-    if (!file.is_open()) {
-        LogError("Read File open failed, file not exist or not permission");
-        return;
-    }
-    size_t file_size = file.tellg();
-    out_data.resize(file_size);
-
-    file.seekg(0);
-    file.read(out_data.data(), file_size);
-    file.close();
-    LogDebug("Read " + path + "Success, Size is " + std::to_string(file_size));
+//    LogDebug("Start Read " + path);
+//    std::ifstream file(path, std::ios::ate | std::ios::binary);
+//    if (!file.is_open()) {
+//        LogError("Read File open failed, file not exist or not permission");
+//        return;
+//    }
+//    size_t file_size = file.tellg();
+//    out_data.resize(file_size);
+//    file.seekg(0);
+//    file.read(out_data.data(), file_size);
+//    file.close();
+//    LogDebug("Read " + path + "Success, Size is " + std::to_string(file_size));
+    ReadFile<std::vector<char>>(path,out_data);
+}
+void FileUtil::ReadString(const std::string path, std::string& out_string){
+    ReadFile<std::string>(path,out_string);
 }
 void FileUtil::WriteBmp(std::string name, unsigned char* data, int width,
                         int height) {
@@ -48,10 +51,10 @@ unsigned char* FileUtil::ReadImg(std::string name, int& width, int& height,
     return stbi_load(name.c_str(), &width, &height, &channel,STBI_rgb_alpha);
 }
 std::shared_ptr<Texture> FileUtil::ReadImageAsRGBA(std::string path){
-    int width,height,channel;
+    int width =0,height=0,channel=0;
     unsigned char* data = nullptr;
     std::shared_ptr<Texture> tex = std::make_shared<Texture>();
-    int data_length;
+    int data_length = 0;
     if (stbi_is_hdr(path.c_str())) {
         data = (unsigned char*)stbi_loadf(path.c_str(), &width, &height,
                                           &channel, STBI_rgb_alpha);

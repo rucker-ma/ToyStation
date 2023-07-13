@@ -18,6 +18,7 @@ void ToyEngine::Init() {
     transfer_system_.Initialize();
     input_system_.Initialize();
     world_manager_.Initialize();
+    scripts_system_.Initialize();
 }
 void ToyEngine::PostInit(){
     world_manager_.PostInitialize();

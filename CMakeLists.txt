@@ -16,7 +16,7 @@ set(TINY_GLTF "${CMAKE_CURRENT_SOURCE_DIR}/src/ThirdParty/tinygltf-2.8.3")
 set(RENDERDOC "${CMAKE_CURRENT_SOURCE_DIR}/src/ThirdParty/renderdoc")
 set(NVCodec "${CMAKE_CURRENT_SOURCE_DIR}/src/ThirdParty/Video_Codec_SDK_12.0.16")
 set(KTX "${CMAKE_CURRENT_SOURCE_DIR}/src/ThirdParty/KTX-Software")
-
+set(NODEJS "${CMAKE_CURRENT_SOURCE_DIR}/src/ThirdParty/node-v18.16.1")
 set(WebRTC110_PATH "E:/WebRTC/webrtc-checkout/src")
 find_library(ASTYLE_LIB NAMES AStyleLibd PATHS ${ASTYLE}/lib)
 find_library(LIBCLANG_LIB NAMES libclang PATHS ${LLVM}/lib)
@@ -28,9 +28,9 @@ find_library(FREETYPE_LIB NAMES freetype PATHS ${FREETYPE}/lib)
 find_library(NVCodec_LIB NAMES nvencodeapi PATHS ${NVCodec}/Lib/x64)
 find_library(NVCodec_LIB NAMES nvcuvid PATHS ${NVCodec}/Lib/x64)
 find_library(KTX_LIB NAMES ktx PATHS ${KTX}/lib)
+find_library(NODE_LIB NAMES libnode PATHS ${NODEJS}/lib)
 
-# set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/src/Engine/Output)
-# set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/src/Engine/Output)
+
 # 设置输出目录要Editor bin目录
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_SOURCE_DIR}/out)
 # add .cmake folder to module_path for search depends libraries

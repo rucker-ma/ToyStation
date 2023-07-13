@@ -8,6 +8,7 @@
 #include "Input/InputSystem.h"
 #include "Compiler/ShaderCompilerSystem.h"
 #include "Framework/WorldManager.h"
+#include "Scripts/ScriptsSystem.h"
 
 namespace toystation {
 CLASS()
@@ -35,6 +36,7 @@ private:
     InputSystem input_system_;
     WorldManager world_manager_;
     ShaderCompilerSystem shader_system_;
+    ScriptsSystem scripts_system_;
     std::deque<RenderAction> render_flags_;
     std::mutex mtx_;
 };

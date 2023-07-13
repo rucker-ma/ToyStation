@@ -9,6 +9,10 @@ ToyEngineSetting& ToyEngineSetting::Instance(){
     static ToyEngineSetting setting;
     return setting;
 }
+void ToyEngineSetting::ProcessArgs(int argc,char** argv){
+    argc_ = argc;
+    argv_ = argv;
+}
 void ToyEngineSetting::SetUseHWAccel(bool value) {
 #ifdef TOYSTATION_CUDA
     if(CudaPlatform::Instance().IsSupported()) {

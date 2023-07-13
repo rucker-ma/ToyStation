@@ -97,6 +97,8 @@ void EditorController::EditorInputComponent::OnKeyboardEvent(KeyboardEvent event
             break ;
         case EventType::Up:
             break ;
+        case EventType::Move:
+            break ;
     }
 }
 void EditorController::EditorInputComponent::ComputeMove(KeyboardEvent event){

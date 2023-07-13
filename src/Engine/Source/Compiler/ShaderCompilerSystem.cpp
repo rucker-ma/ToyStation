@@ -72,28 +72,6 @@ void ShaderCompilerSystem::Initialize(){
     };
     kEngine.GetInputSystem().RegisterCustomResponse(response);
 }
-//void ShaderCompilerSystem::Comiple() {
-//    std::vector<std::string> shader_filter;
-//    for (auto& pair : kSuffixShaderTypeMapping) {
-//        shader_filter.push_back(pair.first);
-//    }
-//
-//    std::vector<FileUtil::FilterPath> shader_files =
-//        FileUtil::FolderFilter("src/Engine/Shader", shader_filter);
-//    for (auto& file_path : shader_files) {
-//        std::vector<char> data;
-//        FileUtil::ReadBinary(file_path.path, data);
-//        shaderc::CompileOptions options;
-//        //        options
-//        shaderc::SpvCompilationResult result = compiler_.CompileGlslToSpv(
-//            data.data(), data.size(),
-//            kSuffixShaderTypeMapping.at(file_path.suffix), "");
-//        if (result.GetCompilationStatus() ==
-//            shaderc_compilation_status::shaderc_compilation_status_success) {
-//            std::vector<uint32_t> spv_bin(result.begin(), result.end());
-//        }
-//    }
-//}
 void ShaderCompilerSystem::LoadShaderConfig() {
     LoadShader(kCompileResult);
 }

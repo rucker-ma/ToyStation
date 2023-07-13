@@ -37,7 +37,7 @@ inline bool check(CUresult e, int iLine, const char *szFile) {
     if (e != CUDA_SUCCESS) {
         const char *szErrName = NULL;
         cuGetErrorName(e, &szErrName);
-        LogFatal("CUDA driver API error : " + szErrName);
+        LogFatal("CUDA driver API error : " , szErrName);
 //        LOG(FATAL) << "CUDA driver API error " << szErrName << " at line " << iLine << " in file " << szFile;
         return false;
     }
@@ -87,7 +87,7 @@ inline bool check(NVENCSTATUS e, int iLine, const char *szFile) {
         "NV_ENC_ERR_RESOURCE_NOT_MAPPED",
     };
     if (e != NV_ENC_SUCCESS) {
-        LogFatal("NVENC error " + aszErrName[e]);
+        LogFatal("NVENC error: " , aszErrName[e]);
 //        LOG(FATAL) << "NVENC error " << aszErrName[e] << " at line " << iLine << " in file " << szFile;
         return false;
     }
@@ -216,7 +216,7 @@ public:
         std::ifstream fpIn(szFileName, std::ifstream::in | std::ifstream::binary);
         if (!fpIn)
         {
-            LogError("Unable to open input file: "+ szFileName);
+            LogError("Unable to open input file: ", szFileName);
 //            LOG(ERROR) << "Unable to open input file: " << szFileName;
             return;
         }

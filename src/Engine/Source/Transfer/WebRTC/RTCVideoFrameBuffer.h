@@ -29,7 +29,7 @@ class RTCNV12Buffer:public webrtc::NV12BufferInterface{
 public:
     static rtc::scoped_refptr<RTCNV12Buffer> Create(
         std::shared_ptr<RenderFrameNV12> frame);
-    rtc::scoped_refptr<webrtc::I420BufferInterface> ToI420();
+    rtc::scoped_refptr<webrtc::I420BufferInterface> ToI420()override;
     int width() const override;
     int height() const override;
      const uint8_t* DataY() const override;

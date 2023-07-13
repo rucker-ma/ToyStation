@@ -18,7 +18,7 @@ class MoveGizmoModel:public GizmoModel{
 public:
     MoveGizmoModel();
     virtual ~MoveGizmoModel();
-    void GenerateModel();
+    void GenerateModel()override;
     std::vector<std::shared_ptr<SubMesh>> GetMeshes()override;
 private:
     void Generate(Matrix3 rotate);
@@ -35,7 +35,7 @@ class RotateGizmoModel:public GizmoModel{
 public:
     RotateGizmoModel();
     virtual ~RotateGizmoModel();
-    void GenerateModel();
+    void GenerateModel()override;
     std::vector<std::shared_ptr<SubMesh>> GetMeshes()override;
 private:
     void Generate(Matrix3 rotate);

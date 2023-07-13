@@ -187,6 +187,6 @@ bool CudaEncoder::CopyToEncodeFrame(const webrtc::NV12BufferInterface& buffer,
                                cudaMemcpyDeviceToDevice);
     assert(res == CUDA_SUCCESS);
     res = cudaMemcpy((char*)inputframe.inputPtr+data_size,buffer.DataUV(),data_size/2,cudaMemcpyDeviceToDevice);
-    return res == CUDA_SUCCESS;
+    return res == cudaSuccess;
 }
 }  // namespace toystation

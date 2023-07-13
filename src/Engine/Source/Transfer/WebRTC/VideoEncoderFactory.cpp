@@ -28,6 +28,9 @@ webrtc::SdpVideoFormat CreateH264Format(webrtc::H264Profile profile,
         case webrtc::H264Profile::kProfileConstrainedHigh:
             profile_str = "64"; // "hex 64 "
             break ;
+        case webrtc::H264Profile::kProfilePredictiveHigh444:
+            LogFatal("Nout support");
+            break ;
     }
     switch (profile) {
 
@@ -39,6 +42,9 @@ webrtc::SdpVideoFormat CreateH264Format(webrtc::H264Profile profile,
         case webrtc::H264Profile::kProfileMain:
         case webrtc::H264Profile::kProfileHigh:
             profile_str += "00";
+            break ;
+        case webrtc::H264Profile::kProfilePredictiveHigh444:
+            LogFatal("Nout support");
             break ;
     }
     std::ostringstream ss;

@@ -41,7 +41,7 @@ void VideoSaver::Init(const webrtc::VideoCodec* codec_settings){
     if(!(oc_->oformat->flags& AVFMT_NOFILE)){
         ret = avio_open(&oc_->pb,filename,AVIO_FLAG_WRITE);
         if(ret<0){
-            LogError("Could not open "+ filename);
+            LogError("Could not open ", filename);
         }
     }
     AVDictionary *opt = NULL;

@@ -489,7 +489,7 @@ RHITexture VkResourceAllocator::LoadKTXFileAsTexture(std::string path,
                                     VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
                                     VK_IMAGE_LAYOUT_UNDEFINED);
         if(ret!=KTX_SUCCESS){
-            LogError("Read texture error: " + ktxErrorString(ret));
+            LogError("Read texture error: " , ktxErrorString(ret));
             ktxTexture_Destroy(ktxtexture);
             ktxVulkanDeviceInfo_Destruct(&kvdi);
             return RHITexture();

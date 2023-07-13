@@ -12,7 +12,9 @@ public:
     static void SetRenderThread(std::thread&& thread) {
         kRenderThreadInternal.swap(thread);
     }
-
+    static void SetScriptThread(std::thread&& thread) {
+        kScriptThreadInternal.swap(thread);
+    }
     static const std::thread& GetTransferThread() {
         return kTransferThreadInternal;
     }
@@ -23,6 +25,7 @@ public:
 private:
     static std::thread kRenderThreadInternal;
     static std::thread kTransferThreadInternal;
+    static std::thread kScriptThreadInternal;
 };
 
 // set after render system initialized

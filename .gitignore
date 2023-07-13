@@ -2,11 +2,12 @@
 .vscode/
 .idea/
 build/
-cbuild/
+build-clang/
+build-ms/
 tools/
 out/
 resource/
-
+node_modules
 **/obj/
 *.pdb
 *.deps.json

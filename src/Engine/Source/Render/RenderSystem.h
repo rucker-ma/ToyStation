@@ -13,7 +13,6 @@ namespace toystation {
 
 enum class RenderAction{
     Render_General,
-    Render_RenderDocCapture,
     Render_UpdatePipeline
 };
 

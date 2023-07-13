@@ -24,9 +24,11 @@ class ToyEngineSetting {
 
 public:
     static ToyEngineSetting& Instance();
+    void ProcessArgs(int argc,char** argv);
+    int SysArgc(){return argc_;}
+    char** SysArgv(){return argv_;}
     //when set true, will use hardware encode,depend on cuda(help transfer vulkan
     //render frame to nvenc encode buffer)
-
     void SetUseHWAccel(bool value);
     bool GetUseHWAccel();
     bool SaveVideo();
@@ -35,6 +37,8 @@ private:
     ToyEngineSetting() = default;
 
     bool use_hwaccel_ = false;
+    int argc_;
+    char** argv_;
 };
 
 }  // namespace toystation
