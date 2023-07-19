@@ -52,7 +52,7 @@ public:
     }
     template <typename... ARGS>
     void ScriptWrite(spdlog::level::level_enum level, ARGS &&...args) {
-        script_logger_->log(level, std::forward<ARGS>(args)...);
+        script_logger_->log(level,std::forward<ARGS>(args)...);
     }
     static Logger *GetInstance() {
         static Logger logger;

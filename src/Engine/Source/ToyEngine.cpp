@@ -5,6 +5,7 @@
 #include "Device/Cuda/CudaPlatform.h"
 #include "ToyEngineSetting.h"
 
+
 namespace toystation {
 
 ToyEngine kEngine;

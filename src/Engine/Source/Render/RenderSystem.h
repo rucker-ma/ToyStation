@@ -26,7 +26,7 @@ private:
 };
 
 using RenderMessage = DataMsg<RenderPayload>;
-class TS_CPP_API RenderSystem {
+class RenderSystem {
 public:
     void Initialize();
     void PostInitialize();

@@ -18,8 +18,6 @@ void Run(std::filesystem::directory_entry entry) {
                     fileparser.Generate();
                     CStyleGenerator cstyle_gen(&fileparser);
                     cstyle_gen.Generate();
-                    CSharpGenerator csharp_gen(&cstyle_gen);
-                    csharp_gen.Generate();
                 }
             }
             if (i.status().type() == std::filesystem::file_type::directory) {
@@ -60,33 +58,56 @@ bool ProcessInput(int argc, char *argv[]) {
             PathEnv::Get().CStyleFolder = std::string(argv[i]);
             std::cerr << "CStyle Folder :" << std::string(argv[i]) << std::endl;
             res = res ^ 0x04;
-        } else if (std::string(argv[i]) == "-CS") {
-            ++i;
-            PathEnv::Get().CSharpFolder = std::string(argv[i]);
-            std::cerr << "CSharp Folder :" << std::string(argv[i]) << std::endl;
-            res = res ^ 0x08;
         }
     }
     return res == 0x0F;
 }
 
+
 int main(int argc, char *argv[]) {
-    if (argc < 2) {
-        std::cerr << "Input Param Too Less" << std::endl;
+
+    std::string root = "D:/project/ToyStation/src";
+    std::vector<std::string> includes {
+        "D:/project/ToyStation/src/ThirdParty/glm-0.9.9.8",
+        "D:/project/ToyStation/src/ThirdParty/stb_image",
+        "D:/project/ToyStation/src/ThirdParty/Vulkan/Include",
+        "D:/project/ToyStation/src/ThirdParty/spdlog/include",
+        "D:/project/ToyStation/src/ThirdParty/vk_extension",
+        "E:/WebRTC/webrtc-checkout/src",
+        "E:/WebRTC/webrtc-checkout/src/third_party/abseil-cpp",
+        "E:/WebRTC/webrtc-checkout/src/third_party/jsoncpp/source/include",
+        "D:/project/ToyStation/src/ThirdParty/asio-1.18.2/include",
+        "D:/project/ToyStation/src/ThirdParty/ffmpeg-5.1.2/include",
+        "D:/project/ToyStation/src/ThirdParty/websocketpp-0.8.2",
+        "D:/project/ToyStation/src/ThirdParty/freetype-2.13/include",
+        "D:/project/ToyStation/src/ThirdParty/tinygltf-2.8.3",
+        "D:/project/ToyStation/src/ThirdParty/renderdoc",
+        "D:/project/ToyStation/src/ThirdParty/Video_Codec_SDK_12.0.16/Interface",
+        "D:/project/ToyStation/src/ThirdParty/KTX-Software/include",
+        "D:/project/ToyStation/src/ThirdParty/node-v18.16.1/include",
+        "D:/project/ToyStation/src/Engine/Source",
+        "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.1/include"
+    };
+    for(auto& include_dir :includes){
+        PathEnv::Get().IncludeFolder.push_back("-I"+include_dir);
     }
-    if (!ProcessInput(argc, argv)) {
-        return 0;
-    }
-    std::cerr << "Receive Input Success" << std::endl;
+    PathEnv::Get().IncludeFolder.emplace_back("-std=c++20");
+    PathEnv::Get().IncludeFolder.emplace_back("-DWEBRTC_WIN");
+    PathEnv::Get().IncludeFolder.emplace_back("-DTOYSTATION_CUDA");
+    PathEnv::Get().IncludeFolder.emplace_back("-DWEBRTC_USE_H264");
+    PathEnv::Get().IncludeFolder.emplace_back("-DNOMINMAX");
+    PathEnv::Get().IncludeFolder.emplace_back("-DNDEBUG");
+    PathEnv::Get().ProjectFolder = root+"/Engine/Source";
+    PathEnv::Get().CStyleFolder = root+"/Engine/Generated";
+
+//    if (argc < 2) {
+//        std::cerr << "Input Param Too Less" << std::endl;
+//    }
+//    if (!ProcessInput(argc, argv)) {
+//        return 0;
+//    }
+    std::cout << "Receive Input Success" << std::endl;
     index = clang_createIndex(1, 1);
-    // PathEnv::Get().ProjectFolder =
-    // "D:/project/csharp/Avalonia-VK/Avalonia/src/TSEngine";
-
-    // PathEnv::Get().CStyleFolder = PathEnv::Get().ProjectFolder;
-    // PathEnv::Get().CSharpFolder =
-    // "D:/project/csharp/Avalonia-VK/Avalonia/src/TSEngine.Net";
-    // PathEnv::Get().CStyleFolder.append("Generated");
-
     if (!std::filesystem::exists(PathEnv::Get().CStyleFolder)) {
         std::filesystem::create_directories(PathEnv::Get().CStyleFolder);
     }

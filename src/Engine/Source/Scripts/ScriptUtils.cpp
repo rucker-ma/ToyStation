@@ -12,4 +12,8 @@ std::string ScriptUtils::ToStdString(v8::Isolate* isolate,v8::Local<v8::String> 
     v8::String::Utf8Value utf8value(isolate, string);
     return std::string(*utf8value);
 }
+std::string ScriptUtils::ToStdString(v8::Isolate* isolate,v8::Local<v8::Value> value){
+    v8::String::Utf8Value utf8value(isolate, value);
+    return std::string(*utf8value);
+}
 }

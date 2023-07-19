@@ -8,7 +8,7 @@
 #include "Cursor.h"
 #include "Cursor.h"
 
-class MacroCursor : public Cursor {
+
 class MacroCursor : public Cursor {
     friend class MacrosDelegate;
 
@@ -34,13 +34,11 @@ private:
     std::vector<std::string> keys;
 };
 
-class MacrosDelegate {
+
 class MacrosDelegate {
 public:
     MacrosDelegate();
     void Push(MacroCursor cursor);
-    bool Modified(Cursor cursor, std::vector<std::string>& keys);
-
     bool Modified(Cursor cursor, std::vector<std::string>& keys);
 
 private:

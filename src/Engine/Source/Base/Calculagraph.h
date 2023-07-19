@@ -3,9 +3,12 @@
 #include <functional>
 #include <string>
 
+#include "Reflection/Meta.h"
+
 namespace toystation {
 
 class Calculagraph {
+    GENERATE_BODY(Calculagraph)
 public:
     /// @brief Constructor, 计算方式 interval*multiply/duration(ms)
     /// @param name 设置对象名称，方便区分和debug

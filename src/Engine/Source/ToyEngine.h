@@ -11,8 +11,8 @@
 #include "Scripts/ScriptsSystem.h"
 
 namespace toystation {
-CLASS()
-class TS_CPP_API ToyEngine {
+class ToyEngine {
+
 public:
     ToyEngine(){};
     //device environment init

@@ -1,8 +1,8 @@
-set(MODULE_NAME Parser)
+set(MODULE_NAME Helper)
 set(CMAKE_CXX_STANDARD 20)
 include_directories(
     ${LLVM}/include
-    ${CMAKE_CURRENT_SOURCE_DIR}
+   
 )
 
 file(GLOB_RECURSE SOURCE_FILE *.cpp)

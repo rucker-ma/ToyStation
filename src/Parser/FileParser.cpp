@@ -3,7 +3,7 @@
 #include "Define.h"
 
 FileParser::FileParser(std::filesystem::path filepath, CXIndex index)
-    : file_path_(filepath), root_cursor_(), idx_(index) {}
+    : file_path_(std::move(filepath)), idx_(index), unit_(nullptr) {}
 
 FileParser::~FileParser() {
     clang_disposeTranslationUnit(unit_);
@@ -18,11 +18,13 @@ void FileParser::Generate() {
     }
 
     unit_ = clang_createTranslationUnitFromSourceFile(
-        idx_, file_path_.string().c_str(), arguments.size(), arguments.data(),
-        0, nullptr);
+        idx_, file_path_.string().c_str(), static_cast<int>(arguments.size()),
+        arguments.data(), 0, nullptr);
     if (unit_ == nullptr) {
-        std::runtime_error("Generate TranslationUnit Error");
+        std::cout << "Generate TranslationUnit Error" << std::endl;
+        return;
     }
+    // 检查生成ast是否出错
     Verify();
     std::cerr << "Parsing : "
               << std::filesystem::relative(file_path_,
@@ -31,31 +33,41 @@ void FileParser::Generate() {
               << std::endl;
     root_cursor_ = clang_getTranslationUnitCursor(unit_);
 
-    Del = std::make_shared<MacrosDelegate>();
+    del_ = std::make_shared<MacrosDelegate>();
     Parse(root_cursor_);
 }
 
 void FileParser::Parse(Cursor& root_cursor) {
+    std::string str;
+    // root_cursor.FormatPrint(str);
+    // 提取包含反射体的结构
     root_cursor.GetChildren();
-    if (!root_cursor.HasMacro()) return;
+    if (!root_cursor.HasMacro()) {
+        return;
+    }
     for (auto& child : root_cursor.GetChildren()) {
         CXCursorKind kind = child.GetKind();
-        if (kind == CXCursor_ClassDecl || kind == CXCursor_StructDecl) {
-            auto cls_cur =
-                std::make_shared<ClassCursor>(child, Del, name_space);
-            cls_cur->Generate();
-            if (Del->Modified(*cls_cur, cls_cur->Keys())) {
-                output_cursors_.push_back(cls_cur);
-            }
-        }
         if (kind == CXCursor_MacroExpansion) {
-            Del->Push(child);
+            del_->Push(child);
         }
-        if (kind == CXCursor_Namespace) {
-            name_space.push_back(child.GetSpelling());
-            Parse(child);
-            name_space.pop_back();
-        }
+
+        // CXCursorKind kind = child.GetKind();
+        // if (kind == CXCursor_ClassDecl || kind == CXCursor_StructDecl) {
+        //     auto cls_cur =
+        //         std::make_shared<ClassCursor>(child, del_, name_space);
+        //     cls_cur->Generate();
+        //     if (del_->Modified(*cls_cur, cls_cur->Keys())) {
+        //         output_cursors_.push_back(cls_cur);
+        //     }
+        // }
+        // if (kind == CXCursor_MacroExpansion) {
+        //     del_->Push(child);
+        // }
+        // if (kind == CXCursor_Namespace) {
+        //     name_space.push_back(child.GetSpelling());
+        //     Parse(child);
+        //     name_space.pop_back();
+        // }
     }
 }
 

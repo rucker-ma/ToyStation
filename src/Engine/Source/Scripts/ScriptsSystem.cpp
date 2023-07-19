@@ -6,6 +6,7 @@
 #include "Base/Thread.h"
 #include "File/FileUtil.h"
 #include "ScriptUtils.h"
+#include "ObjectWrapper.h"
 #include "ToyEngineSetting.h"
 namespace toystation{
 
@@ -83,6 +84,7 @@ void ScriptsSystem::Execute(std::string filepath){
     v8::Local<v8::String> resource = ScriptUtils::ToV8String(isolate, path.c_str());
     v8::ScriptOrigin origin(isolate, resource);
     v8::Local<v8::String> source = ScriptUtils::ToV8String(isolate, content.c_str());
+    v8::TryCatch trycatch(isolate);
     v8::Local<v8::Script> compiled_script =  v8::Script::Compile(context, source, &origin).ToLocalChecked();
     if(compiled_script.IsEmpty()){
         LogWarn("compile script error");
@@ -90,28 +92,14 @@ void ScriptsSystem::Execute(std::string filepath){
     }
     v8::MaybeLocal<v8::Value> ret_val = compiled_script->Run(context);
     if(ret_val.IsEmpty()){
-        LogWarn("execute script error");
+        v8::Local<v8::Value> exception = trycatch.Exception();
+        //trycatch.Message()->GetScriptResourceName()
+        LogWarn("execute script error", ScriptUtils::ToStdString(isolate,exception));
         return;
     }
 }
-void ConsoleLogCallback(const v8::FunctionCallbackInfo<v8::Value>& args) {
-    if (args.Length() > 0) {
-        v8::Isolate* isolate = args.GetIsolate();
-        v8::String::Utf8Value message(isolate, args[0]);
-        std::string logMessage(*message);
-        ScriptInfo(logMessage);
-    }
-}
+
 void ScriptsSystem::SetupV8Global(){
-    v8::Isolate* isolate = setup_->isolate();
-    v8::Locker locker(isolate);
-    v8::Isolate::Scope isolate_scope(isolate);
-    v8::HandleScope handle_scope(isolate);
-    v8::Local<v8::Context> context = setup_->context();
-    v8::Context::Scope context_scope(context);
-    v8::Local<v8::Object> global = context->Global();
-    global->Set(context,ScriptUtils::ToV8String(isolate,"console"),global).FromJust();
-    global->Set(context,ScriptUtils::ToV8String(isolate,"log"),
-                v8::FunctionTemplate::New(isolate,ConsoleLogCallback)->GetFunction(context).ToLocalChecked()).FromJust();
+    ObjectWrapper::WrapV8Global(setup_->isolate(),setup_->context());
 }
 }

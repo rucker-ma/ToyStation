@@ -63,7 +63,8 @@ void TypeAnalysis::CheckType(CXType& type, Cursor& c, ParamMetaInfo& info) {
         return;
     }
     if (clang_isPODType(type) != 1 && type.kind != CXType_Void) {
-        throw std::runtime_error("check type error,type kind");
+        //throw std::runtime_error("check type error,type kind");
+        return;
     }
 
     // save normal type

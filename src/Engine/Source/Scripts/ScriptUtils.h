@@ -11,5 +11,6 @@ class ScriptUtils{
 public:
     static v8::Local<v8::String> ToV8String(v8::Isolate* isolate,const char* string);
     static std::string ToStdString(v8::Isolate* isolate,v8::Local<v8::String> string);
+    static std::string ToStdString(v8::Isolate* isolate,v8::Local<v8::Value> value);
 };
 }
