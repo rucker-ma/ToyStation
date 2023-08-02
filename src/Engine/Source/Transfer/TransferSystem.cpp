@@ -31,10 +31,10 @@ void TransferSystem::Initialize() {
 
     session_server_->OnCloseEvent =
         std::bind(&TransferSystem::OnUserClose, this, std::placeholders::_1);
-
-    sserver_thread_ = std::thread([this] { session_server_->Init(); });
+    //websocket线程
+    sserver_thread_ = std::make_shared<std::thread>([this] { session_server_->Init(); });
     // webrtc线程间通信依赖于平台实现的消息机制，所以需要一个线程来处理平台的消息传递
-    msg_thread_ = std::thread([this] {
+    msg_thread_ = std::make_shared< std::thread>([this] {
         MSG msg;
         BOOL gm;
 

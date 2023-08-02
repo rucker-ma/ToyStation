@@ -5,6 +5,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "MetaArg.h"
 
 namespace toystation {
 namespace reflect {
@@ -186,12 +187,11 @@ public:
             throw std::runtime_error("Mismatching number of arguments");
         }
 
-        std::array<ArgWrap, sizeof...(Args) + 1> args_array = {
+        std::array<ArgWrap, sizeof...(Args) + 1> args_array{
             ArgWrap(obj), ArgWrap(std::forward<Args>(args))...};
 
         return function_(&args_array);
     }
-
 private:
     friend class reflect::RawMetaBuilder;
     std::function<std::any(void*)> function_;
@@ -332,5 +332,7 @@ MetaClass& GetByName(const std::string& name);
   name##Builder::name##Builder() {\
   reflect::AddClass<name>(#name)
 #define END_DEFINE(...) ;}}
+
+#define SKIP_GENERATE(...) __VA_ARGS__
 
 }  // namespace toystation

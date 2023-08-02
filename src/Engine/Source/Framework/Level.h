@@ -13,7 +13,7 @@
 #include "Component/MeshComponent.h"
 #include "EditorController.h"
 #include "BVHTree.h"
-
+#include "Reflection/Meta.h"
 namespace toystation{
 enum class MapType{
     Map_Environment,
@@ -25,6 +25,7 @@ enum class MapType{
 
 
 class Level{
+    GENERATE_BODY(Level)
 public:
     void Load(std::string path);
     void CheckLoadResult();

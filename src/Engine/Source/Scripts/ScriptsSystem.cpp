@@ -62,7 +62,7 @@ void ScriptsSystem::RunV8(){
     if(load_ret.IsEmpty()){
         LogError("Load node environment error");
     }
-    //运行入库函数
+    //运行入口脚本
     Execute("out/dist/entry.js");
     node::SpinEventLoop(setup_->env()).FromMaybe(1);
     LogInfo("Run V8 success");

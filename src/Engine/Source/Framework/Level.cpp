@@ -20,6 +20,7 @@ struct TObjectInfoReader {
 };
 
 void Level::Load(std::string path) {
+
     JsonParseHelper parser;
     std::vector<char> data;
     FileUtil::ReadBinary(path, data);

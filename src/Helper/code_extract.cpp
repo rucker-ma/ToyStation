@@ -8,7 +8,6 @@
 
 CodeExtract::CodeExtract(CXCursor cursor) : cursor_(cursor) {
     FindReflectDeclare();
-    // Print();
     ExtractDeclare();
 }
 
@@ -36,14 +35,15 @@ void CodeExtract::FindReflectDeclare() {
                         clang_Cursor_getTranslationUnit(parent), tokens[2]);
                     std::string reflect_type = ToString(spelling);
 
-                    std::cout << reflect_type << std::endl;
-
                     clang_disposeTokens(clang_Cursor_getTranslationUnit(parent),
                                         tokens, num_tokens);
                     auto* candidate = static_cast<ExtractMacroPack*>(data);
                     candidate->type_names.push_back(reflect_type);
                     // candidate->push_back(cursor);
                 }
+//                if(macro_name == SKIP_MACRO){
+//
+//                }
             } else if (cursor.kind == CXCursor_ClassDecl) {
                 auto* candidate = static_cast<ExtractMacroPack*>(data);
                 std::string class_spelling = Spelling(cursor);
@@ -71,42 +71,51 @@ void CodeExtract::ExtractDeclare() {
                         clang_getCursorLocation(cursor)) == 0) {
                     return CXChildVisit_Continue;
                 }
-                if (cursor.kind == CXCursor_FieldDecl) {
-                    // 提取类型和名称
-                    CXType type = clang_getCursorType(cursor);
-                    std::string type_str = TypeSpelling(type);
-                    std::string name_str = Spelling(cursor);
-                    std::cout << "fied decl type: " << type_str << std::endl;
+                CXChildVisitResult visit_result = CXChildVisit_Recurse;
 
-                    auto* container = static_cast<Class*>(data);
-                    container->properties.push_back({type_str, name_str});
-                    return CXChildVisit_Continue;
-                } else if (cursor.kind == CXCursor_CXXMethod) {
-                    // 提取返回值类型，参数类型名称，函数名
-                    CXType result_type = clang_getCursorResultType(cursor);
-                    std::string result_str = TypeSpelling(result_type);
-                    int args_num = clang_Cursor_getNumArguments(cursor);
-                    std::vector<MethodInput> inputs;
-                    for (int i = 0; i < args_num; i++) {
-                        CXCursor arg_cursor =
-                            clang_Cursor_getArgument(cursor, i);
+                //std::cout<<Spelling(cursor)<<" : " <<KindSpelling(cursor)<<std::endl;
+                switch (cursor.kind) {
+                    case CXCursor_FieldDecl: {
                         CXType type = clang_getCursorType(cursor);
                         std::string type_str = TypeSpelling(type);
                         std::string name_str = Spelling(cursor);
-                        inputs.push_back({type_str, name_str});
+                        //std::cout << "fied decl type: " << type_str << std::endl;
+
+                        auto* container = static_cast<Class*>(data);
+                        container->properties.push_back({type_str, name_str});
+                        visit_result = CXChildVisit_Continue;
+                        break;
                     }
-                    std::string func_name = Spelling(cursor);
-                    auto* container = static_cast<Class*>(data);
-                    container->methods.push_back(
-                        {func_name, result_str, inputs});
-                    return CXChildVisit_Continue;
-                } else if (cursor.kind == CXCursor_Constructor) {
-                    // 暂不处理
-                    return CXChildVisit_Continue;
+                    case CXCursor_CXXMethod:{
+                        CXType result_type = clang_getCursorResultType(cursor);
+                        std::string result_str = TypeSpelling(result_type);
+                        int args_num = clang_Cursor_getNumArguments(cursor);
+                        std::vector<MethodInput> inputs;
+                        for (int i = 0; i < args_num; i++) {
+                            CXCursor arg_cursor =
+                                clang_Cursor_getArgument(cursor, i);
+                            CXType type = clang_getCursorType(cursor);
+                            std::string type_str = TypeSpelling(type);
+                            std::string name_str = Spelling(cursor);
+                            inputs.push_back({type_str, name_str});
+                        }
+                        std::string func_name = Spelling(cursor);
+                        auto* container = static_cast<Class*>(data);
+                        container->methods.push_back(
+                            {func_name, result_str, inputs});
+                        visit_result = CXChildVisit_Continue;
+                        break ;
+                    }
+                    //这里表示反射的类中有申明结构体或其它类，需要跳过处理，避免访问到其中的成员
+                    //如果类中类也标记反射，在之前反射结构查询中就被发现，不需要在这里处理
+                    case CXCursor_StructDecl:
+                    case CXCursor_ClassDecl:
+                        visit_result = CXChildVisit_Continue;
+                        break ;
+                    default:
+                        break ;
                 }
-                std::cout << Spelling(cursor) << " : " << KindSpelling(cursor)
-                          << std::endl;
-                return CXChildVisit_Recurse;
+                return visit_result;
             },
             &refl_container);
         refl_class_.push_back(refl_container);

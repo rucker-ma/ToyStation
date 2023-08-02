@@ -12,7 +12,7 @@
 
 namespace toystation {
 class ToyEngine {
-
+    GENERATE_BODY(ToyEngine)
 public:
     ToyEngine(){};
     //device environment init
@@ -22,10 +22,12 @@ public:
     void PostInit();
     void Run();
     void PushRenderFlag(RenderAction flag);
-    InputSystem& GetInputSystem();
     TransferSystem& GetTransferSystem();
     WorldManager& GetWorldManager();
+    SKIP_GENERATE(
+    InputSystem& GetInputSystem();
     ShaderCompilerSystem& GetShaderSystem();
+    )
     RenderSystem& GetRenderSystem();
 private:
     void SystemTick();
@@ -33,12 +35,15 @@ private:
 private:
     TransferSystem transfer_system_;
     RenderSystem render_system_;
-    InputSystem input_system_;
+
     WorldManager world_manager_;
+    SKIP_GENERATE(
+    InputSystem input_system_;
     ShaderCompilerSystem shader_system_;
     ScriptsSystem scripts_system_;
-    std::deque<RenderAction> render_flags_;
     std::mutex mtx_;
+    )
+    std::deque<RenderAction> render_flags_;
 };
 
 extern ToyEngine kEngine;

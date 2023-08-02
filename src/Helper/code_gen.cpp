@@ -34,7 +34,7 @@ void CodeGen::Generate(CodeExtract& extract, std::string source_relative_path) {
         for (auto& func : refl.methods) {
             cpp_str.append(FuncRegister(func.name, refl.name));
         }
-        cpp_str.append("END_DEFINE()");
+        cpp_str.append("END_DEFINE()\n");
     }
     std::ofstream cpp_file_stream(content_path_,std::ios::app);
     cpp_file_stream<<cpp_str;

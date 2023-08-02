@@ -22,8 +22,8 @@ private:
 private:
     std::shared_ptr<SessionCreator> session_creator_;
     std::shared_ptr<SocketServer> session_server_;
-    std::thread sserver_thread_;
-    std::thread msg_thread_;
+    std::shared_ptr<std::thread> sserver_thread_;
+    std::shared_ptr<std::thread> msg_thread_;
 
     std::map<websocketpp::connection_hdl, std::shared_ptr<TransferSession>,
              std::owner_less<websocketpp::connection_hdl>>

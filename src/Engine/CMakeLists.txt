@@ -92,12 +92,12 @@ IF(${CUDAToolkit_FOUND})
     target_link_libraries(${MODULE_NAME} ${NVCodec_LIB})
 ENDIF(${CUDAToolkit_FOUND})
 
-
-get_property(DIRS DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
+#获取include信息传递到反射工具中
+#get_property(DIRS DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
 # message("${DIRS}")
 #生成文件
-add_custom_target(GenerateTask  DEPENDS Parser
-COMMAND $<TARGET_FILE:Parser> "-I" ${DIRS} "-P" ${CMAKE_CURRENT_SOURCE_DIR}/Source
+add_custom_target(GenerateTask  DEPENDS Helper
+COMMAND $<TARGET_FILE:Helper> "-I" ${DIRS} "-P" ${CMAKE_CURRENT_SOURCE_DIR}/Source
 "-O" ${CMAKE_CURRENT_SOURCE_DIR}/Generated)
 
 # add_custom_command(TARGET GENERATE_FILE PRE_BUILD
@@ -107,9 +107,9 @@ COMMAND $<TARGET_FILE:Parser> "-I" ${DIRS} "-P" ${CMAKE_CURRENT_SOURCE_DIR}/Sour
 
 add_library(GenerateLib INTERFACE)
 target_include_directories(GenerateLib INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/Generated")
-file(GLOB_RECURSE Generate_Source Generated/*.cpp)
+file(GLOB_RECURSE Generate_Source Generated/*.cpp Generated/*.h)
 target_sources(GenerateLib PUBLIC ${Generate_Source})
 add_dependencies(GenerateLib GenerateTask)
-
+add_dependencies(${MODULE_NAME} GenerateLib)
 target_link_libraries(${MODULE_NAME} PRIVATE ${GenerateLib})
 # add_dependencies(${MODULE_NAME} GenerateTask)

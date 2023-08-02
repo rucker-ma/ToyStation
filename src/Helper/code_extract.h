@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 #define REFLECT_MACRO "GENERATE_BODY"
-
+#define SKIP_MACRO "SKIP_GENERATE"
 class CodeExtract {
     friend class CodeGen;
     // 存储宏解析的信息

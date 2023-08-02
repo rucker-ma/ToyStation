@@ -8,18 +8,22 @@
 CXIndex index = nullptr;
 std::unique_ptr< CodeGen> generator = nullptr;
 std::vector<const char*> input_args{
-    "-x",
+    "-x", //以c++语言解析
     "c++",
-    "-w",
-    "-E",
+    "--no-warnings", //Suppress all warnings same as: -w
+    "-E",   //Only run the preprocessor
     "-ferror-limit=0",  // 错误过多也不会停止
     "-o clangLog.txt"   // 写输出到指定文件
 };
 
 void ProcessFile(std::string file_path) {
-    CXTranslationUnit unit = clang_createTranslationUnitFromSourceFile(
-        index, file_path.c_str(), static_cast<int>(input_args.size()),
-        input_args.data(), 0, nullptr);
+//    CXTranslationUnit unit = clang_createTranslationUnitFromSourceFile(
+//        index, file_path.c_str(), static_cast<int>(input_args.size()),
+//        input_args.data(), 0, nullptr);
+    CXTranslationUnit unit = clang_parseTranslationUnit(
+        index, file_path.c_str(),input_args.data(),static_cast<int>(input_args.size()), nullptr,0,
+    CXTranslationUnit_DetailedPreprocessingRecord);
+
     if (unit == nullptr) {
         return;
     }
@@ -55,8 +59,16 @@ void StartProcess(std::filesystem::directory_entry entry) {
                     // 处理头文件
                     std::cout << "process file: " << file_path.string()
                               << std::endl;
-
-                    ProcessFile(file_path.string());
+                    std::ifstream read_stream(file_path);
+                    if(!read_stream.is_open()){
+                        continue ;
+                    }
+                    std::string content{std::istreambuf_iterator<char>(read_stream), std::istreambuf_iterator<char>()};
+                    read_stream.close();
+                    //先读取文件查找是否有标记宏，如果存在再解析AST
+                    if(content.find(REFLECT_MACRO) != std::string::npos){
+                        ProcessFile(file_path.string());
+                    }
                 }
             }
             if (file.status().type() == std::filesystem::file_type::directory) {
@@ -92,6 +104,9 @@ const std::vector<std::string> defines{"-std=c++20",        "-DWEBRTC_WIN",
                                        "-DTOYSTATION_CUDA", "-DWEBRTC_USE_H264",
                                        "-DNOMINMAX",        "-DNDEBUG"};
 int main(int argc, char* argv[]) {
+
+    return 0;
+    std::cout<<"Start Process..."<<std::endl;
     std::string root = "D:/project/ToyStation/src";
 
     for (const auto& include_dir : includes) {
@@ -115,6 +130,8 @@ int main(int argc, char* argv[]) {
     std::filesystem::directory_entry source_entry(
         Global::Instance().code_folder);
     StartProcess(source_entry);
+    //std::string test_file_path = "D:/project/ToyStation/src/Engine/Source\\Input\\InputSystem.h";
+    //ProcessFile(test_file_path);
     clang_disposeIndex(index);
     return 0;
 }

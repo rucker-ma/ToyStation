@@ -64,9 +64,6 @@ void InputSystem::RegisterCustomResponse(std::shared_ptr<CustomInputEventRespons
 void InputSystem::UnregisterCustomResponse(std::shared_ptr<CustomInputEventResponse> response){
     registered_response_.erase(response->name);
 }
-void InputSystem::UnregisterCustomResponse(std::string event_name){
-    registered_response_.erase(event_name);
-}
 void InputSystem::OnInputMessage(std::string msg){
     std::unique_lock<std::mutex> lck(mtx_);
     Json::Value json;

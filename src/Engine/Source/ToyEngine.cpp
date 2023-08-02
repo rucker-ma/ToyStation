@@ -9,6 +9,7 @@
 namespace toystation {
 
 ToyEngine kEngine;
+
 void ToyEngine::PreInit(){
     CudaPlatform::Instance();
     ToyEngineSetting::Instance().SetUseHWAccel(true);
