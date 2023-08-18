@@ -1,6 +1,7 @@
 #include "FileUtil.h"
 
 #include <fstream>
+#include <filesystem>
 #include <io.h>
 #include "Base/Macro.h"
 
@@ -68,6 +69,8 @@ std::string FileUtil::Combine(const char* relative_path) {
     return FileUtil::Combine(std::string(relative_path));
 }
 std::string FileUtil::Combine(std::string relative_path) {
+//    std::filesystem::path current_path = std::filesystem::current_path();
+//    auto path_str = current_path.string();
     std::string root = "D:/project/ToyStation/";
     std::string full_path = root + relative_path;
     std::ifstream f(full_path);

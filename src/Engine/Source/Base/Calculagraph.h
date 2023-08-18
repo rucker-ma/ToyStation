@@ -3,7 +3,7 @@
 #include <functional>
 #include <string>
 
-#include "Reflection/Meta.h"
+#include "Meta/Meta.h"
 
 namespace toystation {
 

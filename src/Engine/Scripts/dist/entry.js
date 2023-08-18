@@ -1,14 +1,8 @@
 "use strict";
-console.log(process.cwd());
-
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-
-
 Object.defineProperty(exports, "__esModule", { value: true });
-const engine_1 = __importDefault(require("./engine"));
-let engine = new engine_1.default();
+const compiler_1 = require("./compiler");
+const service_demo_1 = require("./service_demo");
 console.log(process.cwd());
-engine.start();
+(0, compiler_1.startWatch)();
+(0, service_demo_1.startServer)();
 //# sourceMappingURL=entry.js.map

@@ -119,7 +119,6 @@ void BVHTree::Build(std::vector<std::shared_ptr<SubMesh>> meshes,
     Build(right_objects,node, false);
 }
 HitResult BVHTree::HitObject(Ray ray){
-
     return HitNode(root,ray);
 }
 HitResult BVHTree::HitNode(std::shared_ptr<BVHNode> node, Ray ray){

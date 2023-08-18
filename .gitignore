@@ -14,6 +14,7 @@ node_modules
 *.dll
 *.bkp
 .obsidian/
+src/Engine/Scripts/dist/
 
 !src/ThirdParty/LLVM/bin/libclang.dll
 !src/ThirdParty/Vulkan/Bin/VkLayer_khronos_validation.dll

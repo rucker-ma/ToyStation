@@ -37,6 +37,7 @@ BEGIN_DEFINE(WorldManager)
 .AddFunction("Tick", &WorldManager::Tick)
 .AddFunction("ActiveLevel", &WorldManager::ActiveLevel)
 .AddFunction("LoadLevel", &WorldManager::LoadLevel)
+.AddFunction("InputTest", &WorldManager::InputTest)
 END_DEFINE()
 #include "Input/InputSystem.h"
 BEGIN_DEFINE(InputSystem)

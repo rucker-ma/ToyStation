@@ -1,28 +1,27 @@
 {
-    "compilerOptions": {
-      "module": "CommonJS",
-      "declaration": true,
-      "removeComments": true,
-      "emitDecoratorMetadata": true,
-      "experimentalDecorators": true,
-      "allowSyntheticDefaultImports": true,
-      "moduleResolution": "node",
-      "esModuleInterop": true,
-      "target": "ES2022",
-      "sourceMap": true,
-      // "mapRoot": "./dist/",
-      "outDir": "./dist/",
-      "incremental": true,
-      "skipLibCheck": true,
-      "strictNullChecks": false,
-      "noImplicitAny": false,
-      "strictBindCallApply": false,
-      "forceConsistentCasingInFileNames": false,
-      "noFallthroughCasesInSwitch": false,
-      "allowJs": true,
-      "paths": {
-        "@/*": ["./src/*"]
-      },
+  "compilerOptions": {
+    "module": "CommonJS",
+    "declaration": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "target": "ES2022",
+    "sourceMap": true,
+    "outDir": "./dist/",
+    "incremental": true,
+    "skipLibCheck": true,
+    "strictNullChecks": false,
+    "noImplicitAny": false,
+    "strictBindCallApply": false,
+    "forceConsistentCasingInFileNames": false,
+    "noFallthroughCasesInSwitch": false,
+    "allowJs": true,
+    "paths": {
+      "@/*": ["./src/*"]
     },
-    "exclude": ["node_modules", "dist","content"],
-  }
+  },
+  "exclude": ["node_modules", "dist","content","toy"],
+}

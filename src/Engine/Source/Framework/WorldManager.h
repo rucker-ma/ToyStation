@@ -3,7 +3,7 @@
 //
 #pragma once
 #include "Level.h"
-#include "Reflection/Meta.h"
+#include "Meta/Meta.h"
 
 namespace toystation {
 
@@ -14,7 +14,7 @@ public:
     void PostInitialize();
     void Tick();
     std::shared_ptr<Level> ActiveLevel();
-
+    void InputTest(int num,double db,std::string str);
 private:
     void LoadLevel();
 

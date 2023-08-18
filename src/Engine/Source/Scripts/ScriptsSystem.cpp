@@ -32,15 +32,16 @@ void ScriptsSystem::Initialize() {
     v8::V8::Initialize();
     std::vector<std::string> errors;
     std::vector<std::string> exec_args;
-    setup_ = node::CommonEnvironmentSetup::Create(platform_.get(),&errors,args,exec_args);
-
+    auto setup = node::CommonEnvironmentSetup::Create(platform_.get(),&errors,args,exec_args);
+    env_ = std::make_unique<ScriptEnv>(std::move(setup));
     Global::SetScriptThread(std::thread([this]{RunV8();}));
 }
 void ScriptsSystem::PostInitialize() {}
 void ScriptsSystem::Tick() {}
 void ScriptsSystem::Clean() {
-    node::Stop(setup_->env());
-    setup_ = nullptr;
+    if(env_){
+        env_->Stop();
+    }
     v8::V8::Dispose();
     v8::V8::DisposePlatform();
     platform_ = nullptr;
@@ -48,58 +49,7 @@ void ScriptsSystem::Clean() {
 }
 void ScriptsSystem::RunV8(){
     ThreadUtil::SetCurrentThreadName("node_thread");
-    v8::Isolate* isolate = setup_->isolate();
-    v8::Locker locker(isolate);
-    v8::Isolate::Scope isolate_scope(isolate);
-    v8::HandleScope handle_scope(isolate);
-    v8::Context::Scope context_scope(setup_->context());
-    isolate->SetMicrotasksPolicy(v8::MicrotasksPolicy::kAuto);
-
-    std::string init_script = R"(const publicRequire = require('module').createRequire(process.cwd()+'/dist/');
-	globalThis.require = publicRequire;
-	globalThis.exports = {};)";
-    v8::MaybeLocal<v8::Value> load_ret = node::LoadEnvironment(setup_->env(), init_script.c_str());
-    if(load_ret.IsEmpty()){
-        LogError("Load node environment error");
-    }
-    //运行入口脚本
-    Execute("out/dist/entry.js");
-    node::SpinEventLoop(setup_->env()).FromMaybe(1);
+    env_->Run();
     LogInfo("Run V8 success");
-}
-void ScriptsSystem::Execute(std::string filepath){
-    v8::Isolate* isolate = setup_->isolate();
-    v8::Locker locker(isolate);
-    v8::Isolate::Scope isolate_scope(isolate);
-    v8::HandleScope handle_scope(isolate);
-    v8::Local<v8::Context> context = setup_->context();
-    context->AllowCodeGenerationFromStrings(true);
-    v8::Context::Scope context_scope(context);
-
-    SetupV8Global();
-
-    std::string path = FileUtil::Combine(filepath);
-    std::string content;
-    FileUtil::ReadString(path,content);
-    v8::Local<v8::String> resource = ScriptUtils::ToV8String(isolate, path.c_str());
-    v8::ScriptOrigin origin(isolate, resource);
-    v8::Local<v8::String> source = ScriptUtils::ToV8String(isolate, content.c_str());
-    v8::TryCatch trycatch(isolate);
-    v8::Local<v8::Script> compiled_script =  v8::Script::Compile(context, source, &origin).ToLocalChecked();
-    if(compiled_script.IsEmpty()){
-        LogWarn("compile script error");
-        return;
-    }
-    v8::MaybeLocal<v8::Value> ret_val = compiled_script->Run(context);
-    if(ret_val.IsEmpty()){
-        v8::Local<v8::Value> exception = trycatch.Exception();
-        //trycatch.Message()->GetScriptResourceName()
-        LogWarn("execute script error", ScriptUtils::ToStdString(isolate,exception));
-        return;
-    }
-}
-
-void ScriptsSystem::SetupV8Global(){
-    ObjectWrapper::WrapV8Global(setup_->isolate(),setup_->context());
 }
 }

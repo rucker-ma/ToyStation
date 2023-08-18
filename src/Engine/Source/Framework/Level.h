@@ -13,7 +13,7 @@
 #include "Component/MeshComponent.h"
 #include "EditorController.h"
 #include "BVHTree.h"
-#include "Reflection/Meta.h"
+#include "Meta/Meta.h"
 namespace toystation{
 enum class MapType{
     Map_Environment,
@@ -21,8 +21,6 @@ enum class MapType{
     Map_Irradiance,
     Map_BrdfLut
 };
-
-
 
 class Level{
     GENERATE_BODY(Level)

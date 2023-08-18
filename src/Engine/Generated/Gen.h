@@ -1,3 +1,4 @@
+#pragma once
 #include "Meta/Meta.h"
 META_CLASS(Calculagraph);
 META_CLASS(Level);

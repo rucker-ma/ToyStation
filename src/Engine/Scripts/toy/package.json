@@ -1,0 +1,8 @@
+{
+    "name": "toy",
+    "version": "1.0.0",
+    "files": [
+        "index.js"
+    ],
+    "types": "toy.d.ts"
+}

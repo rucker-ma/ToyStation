@@ -22,10 +22,15 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.startWatch = void 0;
 const fs = __importStar(require("node:fs"));
+const node_path_1 = __importDefault(require("node:path"));
 const ts = __importStar(require("typescript"));
-let current_dir = process.cwd();
+const loader_1 = require("./loader");
 function watch(rootFileNames, options) {
     const files = {};
     rootFileNames.forEach(fileName => {
@@ -52,7 +57,7 @@ function watch(rootFileNames, options) {
             }
             return ts.ScriptSnapshot.fromString(fs.readFileSync(path).toString());
         },
-        getCurrentDirectory: () => current_dir,
+        getCurrentDirectory: () => process.cwd(),
         getCompilationSettings: () => options,
         getDefaultLibFileName: options => ts.getDefaultLibFilePath(options),
         fileExists: ts.sys.fileExists,
@@ -88,6 +93,15 @@ function watch(rootFileNames, options) {
         output.outputFiles.forEach(o => {
             console.log("  write file: " + o.name);
             fs.writeFileSync(o.name, o.text, "utf8");
+            if (o.name.endsWith(".js.map")) {
+                return;
+            }
+            let relative_path = "./" + node_path_1.default.relative(options.outDir, o.name);
+            console.log(process.cwd());
+            Promise.resolve(`${relative_path}`).then(s => __importStar(require(s))).then(loader_1.LoadCompiledModule)
+                .catch(err => {
+                console.log(err);
+            });
         });
     }
     function logErrors(fileName) {
@@ -107,20 +121,22 @@ function watch(rootFileNames, options) {
         });
     }
 }
-console.log(current_dir);
-const options = {
-    module: ts.ModuleKind.CommonJS,
-    sourceMap: true,
-    incremental: true,
-    outDir: "./dist/",
-    baseUrl: "./content/",
-    removeComments: true
-};
-const currentDirectoryFiles = fs
-    .readdirSync(options.baseUrl)
-    .filter(fileName => fileName.length >= 3 && fileName.substr(fileName.length - 3, 3) === ".ts");
-currentDirectoryFiles.forEach((value, index, array) => {
-    array[index] = value;
-});
-watch(currentDirectoryFiles, options);
+function startWatch() {
+    const options = {
+        module: ts.ModuleKind.CommonJS,
+        sourceMap: true,
+        incremental: true,
+        outDir: "./dist/",
+        baseUrl: "./content/",
+        removeComments: true
+    };
+    const currentDirectoryFiles = fs
+        .readdirSync(options.baseUrl)
+        .filter(fileName => fileName.length >= 3 && fileName.substr(fileName.length - 3, 3) === ".ts");
+    currentDirectoryFiles.forEach((value, index, array) => {
+        array[index] = value;
+    });
+    watch(currentDirectoryFiles, options);
+}
+exports.startWatch = startWatch;
 //# sourceMappingURL=compiler.js.map

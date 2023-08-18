@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
+import path from "node:path";
 import * as ts from "typescript";
-
-let current_dir = process.cwd();
+import { LoadCompiledModule } from "./loader";
 function watch(rootFileNames: string[], options: ts.CompilerOptions) {
   const files: ts.MapLike<{ version: number }> = {};
 
@@ -24,18 +24,17 @@ function watch(rootFileNames: string[], options: ts.CompilerOptions) {
     },
     getScriptSnapshot: fileName => {
       let path = fileName;
-      if(fileName in files){
-        path = options.baseUrl+fileName;
+      if (fileName in files) {
+        path = options.baseUrl + fileName;
       }
       if (!fs.existsSync(path)) {
-        console.log(path +" is not exist");
+        console.log(path + " is not exist");
         return undefined;
       }
 
       return ts.ScriptSnapshot.fromString(fs.readFileSync(path).toString());
     },
-     getCurrentDirectory: () => current_dir,
-    //getCurrentDirectory: () => process.cwd(),
+    getCurrentDirectory: () => process.cwd(),
     getCompilationSettings: () => options,
     getDefaultLibFileName: options => ts.getDefaultLibFilePath(options),
     fileExists: ts.sys.fileExists,
@@ -49,15 +48,15 @@ function watch(rootFileNames: string[], options: ts.CompilerOptions) {
   const services = ts.createLanguageService(servicesHost, ts.createDocumentRegistry());
 
   // Now let's watch the files
-  rootFileNames.forEach(fileName => { 
+  rootFileNames.forEach(fileName => {
     // First time around, emit all files
     emitFile(fileName);
 
     // Add a watch on the file to handle next change
-    let filePath = options.baseUrl+fileName; 
+    let filePath = options.baseUrl + fileName;
     console.log(process.cwd());
     console.log("watch path: " + filePath);
-  
+
 
     fs.watchFile(filePath, { persistent: true, interval: 250 }, (curr, prev) => {
       // Check timestamp
@@ -74,7 +73,7 @@ function watch(rootFileNames: string[], options: ts.CompilerOptions) {
   });
   // fs.watch(options.baseUrl,{ persistent: true, recursive: true }, (event:fs.WatchEventType, file) => {
   //   // Check timestamp
-   
+
   //   if(event == 'change'){
   //     console.log(file + " changed");
   //   // if (+curr.mtime <= +prev.mtime) {
@@ -103,8 +102,18 @@ function watch(rootFileNames: string[], options: ts.CompilerOptions) {
     }
 
     output.outputFiles.forEach(o => {
-      console.log("  write file: "+o.name);
+      console.log("  write file: " + o.name);
       fs.writeFileSync(o.name, o.text, "utf8");
+      if (o.name.endsWith(".js.map")) {
+        return;
+      }
+      //动态加载编译成功的对象
+      let relative_path = "./"+ path.relative(options.outDir,o.name);
+      console.log(process.cwd());
+      import(relative_path).then(LoadCompiledModule)
+      .catch(err=>{
+        console.log(err);
+      })
     });
   }
 
@@ -128,29 +137,31 @@ function watch(rootFileNames: string[], options: ts.CompilerOptions) {
   }
 }
 
-console.log(current_dir);
+function startWatch() {
+  const options: ts.CompilerOptions = {
+    module: ts.ModuleKind.CommonJS,
+    sourceMap: true,
+    incremental: true,
+    outDir: "./dist/",
+    baseUrl: "./content/",
+    removeComments: true
 
-const options: ts.CompilerOptions = {
-  module: ts.ModuleKind.CommonJS,
-  sourceMap: true,
-  incremental: true,
-  outDir:"./dist/",
-  baseUrl:"./content/",
-  removeComments:true
-  
+  }
+
+  const currentDirectoryFiles = fs
+    .readdirSync(options.baseUrl)
+    .filter(fileName => fileName.length >= 3 && fileName.substr(fileName.length - 3, 3) === ".ts");
+
+  currentDirectoryFiles.forEach((value: string, index: number, array: string[]) => {
+    array[index] = value
+  });
+  // Start the watcher
+
+  watch(currentDirectoryFiles, options);
+
 }
-
-const currentDirectoryFiles = fs
-.readdirSync(options.baseUrl)
-.filter(fileName => fileName.length >= 3 && fileName.substr(fileName.length - 3, 3) === ".ts");
-
-currentDirectoryFiles.forEach((value: string, index: number, array: string[]) => {
-  array[index] = value
-});
-// Start the watcher
-
-watch(currentDirectoryFiles, options);
-
-// process.chdir("dist");
+export {
+  startWatch
+}
 
 

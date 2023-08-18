@@ -106,6 +106,10 @@ void CodeExtract::ExtractDeclare() {
                         visit_result = CXChildVisit_Continue;
                         break ;
                     }
+                    case CXCursor_Constructor:{
+                        
+                        break ;
+                    }
                     //这里表示反射的类中有申明结构体或其它类，需要跳过处理，避免访问到其中的成员
                     //如果类中类也标记反射，在之前反射结构查询中就被发现，不需要在这里处理
                     case CXCursor_StructDecl:

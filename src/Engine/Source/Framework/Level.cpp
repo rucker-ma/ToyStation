@@ -94,6 +94,9 @@ std::shared_ptr<TaskFuture> Level::LoadObjectWithTask(Level::TObjectInfoReader& 
 }
 void Level::Tick() {
     controller_->Tick();
+    for(auto& object: objects_){
+        object->Tick();
+    }
 }
 void Level::BoundingBoxHit(Ray ray){
     HitResult hited_res = bvh_root_->HitObject(ray);
